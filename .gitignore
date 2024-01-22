@@ -1,0 +1,11 @@
+.venv
+.vscode
+.pdm-python
+__pycache__
+.ruff_cache
+.mypy_cache
+data/raw/*.txt
+data/raw/*.parq
+data/processed/*.csv
+data/processed/*.parq
+*.log
