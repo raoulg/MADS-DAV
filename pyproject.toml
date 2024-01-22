@@ -1,0 +1,32 @@
+[project]
+name = "MADS-DAV"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "Raoul Grouls", email = "Raoul.Grouls@han.nl"},
+]
+dependencies = [
+    "seaborn>=0.13.1",
+    "numpy>=1.26.3",
+    "jupyter>=1.0.0",
+    "pydantic>=2.5.3",
+    "pandas>=2.2.0",
+    "loguru>=0.7.2",
+    "pyarrow>=15.0.0",
+    "plotly>=5.18.0",
+]
+requires-python = ">=3.10,<3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.dev-dependencies]
+lint = [
+    "black>=23.12.1",
+    "isort>=5.13.2",
+    "ruff>=0.1.14",
+    "mypy>=1.8.0",
+]
