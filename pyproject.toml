@@ -1,7 +1,7 @@
 [project]
 name = "MADS-DAV"
 version = "0.1.0"
-description = "Default template for PDM package"
+description = "Code for the Master of Applied Data Science course Data Analysis and Visualization"
 authors = [
     {name = "Raoul Grouls", email = "Raoul.Grouls@han.nl"},
 ]
@@ -19,7 +19,6 @@ dependencies = [
 requires-python = ">=3.10,<3.12"
 readme = "README.md"
 license = {text = "MIT"}
-
 
 [tool.pdm]
 distribution = false
