@@ -1,3 +1,5 @@
+This is the repository for the Master of Applied Data Science course "Data Analysis & Visualisation", previously known as "Data Mining & Exploration".
+
 # Setup the virtual environment
 1. First, make sure you have python >= 3.10. You can check the version with `python --version`.
 2. Make sure you installed `pdm` , eg with `pip install pdm`.
