@@ -41,7 +41,7 @@ class WhatsappPreprocessor:
         authorreg = self.regexes.author
         fmt = self.regexes.format
 
-        with datafile.open() as f:
+        with datafile.open(encoding='utf-8') as f:
             for line in f.readlines():
                 ts = re.search(tsreg, line)
                 if ts:
