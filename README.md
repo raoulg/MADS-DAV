@@ -20,7 +20,6 @@ python src/preprocess.py --device ios
 ```
 Change `ios` to `android` if you have an android device.
 
-
 You should see some logs, like this:
 ```
 2024-02-11 16:07:19.191 | INFO     | __main__:main:71 - Using iOS regexes
@@ -29,4 +28,6 @@ You should see some logs, like this:
 2024-02-11 16:07:19.202 | INFO     | __main__:save:30 - Writing to data/processed/whatsapp-20240211-160719.csv
 2024-02-11 16:07:19.206 | SUCCESS  | __main__:save:32 - Done!
 ```
+
+Inside the `log` folder you will find a logfile, which has some additional information that might be useful for debugging.
 
