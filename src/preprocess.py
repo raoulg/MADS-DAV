@@ -2,7 +2,8 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-#fix bug
+
+# fix bug
 import click
 import pandas as pd
 from loguru import logger
@@ -45,7 +46,6 @@ class WhatsappPreprocessor:
         with datafile.open(encoding="utf-8") as f:
             for line in f.readlines():
                 ts = re.search(tsreg, line)
-                logger.debug(f"ts: {ts}, line: {line}")
                 if ts:
                     timestamp = datetime.strptime(ts.group(0), fmt)
                     msg = re.sub(clearreg, "", line)
