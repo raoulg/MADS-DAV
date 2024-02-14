@@ -7,7 +7,8 @@ import click
 import pandas as pd
 from loguru import logger
 
-from src.settings import Android_Regexes, BaseRegexes, Folders, iOS_Regexes
+from src.settings import (BaseRegexes, Folders, androidRegexes, iosRegexes,
+                          oldRegexes)
 
 logger.remove()
 logger.add("logs/logfile.log", rotation="1 week", level="DEBUG")
@@ -39,11 +40,12 @@ class WhatsappPreprocessor:
         tsreg = self.regexes.timestamp
         clearreg = self.regexes.clear
         authorreg = self.regexes.author
-        fmt = self.regexes.format
+        fmt = self.regexes.fmt
 
-        with datafile.open(encoding='utf-8') as f:
+        with datafile.open(encoding="utf-8") as f:
             for line in f.readlines():
                 ts = re.search(tsreg, line)
+                logger.debug(f"ts: {ts}, line: {line}")
                 if ts:
                     timestamp = datetime.strptime(ts.group(0), fmt)
                     msg = re.sub(clearreg, "", line)
@@ -69,15 +71,18 @@ class WhatsappPreprocessor:
 def main(device: str):
     if device.lower() == "ios":
         logger.info("Using iOS regexes")
-        regexes: BaseRegexes = iOS_Regexes()
+        regexes: BaseRegexes = iosRegexes
+    elif device.lower() == "old":
+        logger.info("Using old version regexes")
+        regexes: BaseRegexes = oldRegexes  # type: ignore
     else:
         logger.info("Using Android regexes")
-        regexes: BaseRegexes = Android_Regexes()  # type: ignore
+        regexes: BaseRegexes = androidRegexes  # type: ignore
 
     folders = Folders(
         raw=Path("data/raw"),
         processed=Path("data/processed"),
-        datafile=Path("_chat.txt"),
+        datafile=Path("chat_old.txt"),
     )
     preprocessor = WhatsappPreprocessor(folders, regexes)
     preprocessor()

@@ -1,27 +1,37 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol
+
+from pydantic import BaseModel
 
 
-class BaseRegexes(Protocol):
+class BaseRegexes(BaseModel):
     timestamp: str
     author: str
     clear: str
-    format: str
+    fmt: str
 
 
-class iOS_Regexes(BaseRegexes):
-    timestamp = r"(?<=\[)\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}(?=\])"
-    author = r"(?<=\]\s)(.*?)(?=:)"
-    clear = r"\[\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\]\s[~a-zA-Z\s]+:"
-    format = "%d-%m-%Y %H:%M:%S"
+iosRegexes = BaseRegexes(
+    timestamp=r"(?<=\[)\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}(?=\])",
+    author=r"(?<=\]\s)(.*?)(?=:)",
+    clear=r"\[\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\]\s[~a-zA-Z\s]+:",
+    fmt="%d-%m-%Y %H:%M:%S",
+)
 
 
-class Android_Regexes(BaseRegexes):
-    timestamp = r"^\d{2}-\d{2}-\d{4} \d{2}:\d{2}"
-    author = r"(?<=\s-\s)(.*?)(?=:)"
-    clear = r"^\d{2}-\d{2}-\d{4} \d{2}:\d{2}[-~a-zA-Z\s]+:"
-    format = "%d-%m-%Y %H:%M"
+androidRegexes = BaseRegexes(
+    timestamp=r"^\d{2}-\d{2}-\d{4} \d{2}:\d{2}",
+    author=r"(?<=\s-\s)(.*?)(?=:)",
+    clear=r"^\d{2}-\d{2}-\d{4} \d{2}:\d{2}[-~a-zA-Z\s]+:",
+    fmt="%d-%m-%Y %H:%M",
+)
+
+oldRegexes = BaseRegexes(
+    timestamp=r"^\d{1,2}/\d{1,2}/\d{2}, \d{2}:\d{2}",
+    author=r"(?<=\s-\s)(.*?)(?=:)",
+    clear=r"^\d{1,2}/\d{1,2}/\d{2}, \d{2}:\d{2}[-~a-zA-Z0-9\s]+:",
+    fmt="%m/%d/%y, %H:%M",
+)
 
 
 @dataclass
