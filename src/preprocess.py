@@ -15,6 +15,8 @@ logger.remove()
 logger.add("logs/logfile.log", rotation="1 week", level="DEBUG")
 logger.add(sys.stderr, level="INFO")
 
+logger.debug(f"Python path: {sys.path}")
+
 
 class WhatsappPreprocessor:
     def __init__(self, folders: Folders, regexes: BaseRegexes):
@@ -82,7 +84,7 @@ def main(device: str):
     folders = Folders(
         raw=Path("data/raw"),
         processed=Path("data/processed"),
-        datafile=Path("chat_old.txt"),
+        datafile=Path("_chat.txt"),
     )
     preprocessor = WhatsappPreprocessor(folders, regexes)
     preprocessor()
