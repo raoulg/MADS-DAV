@@ -9,3 +9,4 @@ data/raw/*.parq
 data/processed/*.csv
 data/processed/*.parq
 *.log
+*.pptx
