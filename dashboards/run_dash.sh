@@ -15,7 +15,7 @@ show_help() {
 }
 
 # Default script to run if no argument given
-SCRIPT="dashboard.py"
+SCRIPT="dashboard_1.py"
 
 # Check if help is requested
 if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
@@ -26,7 +26,7 @@ fi
 # Check if an argument was provided
 if [ $# -gt 0 ]; then
     # Update SCRIPT based on the argument provided
-    SCRIPT="dashboard$1.py"
+    SCRIPT="dashboard_$1.py"
 fi
 
 # Inform the user which script will be run
