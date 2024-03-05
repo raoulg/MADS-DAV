@@ -19,15 +19,16 @@ Before you start, ensure you have Python and `pdm` installed on your system. Thi
 If you've made accidental changes to the main branch and encounter merge conflicts when pulling, follow these steps:
 
 - 🔙 Undo any changes to the main branch. Don't worry, we will save your changes in a new branch. 🌱🔒
-First, you need to find out what the commit hash if from the latest commit. You can do this by running:
+First, you need to find out what the commit hash is from the latest commit. You can do this by running:
   ```bash
   git log --abbrev-commit
   ```
+  Choose the latest commit hash that you want to keep.
   Then, you can reset the changes to the latest commit by running:
   ```bash
   git reset --soft <commit-hash>
   ```
-  Replace `<commit-hash>` with the commit hash from the latest commit, this should look something like `2a5cb620`.
+  Replace `<commit-hash>` with the commit hash from the latest commit you want to keep, this should look something like `2a5cb620`.
 
   Another way to do this would be to count the number of commits you need to undo:
   ```bash
