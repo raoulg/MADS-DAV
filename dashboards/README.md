@@ -18,7 +18,7 @@ Before you start, ensure you have Python and `pdm` installed on your system. Thi
 
 If you've made accidental changes to the main branch and encounter merge conflicts when pulling, follow these steps:
 
-- Undo any changes to the main branch. Dont worry, we will save your changes in a new branch.
+- 🔙 Undo any changes to the main branch. Don't worry, we will save your changes in a new branch. 🌱🔒
 First, you need to find out what the commit hash if from the latest commit. You can do this by running:
   ```bash
   git log --abbrev-commit
