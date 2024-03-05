@@ -21,19 +21,26 @@ If you've made accidental changes to the main branch and encounter merge conflic
 - Undo any changes to the main branch. Dont worry, we will save your changes in a new branch.
 First, you need to find out what the commit hash if from the latest commit. You can do this by running:
   ```bash
-  git log
+  git log --abbrev-commit
   ```
   Then, you can reset the changes to the latest commit by running:
   ```bash
-  git reset --hard <commit-hash>
+  git reset --soft <commit-hash>
   ```
   Replace `<commit-hash>` with the commit hash from the latest commit, this should look something like `2a5cb620`.
+
+  Another way to do this would be to count the number of commits you need to undo:
+  ```bash
+  git reset --soft HEAD~1
+  ```
+  will reset just one (the latest) commit.
 
 - Create and switch to a new branch:
 
   ```bash
   git checkout -b <your-new-branch-name>
-  ```
+    ```
+  Make sure to change <your-new-branch-name> with an actual name. eg `local-changes`
 
 - Add your changes:
 
@@ -61,7 +68,7 @@ Once you have the latest version of the codebase and have resolved any conflicts
 pdm install
 ```
 This ensures you have all the necessary dependencies installed in your environment.
-Your pyproject.toml file should say "version = "0.2.0" in one of the first lines. If it doesn't, you may need to update your local copy of the repository.
+Your pyproject.toml file should say `version = "0.2.0"` in one of the first lines. If it doesn't, you may need to update your local copy of the repository.
 
 # Usage 🚴
 
