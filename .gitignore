@@ -4,8 +4,9 @@
 __pycache__
 .ruff_cache
 .mypy_cache
-data/raw/*.txt
+data/raw/**/*.txt
 data/raw/*.parq
+*.parquet
 data/processed/*.csv
 data/processed/*.parq
 *.log
