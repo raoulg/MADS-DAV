@@ -10,3 +10,4 @@ data/processed/*.csv
 data/processed/*.parq
 *.log
 *.pptx
+.DS_Store
