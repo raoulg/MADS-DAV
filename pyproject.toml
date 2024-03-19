@@ -36,6 +36,13 @@ lint = [
     "mypy>=1.8.0",
 ]
 
+[project.optional-dependencies]
+huggingface = [
+    "transformers>=4.38.2",
+    "torch>=2.2.1",
+    "sentence-transformers>=2.5.1",
+]
+
 [tool.mypy]
 allow_redefinition = true
 ignore_missing_imports = true
