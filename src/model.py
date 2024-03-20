@@ -32,6 +32,7 @@ class TextClustering:
 
     def fit(self, parts: list[str]) -> np.ndarray:
         X = self.vectorizer.fit_transform(parts)
+        logger.info(f"Vectorized text into shape {X.shape}")
         X = np.asarray(X.todense())
         distance = manhattan_distances(X, X)
         return distance
