@@ -2,7 +2,7 @@
 
 # Function to display the help section
 show_help() {
-    echo "Usage: ./run_dashboard.sh [OPTION]"
+    echo "Usage: ./run_dashb.sh [OPTION]"
     echo "Run a Python dashboard script."
     echo ""
     echo "Without any OPTION, it defaults to running 'dashboard.py'."
@@ -11,7 +11,7 @@ show_help() {
     echo "  --help, -h      Display this help and exit."
     echo ""
     echo "Example:"
-    echo "  ./run_dashboard.sh 2   # Runs 'dashboard2.py'"
+    echo "  ./run_dash.sh 2   # Runs 'dashboard2.py'"
 }
 
 # Default script to run if no argument given
@@ -31,6 +31,8 @@ fi
 
 # Inform the user which script will be run
 echo "Running $SCRIPT..."
+echo "Note that if you are running this from the VM, you need to add port 8501"
+echo "After adding the port, you can open it on http://localhost:8501/ "
 
 # Execute the Python script
 pdm run streamlit run $SCRIPT
