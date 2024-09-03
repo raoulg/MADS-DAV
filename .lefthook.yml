@@ -18,7 +18,7 @@ pre-commit:
     ruff:
       files: git ls-files
       glob: '*.py'
-      run: ruff {staged_files} --fix
+      run: ruff check {staged_files} --fix
     mypy:
       glob: '*.py'
       run: mypy --pretty {staged_files} --ignore-missing-imports
