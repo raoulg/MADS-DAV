@@ -12,10 +12,10 @@ class BaseRegexes(BaseModel):
 
 
 iosRegexes = BaseRegexes(
-    timestamp=r"(?<=\[)\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}(?=\])",
+    timestamp=r"(?<=\[)\d{2}-\d{2}-\d{4},? \d{2}:\d{2}:\d{2}(?=\])",
     author=r"(?<=\]\s)(.*?)(?=:)",
-    clear=r"\[\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}\]\s[~a-zA-Z\s]+:",
-    fmt="%d-%m-%Y %H:%M:%S",
+    clear=r"\[\d{2}-\d{2}-\d{4}, \d{2}:\d{2}:\d{2}\]\s[~a-zA-Z\s]+:",
+    fmt="%d-%m-%Y, %H:%M:%S",
 )
 
 

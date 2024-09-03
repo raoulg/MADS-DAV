@@ -1,5 +1,6 @@
 import re
 import sys
+import tomllib
 from datetime import datetime
 from pathlib import Path
 
@@ -7,8 +8,8 @@ import click
 import pandas as pd
 from loguru import logger
 
-from src.settings import (BaseRegexes, Folders, androidRegexes, iosRegexes,
-                          oldRegexes)
+from wa_analyzer.settings import (BaseRegexes, Folders, androidRegexes,
+                                  iosRegexes, oldRegexes)
 
 logger.remove()
 logger.add("logs/logfile.log", rotation="1 week", level="DEBUG")
@@ -80,10 +81,19 @@ def main(device: str):
         logger.info("Using Android regexes")
         regexes: BaseRegexes = androidRegexes  # type: ignore
 
+    with open("config.toml", "rb") as f:
+        config = tomllib.load(f)
+        raw = Path(config["raw"])
+        processed = Path(config["processed"])
+        datafile = Path(config["input"])
+
+    if not (raw / datafile).exists():
+        logger.error(f"File {raw / datafile} not found")
+
     folders = Folders(
-        raw=Path("data/raw"),
-        processed=Path("data/processed"),
-        datafile=Path("_chat.txt"),
+        raw=raw,
+        processed=processed,
+        datafile=datafile,
     )
     preprocessor = WhatsappPreprocessor(folders, regexes)
     preprocessor()
