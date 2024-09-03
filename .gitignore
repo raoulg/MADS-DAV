@@ -12,3 +12,4 @@ data/processed/*.parq
 *.log
 *.pptx
 .DS_Store
+*.egg-info
