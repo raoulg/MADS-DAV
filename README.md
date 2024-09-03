@@ -1,10 +1,6 @@
 This is the repository for the Master of Applied Data Science course "Data Analysis & Visualisation", previously known as "Data Mining & Exploration".
-
 All instructions assume a UNIX machine. You have should have received an invite link for a VM; if not, contact your teacher.
-
-On the VM, everything is installed.
-
-
+On the VM, everything is installed (like rye).
 
 # Setup the virtual environment
 1. First, make sure you have python >= 3.11. You can check the version with `python --version`.
@@ -31,9 +27,10 @@ which python
 After this, you can run the preprocessor with the following command:
 
 ```bash
-python -m src/preprocess --device ios
+analyzer --device ios
 ```
 Change `ios` to `android` if you have an android device.
+This will run the `src/wa_analyzer.py:main` method, which will process the chat and save the results in the `data/processed` folder.
 
 You should see some logs, like this:
 ```

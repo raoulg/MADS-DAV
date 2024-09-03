@@ -1,5 +1,5 @@
 raw = "data/raw"
 processed = "data/processed"
 input = "_chat.txt"
-current = "whatsapp-20240903-151406.parq"
+current = "whatsapp-20240903-170303.parq"
 
