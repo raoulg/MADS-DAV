@@ -64,7 +64,6 @@ class WhatsappPreprocessor:
 
         logger.info(f"Found {len(records)} records")
         logger.info(f"Appended {len(appended)} records")
-        logger.debug(f"appended: {appended}")
         return records, appended
 
 
