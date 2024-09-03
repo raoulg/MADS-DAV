@@ -1,9 +1,18 @@
 This is the repository for the Master of Applied Data Science course "Data Analysis & Visualisation", previously known as "Data Mining & Exploration".
 
+All instructions assume a UNIX machine. You have should have received an invite link for a VM; if not, contact your teacher.
+
+On the VM, everything is installed.
+
+
+
 # Setup the virtual environment
-1. First, make sure you have python >= 3.10. You can check the version with `python --version`.
-2. Make sure you installed `pdm` , eg with `pip install pdm`.
-3. Install the dependecies by navigating the the root where the `pyproject.toml` is located and run `pdm install`.
+1. First, make sure you have python >= 3.11. You can check the version with `python --version`.
+2. Make sure `rye` is there
+    - check if it is installed by executing `rye --help`
+    - if not, run `curl -sSf https://rye.astral.sh/get | bash` (not necessary on the VM)
+    - watch the intro video for rye at https://rye.astral.sh/guide/
+3. Install the dependecies by navigating to the MADS-DAV folder where the `pyproject.toml` is located and run `rye sync`.
 
 # Run the preprocessor
 
@@ -13,7 +22,7 @@ Download a chat from Whatsapp and put it in the `data/raw` folder. Rename the fi
 source .venv/bin/activate
 ```
 
-This will activate your virtual environment. 
+This will activate your virtual environment.
 You can check which python is being used by running:
 ```bash
 which python
