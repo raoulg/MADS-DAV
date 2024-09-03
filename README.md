@@ -7,16 +7,22 @@ This is the repository for the Master of Applied Data Science course "Data Analy
 
 # Run the preprocessor
 
-Download a chat from Whatsapp and put it in the `data/raw` folder. Rename the file to `chat.txt' and run the following command just once:
+Download a chat from Whatsapp and put it in the `data/raw` folder. Rename the file to `chat.txt' and run the following command:
 
 ```bash
-eval $(pdm venv activate)
+source .venv/bin/activate
 ```
 
-This will activate your virtual environment. After this, you can run the preprocessor with the following command:
+This will activate your virtual environment. 
+You can check which python is being used by running:
+```bash
+which python
+```
+
+After this, you can run the preprocessor with the following command:
 
 ```bash
-python src/preprocess.py --device ios
+python -m src/preprocess --device ios
 ```
 Change `ios` to `android` if you have an android device.
 
