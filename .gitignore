@@ -13,4 +13,4 @@ data/processed/*.parq
 *.pptx
 .DS_Store
 *.egg-info
-anon_reference.json
+*reference.json
