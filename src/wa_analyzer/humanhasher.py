@@ -1,7 +1,6 @@
 import hashlib
 import math
 import operator
-from pathlib import Path
 
 words = [
     "animated",
