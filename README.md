@@ -1,5 +1,5 @@
 This is the repository for the Master of Applied Data Science course "Data Analysis & Visualisation", previously known as "Data Mining & Exploration".
-All instructions assume a UNIX machine. You have should have received an invite link for a VM; if not, contact your teacher.
+All instructions assume a UNIX machine. You should have received an invite link for a VM; if not, contact your teacher.
 On the VM, everything is installed (like rye).
 
 # Setup the virtual environment
