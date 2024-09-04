@@ -4,7 +4,7 @@ On the VM, everything is installed (like rye).
 
 # Setup the virtual environment
 1. First, make sure you have python >= 3.11. You can check the version with `python --version`.
-2. Make sure `rye` is there
+2. Make sure `rye` is there. Alternatively, use `pip` to install your environment.
     - check if it is installed by executing `rye --help`
     - if not, run `curl -sSf https://rye.astral.sh/get | bash` (not necessary on the VM)
     - watch the intro video for rye at https://rye.astral.sh/guide/
