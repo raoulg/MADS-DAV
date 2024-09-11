@@ -14,3 +14,4 @@ data/processed/*.parq
 .DS_Store
 *.egg-info
 *reference.json
+.lycheecache
