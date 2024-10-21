@@ -15,4 +15,3 @@ data/processed/*.parq
 *.egg-info
 *reference.json
 .lycheecache
-img/example/**
