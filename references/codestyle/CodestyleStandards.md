@@ -2,6 +2,7 @@
 
 Table of contents
 
+- [0. Overview of topics](#0-overview-of-topics)
 - [1. Two cultures](#1-two-cultures)
 - [2. The pros and cons of Pythons flexibility](#2-the-pros-and-cons-of-pythons-flexibility)
 - [3. Development stages](#3-development-stages)
@@ -9,7 +10,35 @@ Table of contents
   - [Proof of concept](#proof-of-concept)
   - [Product](#product)
   - [Deployment](#deployment)
-- [4. Overview of topics](#4-overview-of-topics)
+
+## 0. Overview of topics
+
+For every standard, we have a possible classifier. The classifiers are:
+
+- 🐌 : at this stage, this standard might slow you down
+- 💡 : at this stage, this standard is probably a good idea
+- 🏅 : at this stage, this standard is a must
+
+The topics are ordered by the stage where they are most useful.
+The topics cover different subjects; some are more a preference for one library over another, some are about the way you organize your code, and other are about additional tooling like dependency management and linting.
+
+| Topic                                                                            | Testing a Concept | Proof of Concept | Product | Deployment |
+| -------------------------------------------------------------------------------- | ----------------- | ---------------- | ------- | ---------- |
+| [never hardcode](never_hardcode.md)                                   | 💡                 | 🏅                | 🏅       | 🏅          |
+| [Prefer pathlib.Path over os.path](pathlib.md)                                   | 💡                 | 🏅                | 🏅       | 🏅          |
+| [Prefer loguru over print](loguru.md)                                            | 💡                 | 🏅                | 🏅       | 🏅          |
+| [Use pydantic for all settings](pydantic.md)                                     | 💡                 | 🏅                | 🏅       | 🏅          |
+| [pyproject.toml for dependencies](03_dependencies_management.md) | 💡                 | 🏅                | 🏅       | 🏅      |
+| [Use cookiecutters](cookiecutter.md)                                             | 💡                 | 🏅                | 🏅       | 🏅          |
+| [Git](01_git_basics.md)                                                   | 💡                 | 🏅                | 🏅       | 🏅          |
+| [Use formatters and linting](linting.md)                                         | 💡                 | 🏅                | 🏅       | 🏅          |
+| [Use typehinting](typehinting.md)                                                | 🐌                 | 💡                | 🏅       | 🏅          |
+| [Add a README](add_a_readme.md)                                     | 🐌                 | 💡                | 🏅       | 🏅          |
+| [Encapsulation, SRP](encapsulation.md)                                                                    | 🐌                 | 💡                | 🏅       | 🏅          |
+| [Open-Closed Principle](open_closed.md)                                                            | 🐌                 | 💡                | 🏅       | 🏅          |
+| Makefiles or shell scripts                                     | 🐌                 | 💡                | 🏅       | 🏅          |
+| [Abstract classes (ABC, Protocol)](typehinting.md)                               | 🐌                 | 🐌                | 💡       | 🏅          |
+| Write tests (pytest)                                                             | 🐌                 | 🐌                | 💡       | 🏅          |
 
 ## 1. Two cultures
 
@@ -67,31 +96,3 @@ This is the stage where you will distribute the product to other people that wer
 ### Deployment
 
 This is the stage where the code will be used in production. It is now important that the code is robust and well tested. You will be working in a team, and you will be working on a codebase that is already quite large.
-
-## 4. Overview of topics
-
-For every standard, we have a possible classifier. The classifiers are:
-
-- 🐌 : at this stage, this standard might slow you down
-- 💡 : at this stage, this standard is probably a good idea
-- 🏅 : at this stage, this standard is a must
-
-The topics are ordered by the stage where they are most useful.
-The topics cover different subjects; some are more a preference for one library over another, some are about the way you organize your code, and other are about additional tooling like dependency management and linting.
-
-| Topic                                                                            | Testing a Concept | Proof of Concept | Product | Deployment |
-| -------------------------------------------------------------------------------- | ----------------- | ---------------- | ------- | ---------- |
-| [Prefer pathlib.Path over os.path](pathlib.md)                                   | 💡                 | 🏅                | 🏅       | 🏅          |
-| [Prefer loguru over print](loguru.md)                                            | 💡                 | 🏅                | 🏅       | 🏅          |
-| [Use pydantic for all settings](pydantic.md)                                     | 💡                 | 🏅                | 🏅       | 🏅          |
-| [pyproject.toml for dependencies](03_dependencies_management.md) | 💡                 | 🏅                | 🏅       | 🏅          |
-| [Use cookiecutters](cookiecutter.md)                                             | 💡                 | 🏅                | 🏅       | 🏅          |
-| [Git](01_git_basics.md)                                                   | 💡                 | 🏅                | 🏅       | 🏅          |
-| [Use formatters and linting](linting.md)                                         | 💡                 | 🏅                | 🏅       | 🏅          |
-| [Use typehinting](typehinting.md)                                                | 🐌                 | 💡                | 🏅       | 🏅          |
-| Makefiles                                     | 🐌                 | 💡                | 🏅       | 🏅          |
-| Encapsulation                                                                    | 🐌                 | 💡                | 🏅       | 🏅          |
-| Open-Closed Principle                                                            | 🐌                 | 💡                | 🏅       | 🏅          |
-| single responsibility                                                            | 🐌                 | 💡                | 🏅       | 🏅          |
-| [Abstract classes (ABC, Protocol)](typehinting.md)                               | 🐌                 | 🐌                | 💡       | 🏅          |
-| Write tests (pytest)                                                             | 🐌                 | 🐌                | 💡       | 🏅          |

@@ -14,6 +14,20 @@ config = {"input_size": 3, "output_size": 20, "data_dir": "."}
 
 While this will work perfectly fine if you are prototyping, at some point your project will grow bigger and you will want to have more control over your parameters.
 
+A basic way to improve upon the dict is to use a dataclass; 
+```python
+from dataclasses import dataclass
+
+@dataclass
+class SearchSpace:
+    input_size: int
+    output_size: int
+    tune_dir: Optional[Path]
+    data_dir: Path
+```
+
+This will create a class with the parameters you need. However, it does not provide any checks on the parameters. You could create `Searchspace.input_size = "hi"` and python won't complain. While it is better than the dict, because it gives you more control over the items inside the object, you can have stricter checks by using pydantic: 
+
 Pydantic helps with a lot of things. First of all, it will help you to define the types of your parameters. This will help you to catch bugs early on!
 At the moment the wrong type is passed, pydantic will first try to convert it to the correct type. If this fails, it will raise an error.
 
@@ -28,11 +42,11 @@ class SearchSpace(BaseModel):
 config = SearchSpace(input_size=3.0, output_size=20, data_dir=".")
 ```
 
-In this code, the inputsize is provided as a float but will be casted to an int. The data_dir is provided as a string, but will be casted to a Path object. The ommited tune_dir will be set to None. Python will happily continue if you provide the wrong type; it will even do calculations with strings, etc, potentially making it difficult to debug errors in larger codebases. In addition to that, it helps to read the code and to clarify what type of parameter is expected.
+In this code, the inputsize is provided as a float but will be casted to an int. The data_dir is provided as a string, but will be casted to a Path object. The ommited tune_dir will be set to None. Python will happily continue if you provide the wrong type; it will even do calculations with strings, etc, potentially making it difficult to debug errors in larger codebases. But pydantic guarantees that everything has the type you requested! In addition to avoiding errors, it helps to read the code and to clarify what type of parameter is expected.
 
-## root validators
+## field validators
 
-It is possible to extend the settings with a `@root_validator`. This will allow you to do some checks on the parameters.
+It is possible to extend the settings with a `@field_validator`. This will allow you to do some checks on the parameters.
 
 ```python
 class SearchSpace(BaseModel):
@@ -41,14 +55,15 @@ class SearchSpace(BaseModel):
     tune_dir: Optional[Path]
     data_dir: Path
 
-    @root_validator
-    def check_path(cls, values: Dict) -> Dict:
-        datadir = values.get("data_dir")
-        if not datadir.exists():
+    @field_validator('data_dir')
+    @classmethod
+    def check_path(cls, v: Path) -> Path:
+        if not v.exists():
             raise FileNotFoundError(
-                f"Make sure the datadir exists.\n Found {datadir} to be non-existing."
+                f"Make sure the datadir exists.\n Found {v} to be non-existing."
             )
-        return values
+        return v
+
 ```
 
 In this example, the location of the data_dir is checked. This is a really common cause of errors! You could also choose to create the directory if it does not exist yet.
