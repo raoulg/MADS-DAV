@@ -155,5 +155,5 @@ def add_annotation(self, annotation: Annotation):
 Finally, the main block of the script demonstrates how to use the `AnnotatedPlot` class with different annotations.
 
 - **img_folder**: We create a folder to store the plots if it doesn't already exist.
-- **AnnotatedPlot**: We instantiate `AnnotatedPlot` and add different annotations in steps, showing how we can easily extend the functionality without modifying the existing code. This is a perfect illustration of the **Open-Closed Principle** in action.
+- **AnnotatedPlot**: We instantiate `AnnotatedPlot` and add different annotations in steps, showing how we can easily extend the functionality without modifying the existing code. This is a nice illustration of the **Open-Closed Principle** in action.
 
