@@ -89,8 +89,6 @@ if __name__ == "__main__":
     logger.info("Plot with trendline and max point saved")
 
     # Extend with a new annotation without modifying existing code
-    plot.add_annotation(TrendlineAnnotation())
-    plot.add_annotation(MaxPointAnnotation())
     plot.add_annotation(MeanLineAnnotation())
     logger.info("Added annotations")
 
