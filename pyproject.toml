@@ -1,6 +1,6 @@
 [project]
 name = "wa-analyzer"
-version = "0.3.1"
+version = "0.4.1"
 description = "Code for the Master of Applied Data Science course Data Analysis and Visualization"
 authors = [
     {name = "Raoul Grouls", email = "Raoul.Grouls@han.nl"},
