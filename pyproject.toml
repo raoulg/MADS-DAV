@@ -24,6 +24,9 @@ license = {text = "MIT"}
 [project.scripts]
 "analyzer" = "wa_analyzer.preprocess:main"
 
+[project.urls]
+GitHub = "https://github.com/raoulg/MADS-DAV"
+
 [project.optional-dependencies]
 huggingface = [
     "transformers>=4.38.2",
