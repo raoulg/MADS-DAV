@@ -1,6 +1,6 @@
 # Code Walkthrough: Demonstrating the Open-Closed Principle (OCP)
 
-To understand how open-closed works, I have created a file in the src folder. Please have a look at `src/wa_analyzer/open_closed.py`. This markdown file describes and explains all of the code in that file. You can test the file for yourself by activating the `.venv` and running `python src/wa_analyzer/open_closed.py`. Have a look at the different images that are created in the `img` folder.
+To understand how open-closed works, I have created a file in the src folder. Please have a look at `dev/open_closed.py`. This markdown file describes and explains all of the code in that file. You can test the file for yourself by activating the `.venv` and running `python dev/open_closed.py`. Have a look at the different images that are created in the `img` folder.
 
 In the file, I demonstrate how the **Open-Closed Principle** (OCP) is applied. This principle states that software entities (classes, functions, etc.) should be open for extension but closed for modification. We'll walk through the code, explaining how it adheres to this principle.
 
@@ -38,7 +38,7 @@ class BasePlot:
 ```
 
 - **fig and ax**: `fig` is the figure object (the entire plot), and `ax` is the axes object (the part of the figure where data is plotted). These are crucial to understanding how `matplotlib` operates, and in this case, we will explicitly pass the `ax` to Seaborn functions. This reduces confusion since Seaborn automagically uses the active `ax` object if it's not explicitly passed. We do this to ensure we have control over where the plot is drawn.
-  
+
 ```python
     def plot(self, title: str):
         sns.scatterplot(data=self.data, x="x", y="y", ax=self.ax)
@@ -129,13 +129,13 @@ class AnnotatedPlot(BasePlot):
 ```
 
 - **Constructor**: We call `super().__init__(data)` to ensure that `AnnotatedPlot` inherits all the setup from `BasePlot`. This will also store the data parameter in the `BasePlot` and setup the fig and ax (see the first two lines of `BasePlot`). Then, we initialize an empty list to store the annotations.
-  
+
 ```python
 def add_annotation(self, annotation: Annotation):
         self.annotations.append(annotation)
 ```
 
-- **Add Annotation**: This method allows new annotations to be added to the plot. We store each annotation in the `annotations` list. This method is actually where the magic happens: every time we add an annotation, it is stored in the list of annotations. This ensures our class is indeed open for extension (quite literal by adding an annotation to the list) while we dont need to bother about the code that is already there (which is in this way indeed closed for modification). 
+- **Add Annotation**: This method allows new annotations to be added to the plot. We store each annotation in the `annotations` list. This method is actually where the magic happens: every time we add an annotation, it is stored in the list of annotations. This ensures our class is indeed open for extension (quite literal by adding an annotation to the list) while we dont need to bother about the code that is already there (which is in this way indeed closed for modification).
 
 ```python
     def plot(self, title: str):
@@ -145,7 +145,7 @@ def add_annotation(self, annotation: Annotation):
 ```
 
 - **Plot method**: We first call the `plot` method of the `BasePlot` class using `super()`. This makes sure the title is added, and the base scatterplot is created. After that, we can start extending by looping through all the annotations and apply each one to the plot. This shows how we can extend the functionality of the plot without modifying the `BasePlot` class, adhering to the **Open-Closed Principle**.
-  
+
     - **Why use `super().plot()`?**: By calling `super()`, we ensure that the plotting logic from the base class is executed before we apply any annotations. This promotes reuse and avoids code duplication.
 
 ---
