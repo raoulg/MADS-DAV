@@ -1,96 +1,65 @@
 # Dashboard Runner 🚀
+built with [![Rye](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/ischaojie/7e975b710fd2265b983c051349369881/raw/5cc749c1b94777dc04069668e0c19959bbbd5b46/rye-badge.json)](https://rye-up.com/)
+
 
 Welcome to the Dashboard Runner project! This tool allows you to easily run different Streamlit dashboard scripts with a simple command. Perfect for quickly switching between various data visualizations or dashboards.
 
 ## Installation 🛠️
-
-Before you start, ensure you have Python and `pdm` installed on your system. This project uses Streamlit, so you'll need to ensure you're working with the correct Python package versions.
-
-1. **Pull the latest version from Git:** 🔄
-
-   Ensure you have the latest version of the project to get the most recent `pyproject.toml` file, specifying version `0.2`, which includes Streamlit among other dependencies.
-
-   ```bash
-   git pull origin main
-   ```
-
-2. **Handling Merge Conflicts:** ❗
-
-If you've made accidental changes to the main branch and encounter merge conflicts when pulling, follow these steps:
-
-- 🔙 Undo any changes to the main branch. Don't worry, we will save your changes in a new branch. 🌱🔒
-First, you need to find out what the commit hash is from the latest commit. You can do this by running:
-  ```bash
-  git log --abbrev-commit
-  ```
-  Choose the latest commit hash that you want to keep.
-  Then, you can reset the changes to the latest commit by running:
-  ```bash
-  git reset --soft <commit-hash>
-  ```
-  Replace `<commit-hash>` with the commit hash from the latest commit you want to keep, this should look something like `2a5cb620`.
-
-  Another way to do this would be to count the number of commits you need to undo:
-  ```bash
-  git reset --soft HEAD~1
-  ```
-  will reset just one (the latest) commit.
-
-- Create and switch to a new branch:
-
-  ```bash
-  git checkout -b <your-new-branch-name>
-    ```
-  Make sure to change <your-new-branch-name> with an actual name. eg `local-changes`
-
-- Add your changes:
-
-  ```bash
-  git add .
-  ```
-
-- Commit your changes:
-
-  ```bash
-  git commit -m "Describe your changes"
-  ```
-
-- Switch back to the main branch and pull the latest changes again:
-
-  ```bash
-  git checkout main
-  git pull origin main
-  ```
-
-3. **Install Dependencies with PDM:** ⚙️
-
-Once you have the latest version of the codebase and have resolved any conflicts, use `pdm` to install the required dependencies as specified in `pyproject.toml`.
+All dependencies are described by the `pyproject.toml` file. You can install everyting with
 ```bash
-pdm install
+rye sync
 ```
-This ensures you have all the necessary dependencies installed in your environment.
-Your pyproject.toml file should say `version = "0.2.0"` in one of the first lines. If it doesn't, you may need to update your local copy of the repository.
+or, if you insist on using the 10x slower pip, `pip install .`
 
 # Usage 🚴
 
 To run a specific dashboard script, use the `run_dashboard.sh` script. Here's how:
 
-1. **Make the script executable (if not already done):** ✅
+## Make the script executable
+
+First, the script needs to be allowed to be executed. You can check this with the `ls -l` command:
 
 ```bash
-chmod +x run_dashboard.sh
+❯ ls -l
+total 24
+-rw-rw-r-- 1 azureuser azureuser 1704 Sep  3 10:04 dashboard_1.py
+-rw-rw-r-- 1 azureuser azureuser 2525 Sep  3 10:04 dashboard_2.py
+-rw-rw-r-- 1 azureuser azureuser 2156 Sep  3 10:04 dashboard_3.py
+-rw-rw-r-- 1 azureuser azureuser 2571 Sep  3 10:04 dashboard_4.py
+-rw-rw-r-- 1 azureuser azureuser 1261 Oct 22 09:22 README.md
+-rwxrwxr-x 1 azureuser azureuser 1092 Sep  3 10:04 run_dash.sh
 ```
 
-2. Run your desired dashboard:
+Note that, for the `.sh` file, there are additonal `x`s which stand for `executable`.
+If you dont see the x-es, you can run this command:
+
 ```bash
-./run_dashboard.sh # Runs the default dashboard.py
-./run_dashboard.sh 2 # Runs dashboard2.py
+chmod +x run_dash.sh
 ```
+
+## Run your desired dashboard:
+You can now run the script. It will execute to python scripts.
+```bash
+./run_dash.sh # Runs the default dashboard.py
+./run_dash.sh 2 # Runs dashboard2.py
+```
+
+Alternatively, you can do this manually by:
+```bash
+source .venv/bin/activate  # activating the environment
+cd dashboards # cd-ing into the correct folder
+python dashboard_1.py # executing the script
+```
+
 For additional help and options:
 ```bash
-./run_dashboard.sh --help
+./run_dash.sh --help
 ```
 
-## Contributing 🤝
+## Open the dashboard
+If you run this on a VM, VScode should automatically forward your port on `:8501`. You can see this under the tab `Ports`, next to the tab for `Terminal`.
 
+Locally, you can open `http://localhost:8501/` and you should see your dashboard!
+
+## Contributing 🤝
 Contributions to improve Dashboard Runner are always welcome! Whether it's adding new features, improving documentation, or reporting issues, feel free to make a pull request or open an issue.
