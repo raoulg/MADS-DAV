@@ -7,16 +7,17 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
+#   universal: true
 
 -e file:.
 altair==5.3.0
     # via streamlit
-annotated-types==0.6.0
+annotated-types==0.7.0
     # via pydantic
-anyio==4.3.0
+anyio==4.6.2.post1
     # via httpx
     # via jupyter-server
-appnope==0.1.4
+appnope==0.1.4 ; platform_system == 'Darwin'
     # via ipykernel
 argon2-cffi==23.1.0
     # via jupyter-server
@@ -28,12 +29,12 @@ asttokens==2.4.1
     # via stack-data
 async-lru==2.0.4
     # via jupyterlab
-attrs==23.2.0
+attrs==24.2.0
     # via jsonschema
     # via referencing
-babel==2.15.0
+babel==2.16.0
     # via jupyterlab-server
-backports-tarfile==1.1.1
+backports-tarfile==1.2.0 ; python_full_version < '3.12'
     # via jaraco-context
 beautifulsoup4==4.12.3
     # via nbconvert
@@ -41,45 +42,54 @@ bleach==6.1.0
     # via nbconvert
 blinker==1.8.2
     # via streamlit
-cachetools==5.3.3
+cachetools==5.5.0
     # via streamlit
-certifi==2024.2.2
+certifi==2022.12.7
     # via httpcore
     # via httpx
     # via requests
-cffi==1.16.0
+cffi==1.17.1
     # via argon2-cffi-bindings
-charset-normalizer==3.3.2
+    # via cryptography
+    # via pyzmq
+charset-normalizer==2.1.1
     # via requests
 click==8.1.7
     # via streamlit
     # via wa-analyzer
+colorama==0.4.6 ; sys_platform == 'win32' or platform_system == 'Windows'
+    # via click
+    # via ipython
+    # via loguru
+    # via tqdm
 comm==0.2.2
     # via ipykernel
     # via ipywidgets
-contourpy==1.2.1
+contourpy==1.3.0
     # via matplotlib
+cryptography==43.0.3 ; sys_platform == 'linux'
+    # via secretstorage
 cycler==0.12.1
     # via matplotlib
-debugpy==1.8.1
+debugpy==1.8.7
     # via ipykernel
 decorator==5.1.1
     # via ipython
 defusedxml==0.7.1
     # via nbconvert
-executing==2.0.1
+executing==2.1.0
     # via stack-data
-fastjsonschema==2.19.1
+fastjsonschema==2.20.0
     # via nbformat
-filelock==3.14.0
+filelock==3.13.1
     # via huggingface-hub
     # via torch
     # via transformers
-fonttools==4.51.0
+fonttools==4.54.1
     # via matplotlib
 fqdn==1.5.1
     # via jsonschema
-fsspec==2024.5.0
+fsspec==2024.2.0
     # via huggingface-hub
     # via torch
 gitdb==4.0.11
@@ -88,43 +98,45 @@ gitpython==3.1.43
     # via streamlit
 h11==0.14.0
     # via httpcore
-httpcore==1.0.5
+httpcore==1.0.6
     # via httpx
-httpx==0.27.0
+httpx==0.27.2
     # via jupyterlab
-huggingface-hub==0.23.0
+huggingface-hub==0.26.1
     # via sentence-transformers
     # via tokenizers
     # via transformers
-idna==3.7
+idna==3.4
     # via anyio
     # via httpx
     # via jsonschema
     # via requests
-importlib-metadata==7.1.0
+importlib-metadata==8.5.0 ; python_full_version < '3.12'
     # via keyring
-ipykernel==6.29.4
+ipykernel==6.29.5
     # via jupyter
     # via jupyter-console
     # via jupyterlab
-    # via qtconsole
-ipython==8.24.0
+ipython==8.28.0
     # via ipykernel
     # via ipywidgets
     # via jupyter-console
-ipywidgets==8.1.2
+ipywidgets==8.1.5
     # via jupyter
 isoduration==20.11.0
     # via jsonschema
 jaraco-classes==3.4.0
     # via keyring
-jaraco-context==5.3.0
+jaraco-context==6.0.1
     # via keyring
-jaraco-functools==4.0.1
+jaraco-functools==4.1.0
     # via keyring
 jedi==0.19.1
     # via ipython
-jinja2==3.1.4
+jeepney==0.8.0 ; sys_platform == 'linux'
+    # via keyring
+    # via secretstorage
+jinja2==3.1.3
     # via altair
     # via jupyter-server
     # via jupyterlab
@@ -136,23 +148,22 @@ joblib==1.4.2
     # via scikit-learn
 json5==0.9.25
     # via jupyterlab-server
-jsonpointer==2.4
+jsonpointer==3.0.0
     # via jsonschema
-jsonschema==4.22.0
+jsonschema==4.23.0
     # via altair
     # via jupyter-events
     # via jupyterlab-server
     # via nbformat
-jsonschema-specifications==2023.12.1
+jsonschema-specifications==2024.10.1
     # via jsonschema
-jupyter==1.0.0
+jupyter==1.1.1
     # via wa-analyzer
-jupyter-client==8.6.1
+jupyter-client==8.6.3
     # via ipykernel
     # via jupyter-console
     # via jupyter-server
     # via nbclient
-    # via qtconsole
 jupyter-console==6.6.3
     # via jupyter
 jupyter-core==5.7.2
@@ -164,12 +175,11 @@ jupyter-core==5.7.2
     # via nbclient
     # via nbconvert
     # via nbformat
-    # via qtconsole
 jupyter-events==0.10.0
     # via jupyter-server
 jupyter-lsp==2.2.5
     # via jupyterlab
-jupyter-server==2.14.0
+jupyter-server==2.14.2
     # via jupyter-lsp
     # via jupyterlab
     # via jupyterlab-server
@@ -177,30 +187,31 @@ jupyter-server==2.14.0
     # via notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.2.0
+jupyterlab==4.1.6
+    # via jupyter
     # via notebook
 jupyterlab-pygments==0.3.0
     # via nbconvert
-jupyterlab-server==2.27.1
+jupyterlab-server==2.24.0
     # via jupyterlab
     # via notebook
-jupyterlab-widgets==3.0.10
+jupyterlab-widgets==3.0.13
     # via ipywidgets
-keyring==25.2.1
+keyring==25.4.1
     # via mads-datasets
-kiwisolver==1.4.5
+kiwisolver==1.4.7
     # via matplotlib
 loguru==0.7.2
     # via mads-datasets
     # via wa-analyzer
-mads-datasets==0.3.10
+mads-datasets==0.3.14
     # via wa-analyzer
 markdown-it-py==3.0.0
     # via rich
 markupsafe==2.1.5
     # via jinja2
     # via nbconvert
-matplotlib==3.9.0
+matplotlib==3.9.2
     # via seaborn
 matplotlib-inline==0.1.7
     # via ipykernel
@@ -209,7 +220,7 @@ mdurl==0.1.2
     # via markdown-it-py
 mistune==3.0.2
     # via nbconvert
-more-itertools==10.2.0
+more-itertools==10.5.0
     # via jaraco-classes
     # via jaraco-functools
 mpmath==1.3.0
@@ -225,14 +236,14 @@ nbformat==5.10.4
     # via nbconvert
 nest-asyncio==1.6.0
     # via ipykernel
-networkx==3.3
+networkx==3.2.1
     # via torch
-notebook==7.2.0
+notebook==7.1.3
     # via jupyter
 notebook-shim==0.2.4
     # via jupyterlab
     # via notebook
-numpy==1.26.4
+numpy==1.26.3
     # via altair
     # via contourpy
     # via mads-datasets
@@ -244,14 +255,13 @@ numpy==1.26.4
     # via scikit-learn
     # via scipy
     # via seaborn
-    # via sentence-transformers
     # via statsmodels
     # via streamlit
     # via transformers
     # via wa-analyzer
 overrides==7.7.0
     # via jupyter-server
-packaging==24.0
+packaging==22.0
     # via altair
     # via huggingface-hub
     # via ipykernel
@@ -261,12 +271,10 @@ packaging==24.0
     # via matplotlib
     # via nbconvert
     # via plotly
-    # via qtconsole
-    # via qtpy
     # via statsmodels
     # via streamlit
     # via transformers
-pandas==2.2.2
+pandas==2.2.3
     # via altair
     # via mads-datasets
     # via seaborn
@@ -279,42 +287,42 @@ parso==0.8.4
     # via jedi
 patsy==0.5.6
     # via statsmodels
-pexpect==4.9.0
+pexpect==4.9.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
     # via ipython
-pillow==10.3.0
+pillow==10.2.0
     # via mads-datasets
     # via matplotlib
     # via sentence-transformers
     # via streamlit
-platformdirs==4.2.2
+platformdirs==4.3.6
     # via jupyter-core
-plotly==5.22.0
+plotly==5.24.1
     # via wa-analyzer
-polars==0.20.26
+polars==1.10.0
     # via mads-datasets
-prometheus-client==0.20.0
+prometheus-client==0.21.0
     # via jupyter-server
-prompt-toolkit==3.0.43
+prompt-toolkit==3.0.48
     # via ipython
     # via jupyter-console
-protobuf==4.25.3
+protobuf==5.28.2
     # via streamlit
-psutil==5.9.8
+psutil==6.1.0
     # via ipykernel
-ptyprocess==0.7.0
+ptyprocess==0.7.0 ; os_name != 'nt' or (sys_platform != 'emscripten' and sys_platform != 'win32')
     # via pexpect
     # via terminado
-pure-eval==0.2.2
+pure-eval==0.2.3
     # via stack-data
-pyarrow==16.1.0
+pyarrow==17.0.0
     # via streamlit
     # via wa-analyzer
 pycparser==2.22
     # via cffi
-pydantic==2.7.1
+pydantic==2.7.4
     # via mads-datasets
     # via wa-analyzer
-pydantic-core==2.18.2
+pydantic-core==2.18.4
     # via pydantic
 pydeck==0.9.1
     # via streamlit
@@ -322,9 +330,8 @@ pygments==2.18.0
     # via ipython
     # via jupyter-console
     # via nbconvert
-    # via qtconsole
     # via rich
-pyparsing==3.1.2
+pyparsing==3.2.0
     # via matplotlib
 python-dateutil==2.9.0.post0
     # via arrow
@@ -333,29 +340,32 @@ python-dateutil==2.9.0.post0
     # via pandas
 python-json-logger==2.0.7
     # via jupyter-events
-pytz==2024.1
+pytz==2024.2
     # via pandas
-pyyaml==6.0.1
+pywin32==308 ; platform_python_implementation != 'PyPy' and sys_platform == 'win32'
+    # via jupyter-core
+pywin32-ctypes==0.2.3 ; sys_platform == 'win32'
+    # via keyring
+pywinpty==2.0.14 ; os_name == 'nt'
+    # via jupyter-server
+    # via jupyter-server-terminals
+    # via terminado
+pyyaml==6.0.2
     # via huggingface-hub
     # via jupyter-events
     # via transformers
-pyzmq==26.0.3
+pyzmq==26.2.0
     # via ipykernel
     # via jupyter-client
     # via jupyter-console
     # via jupyter-server
-    # via qtconsole
-qtconsole==5.5.2
-    # via jupyter
-qtpy==2.4.1
-    # via qtconsole
 referencing==0.35.1
     # via jsonschema
     # via jsonschema-specifications
     # via jupyter-events
-regex==2024.5.15
+regex==2024.9.11
     # via transformers
-requests==2.31.0
+requests==2.28.1
     # via huggingface-hub
     # via jupyterlab-server
     # via mads-datasets
@@ -367,26 +377,30 @@ rfc3339-validator==0.1.4
 rfc3986-validator==0.1.1
     # via jsonschema
     # via jupyter-events
-rich==13.7.1
+rich==13.9.2
     # via streamlit
-rpds-py==0.18.1
+rpds-py==0.20.0
     # via jsonschema
     # via referencing
-safetensors==0.4.3
+safetensors==0.4.5
     # via transformers
-scikit-learn==1.4.2
+scikit-learn==1.5.2
     # via sentence-transformers
     # via wa-analyzer
-scipy==1.13.0
+scipy==1.14.1
     # via scikit-learn
     # via sentence-transformers
     # via statsmodels
 seaborn==0.13.2
     # via wa-analyzer
+secretstorage==3.3.3 ; sys_platform == 'linux'
+    # via keyring
 send2trash==1.8.3
     # via jupyter-server
-sentence-transformers==2.7.0
+sentence-transformers==3.2.1
     # via wa-analyzer
+setuptools==70.0.0 ; python_full_version >= '3.12'
+    # via torch
 six==1.16.0
     # via asttokens
     # via bleach
@@ -398,17 +412,17 @@ smmap==5.0.1
 sniffio==1.3.1
     # via anyio
     # via httpx
-soupsieve==2.5
+soupsieve==2.6
     # via beautifulsoup4
 stack-data==0.6.3
     # via ipython
-statsmodels==0.14.2
+statsmodels==0.14.4
     # via wa-analyzer
-streamlit==1.34.0
+streamlit==1.39.0
     # via wa-analyzer
-sympy==1.12
+sympy==1.13.1
     # via torch
-tenacity==8.3.0
+tenacity==9.0.0
     # via plotly
     # via streamlit
 terminado==0.18.1
@@ -418,16 +432,16 @@ threadpoolctl==3.5.0
     # via scikit-learn
 tinycss2==1.3.0
     # via nbconvert
-tokenizers==0.19.1
+tokenizers==0.20.1
     # via transformers
 toml==0.10.2
     # via streamlit
-toolz==0.12.1
+toolz==1.0.0
     # via altair
-torch==2.3.0
+torch==2.5.0+cpu
     # via sentence-transformers
     # via wa-analyzer
-tornado==6.4
+tornado==6.4.1
     # via ipykernel
     # via jupyter-client
     # via jupyter-server
@@ -435,7 +449,7 @@ tornado==6.4
     # via notebook
     # via streamlit
     # via terminado
-tqdm==4.66.4
+tqdm==4.64.1
     # via huggingface-hub
     # via mads-datasets
     # via sentence-transformers
@@ -455,35 +469,38 @@ traitlets==5.14.3
     # via nbclient
     # via nbconvert
     # via nbformat
-    # via qtconsole
-transformers==4.41.0
+transformers==4.45.2
     # via sentence-transformers
     # via wa-analyzer
-types-python-dateutil==2.9.0.20240316
+types-python-dateutil==2.9.0.20241003
     # via arrow
-typing-extensions==4.11.0
+typing-extensions==4.9.0
     # via huggingface-hub
     # via ipython
     # via pydantic
     # via pydantic-core
     # via streamlit
     # via torch
-tzdata==2024.1
+tzdata==2024.2
     # via pandas
 uri-template==1.3.0
     # via jsonschema
-urllib3==2.2.1
+urllib3==1.26.13
     # via requests
+watchdog==5.0.3 ; platform_system != 'Darwin'
+    # via streamlit
 wcwidth==0.2.13
     # via prompt-toolkit
-webcolors==1.13
+webcolors==24.8.0
     # via jsonschema
 webencodings==0.5.1
     # via bleach
     # via tinycss2
 websocket-client==1.8.0
     # via jupyter-server
-widgetsnbextension==4.0.10
+widgetsnbextension==4.0.13
     # via ipywidgets
-zipp==3.18.2
+win32-setctime==1.1.0 ; sys_platform == 'win32'
+    # via loguru
+zipp==3.20.2 ; python_full_version < '3.12'
     # via importlib-metadata

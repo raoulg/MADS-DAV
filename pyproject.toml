@@ -1,6 +1,6 @@
 [project]
 name = "wa-analyzer"
-version = "0.3.0"
+version = "0.3.1"
 description = "Code for the Master of Applied Data Science course Data Analysis and Visualization"
 authors = [
     {name = "Raoul Grouls", email = "Raoul.Grouls@han.nl"},
@@ -8,17 +8,13 @@ authors = [
 dependencies = [
     "seaborn>=0.13.1",
     "numpy>=1.26.3",
-    "jupyter>=1.0.0",
     "pydantic>=2.5.3",
     "pandas>=2.2.0",
     "loguru>=0.7.2",
     "pyarrow>=15.0.0",
-    "plotly>=5.18.0",
     "click>=8.1.7",
-    "mads-datasets>=0.3.10",
     "scikit-learn>=1.4.0",
     "statsmodels>=0.14.1",
-    "streamlit>=1.31.1",
 ]
 
 requires-python = ">=3.11,<3.12"
@@ -35,6 +31,12 @@ huggingface = [
     "sentence-transformers>=2.5.1",
 ]
 
+plotting = [
+    "plotly>=5.18.0",
+    "streamlit>=1.31.1",
+    "mads-datasets>=0.3.14",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -44,7 +46,14 @@ managed = true
 dev-dependencies = [
     "pyright>=1.1.384",
     "isort>=5.13.2",
+    "ipython>=8.28.0",
+    "jupyter>=1.0.0",
 ]
+universal = true
+
+[[tool.rye.sources]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cpu"
 
 [tool.hatch.metadata]
 allow-direct-references = true
