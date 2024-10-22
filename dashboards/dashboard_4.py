@@ -4,6 +4,7 @@ from mads_datasets import DatasetFactoryProvider, DatasetType
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
+from loguru import logger
 
 
 def load_penguins_dataset() -> pd.DataFrame:
@@ -14,6 +15,7 @@ def load_penguins_dataset() -> pd.DataFrame:
     In addition to that, we want to cache the object, so that it is not reloaded
     every time the user interacts with the dashboard.
     """
+    logger.info("Loading dataset")
     penguinsdataset = DatasetFactoryProvider.create_factory(DatasetType.PENGUINS)
     penguinsdataset.download_data()
     df = pd.read_parquet(penguinsdataset.filepath)  # noqa: PD901
@@ -33,6 +35,7 @@ def load_penguins_dataset() -> pd.DataFrame:
 
 
 def train_model(data):
+    logger.info("Training model")
     X = data[
         [
             "Culmen Length (mm)",
@@ -46,21 +49,25 @@ def train_model(data):
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
+    logger.info(f"columns: {X_train.columns}")
 
     model = RandomForestClassifier()
-    model.fit(X_train, y_train)
-
-    y_pred = model.predict(X_test)
+    model.fit(X_train.values, y_train)
+    y_pred = model.predict(X_test.values)
     accuracy = accuracy_score(y_test, y_pred)
+    logger.success(f"Trained model with accuracy {accuracy}")
 
-    return model, accuracy
+    return {"model" : model , "accuracy" : accuracy}
 
 
 def main():
     st.title("Penguins Species Prediction with Machine Learning")
+    if "penguins" not in st.session_state:
+        st.session_state.penguins = load_penguins_dataset()
+    if "model" not in st.session_state:
+        st.session_state.model = train_model(st.session_state.penguins)
 
-    data = load_penguins_dataset()
-    model, accuracy = train_model(data)
+    accuracy = st.session_state.model["accuracy"]
 
     st.write(f"Model Accuracy: {accuracy:.2f}")
 
@@ -79,6 +86,7 @@ def main():
     )
 
     if st.button("Predict"):
+        model = st.session_state.model["model"]
         prediction = model.predict(
             [[culmen_length, culmen_depth, flipper_length, body_mass]]
         )
