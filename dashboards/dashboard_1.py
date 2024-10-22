@@ -10,13 +10,6 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 def load_penguins_dataset() -> pd.DataFrame:
-    """_summary_
-    allow_output_mutation=True argument is used because the
-    penguinsdataset object is mutable, and we want to allow modifications to it.
-
-    In addition to that, we want to cache the object, so that it is not reloaded
-    every time the user interacts with the dashboard.
-    """
     penguinsdataset = DatasetFactoryProvider.create_factory(DatasetType.PENGUINS)
     penguinsdataset.download_data()
     df = pd.read_parquet(penguinsdataset.filepath)  # noqa: PD901
@@ -37,6 +30,10 @@ def load_penguins_dataset() -> pd.DataFrame:
 
 def main() -> None:
     if "penguins" not in st.session_state:
+        """
+        we want to cache the penguins dataset, so that it is not reloaded
+        every time the user interacts with the dashboard.
+        """
         st.session_state.penguins = load_penguins_dataset()
 
     option1 = st.selectbox(

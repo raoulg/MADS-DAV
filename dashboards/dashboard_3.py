@@ -48,7 +48,7 @@ def main():
         x_axis = st.selectbox(
             "Select the x-axis",
             filtered_df.columns,
-            index=2,
+            index=2, # this will pick a default item
         )
         y_axis = st.selectbox(
             "Select the y-axis",
@@ -61,9 +61,15 @@ def main():
 
     # Histogram
     with col2:
+        x_hist = st.selectbox(
+            "Select the x-axis",
+            filtered_df.columns,
+            index=3,
+        )
+
         st.subheader(f"Histogram of Flipper Lengths for {species}")
         fig2, ax2 = plt.subplots(figsize=(5, 4))
-        sns.histplot(filtered_df["Flipper Length (mm)"], ax=ax2, kde=True)
+        sns.histplot(filtered_df[f"{x_hist}"], ax=ax2, kde=True)
         st.pyplot(fig2)
 
     # Box plot

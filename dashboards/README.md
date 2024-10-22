@@ -48,7 +48,7 @@ Alternatively, you can do this manually by:
 ```bash
 source .venv/bin/activate  # activating the environment
 cd dashboards # cd-ing into the correct folder
-python dashboard_1.py # executing the script
+streamlit run dashboard_1.py # executing the script
 ```
 
 For additional help and options:

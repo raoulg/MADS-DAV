@@ -47,7 +47,7 @@ def main() -> None:
         option1 = st.selectbox(
             "Select the x-axis",
             st.session_state.penguins.columns,
-            index=2,
+            index=2, # this will pick a default item
         )
         option2 = st.selectbox(
             "Select the y-axis",
