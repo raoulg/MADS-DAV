@@ -1,29 +1,26 @@
-This is the repository for the Master of Applied Data Science course "Data Analysis & Visualisation", previously known as "Data Mining & Exploration".
-All instructions assume a UNIX machine. You should have received an invite link for a VM; if not, contact your teacher.
-On the VM, everything is installed (like rye).
+This is the repository for the Master of Applied Data Science course "Data Analysis & Visualisation", previously known as "Data Mining & Exploration". All instructions assume a UNIX machine (Linux or Os X). You should have received an invite link for a linux VM; if not, contact your teacher. On the VM, everything is installed (like uv).
+
+The manual for setting up the VM can be found in the `references` folder, in addition to a `git_crash_course` to help you work with git. Make sure to read both documents before you start asking questions about either.
 
 # Setup the virtual environment
-1. First, make sure you have python >= 3.11. You can check the version with `python --version`.
-2. Make sure `rye` is there. Alternatively, use `pip` to install your environment.
-    - check if it is installed by executing `rye --help`
-    - if not, run `curl -sSf https://rye.astral.sh/get | bash` (not necessary on the VM)
-    - watch the intro video for rye at https://rye.astral.sh/guide/
-3. Install the dependecies by navigating to the MADS-DAV folder where the `pyproject.toml` is located and run `rye sync`.
+1. Make sure you have `uv` installed. On Unix systems, you can use `curl -LsSf https://astral.sh/uv/install.sh | sh`
+2. if the `MADS-DAV` folder isnt already cloned with git, add it with the command `git clone https://github.com/raoulg/MADS-DAV.git`
+3. Navigate to the MADS-DAV folder where the `pyproject.toml` is located with `cd MADS-DAV` and run `uv sync --all-extras`. This should create a virtual environment (a .venv folder) and install all dependencies there.
+4. Read through the https://docs.astral.sh/uv/guides/projects/ "working on projects" intro into `uv`
 
 # Run the preprocessor
-
-Download a chat from Whatsapp and put it in the `data/raw` folder. Rename the file to `chat.txt' and run the following command:
+Download a chat from Whatsapp and put it in the `data/raw` folder. Rename the file to `chat.txt' and run the following command to activate the virtual environment you have created in the previous step.
 
 ```bash
 source .venv/bin/activate
 ```
 
-This will activate your virtual environment.
 You can check which python is being used by running:
 ```bash
 which python
 ```
 
+This should now return a path that includes the `.venv` folder in your project.
 After this, you can run the preprocessor with the following command:
 
 ```bash
