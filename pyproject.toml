@@ -5,19 +5,18 @@ description = "Code for the Master of Applied Data Science course Data Analysis 
 authors = [
     {name = "Raoul Grouls", email = "Raoul.Grouls@han.nl"},
 ]
+requires-python = ">=3.12,<3.13"
 dependencies = [
-    "seaborn>=0.13.1",
-    "numpy>=1.26.3",
-    "pydantic>=2.5.3",
-    "pandas>=2.2.0",
-    "loguru>=0.7.2",
-    "pyarrow>=15.0.0",
-    "click>=8.1.7",
-    "scikit-learn>=1.4.0",
-    "statsmodels>=0.14.1",
+    "click>=8.1.8",
+    "loguru>=0.7.3",
+    "numpy>=2.2.1",
+    "pandas>=2.2.3",
+    "pyarrow>=18.1.0",
+    "pydantic>=2.10.4",
+    "scikit-learn>=1.6.0",
+    "seaborn>=0.13.2",
+    "statsmodels>=0.14.4",
 ]
-
-requires-python = ">=3.11,<3.12"
 readme = "README.md"
 license = {text = "MIT"}
 
@@ -29,37 +28,32 @@ GitHub = "https://github.com/raoulg/MADS-DAV"
 
 [project.optional-dependencies]
 huggingface = [
-    "transformers>=4.38.2",
-    "torch>=2.2.1",
-    "sentence-transformers>=2.5.1",
+    "sentence-transformers>=3.3.1",
+    "torch>=2.5.1",
+    "transformers>=4.47.1",
+]
+plotting = [
+    "mads-datasets>=0.3.14",
+    "plotly>=5.24.1",
+    "streamlit>=1.41.1",
 ]
 
-plotting = [
-    "plotly>=5.18.0",
-    "streamlit>=1.31.1",
-    "mads-datasets>=0.3.14",
+
+[dependency-groups]
+dev = [
+    "isort>=5.13.2",
+    "jupyter>=1.1.1",
+    "ruff>=0.8.6",
 ]
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.rye]
-managed = true
-dev-dependencies = [
-    "pyright>=1.1.384",
-    "isort>=5.13.2",
-    "ipython>=8.28.0",
-    "jupyter>=1.0.0",
-]
-universal = true
-
-[[tool.rye.sources]]
-name = "pytorch"
-url = "https://download.pytorch.org/whl/cpu"
-
-[tool.hatch.metadata]
-allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/wa_analyzer"]
