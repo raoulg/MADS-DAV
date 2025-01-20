@@ -88,6 +88,8 @@ def main(device: str):
 
     if not (raw / datafile).exists():
         logger.error(f"File {raw / datafile} not found")
+    else:
+        logger.info(f"Reading from {raw / datafile}")
 
     folders = Folders(
         raw=raw,
