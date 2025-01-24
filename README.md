@@ -6,7 +6,7 @@ The manual for setting up the VM can be found in the `references` folder, in add
 1. Make sure you have `uv` installed. On Unix systems, you can use `curl -LsSf https://astral.sh/uv/install.sh | sh`
 2. if the `MADS-DAV` folder isnt already cloned with git, add it with the command `git clone https://github.com/raoulg/MADS-DAV.git`
 3. Navigate to the MADS-DAV folder where the `pyproject.toml` is located with `cd MADS-DAV` and run `uv sync --all-extras`. This should create a virtual environment (a .venv folder) and install all dependencies there.
-4. Read through the https://docs.astral.sh/uv/guides/projects/ "working on projects" intro into `uv`
+4. Read through the [uv docs](https://docs.astral.sh/uv/guides/projects/) "working on projects" intro into `uv`
 
 # Run the preprocessor
 Download a chat from Whatsapp and put it in the `data/raw` folder. Rename the file to `chat.txt' and run the following command to activate the virtual environment you have created in the previous step.
@@ -39,4 +39,10 @@ You should see some logs, like this:
 ```
 
 Inside the `log` folder you will find a logfile, which has some additional information that might be useful for debugging.
+
+## codestyle
+During the course, you will continue to improve your coding skills. 
+Use the [codestyle](https://github.com/raoulg/codestyle) repo as a reference!
+
+
 
