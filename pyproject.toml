@@ -33,6 +33,7 @@ huggingface = [
     "torch>=2.5.1",
     "transformers>=4.47.1",
 ]
+
 plotting = [
     "mads-datasets>=0.3.14",
     "plotly>=5.24.1",
@@ -46,6 +47,7 @@ dev = [
     "isort>=5.13.2",
     "jupyter>=1.1.1",
     "mypy>=1.14.1",
+    "notebooktester>=0.1.2",
     "ruff>=0.8.6",
 ]
 

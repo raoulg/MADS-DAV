@@ -1247,6 +1247,21 @@ wheels = [
 ]
 
 [[package]]
+name = "notebooktester"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "jupyter" },
+    { name = "loguru" },
+    { name = "tqdm" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/44/4e/0674f443d2b4a73c2729fceb1dab36222fc0093691ba71cad1ed7d4108ca/notebooktester-0.1.2.tar.gz", hash = "sha256:38b7d1ca16184098c353f786ec692b51813489f2368a61aed4ca9a90fa7b6cec", size = 54332 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/47/d5e9b1b43f5cb27753d64d3c5e33bfbc28e8c8468d9881a9c73e29a8ed50/notebooktester-0.1.2-py3-none-any.whl", hash = "sha256:71c043333e3460a173df53bb1400bd5e4ad8ab9fe136abba9ee90b1d40e986e1", size = 6188 },
+]
+
+[[package]]
 name = "numpy"
 version = "2.2.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2419,6 +2434,7 @@ dev = [
     { name = "isort" },
     { name = "jupyter" },
     { name = "mypy" },
+    { name = "notebooktester" },
     { name = "ruff" },
 ]
 
@@ -2448,6 +2464,7 @@ dev = [
     { name = "isort", specifier = ">=5.13.2" },
     { name = "jupyter", specifier = ">=1.1.1" },
     { name = "mypy", specifier = ">=1.14.1" },
+    { name = "notebooktester", specifier = ">=0.1.2" },
     { name = "ruff", specifier = ">=0.8.6" },
 ]
 
