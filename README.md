@@ -2,14 +2,15 @@ This is the repository for the Master of Applied Data Science course "Data Analy
 
 The manual for setting up the VM can be found in the `references` folder, in addition to a `git_crash_course` to help you work with git. Make sure to read both documents before you start asking questions about either.
 
+
 # Setup the virtual environment
-1. Make sure you have `uv` installed. On Unix systems, you can use `curl -LsSf https://astral.sh/uv/install.sh | sh`
+1. Make sure you have `uv` installed. You can check this by typing `which uv` in the terminal. If that doesnt return a location but `uv not found` you need to install it.On Unix systems, you can use `curl -LsSf https://astral.sh/uv/install.sh | sh`, for Windows read the [uv documentation](https://docs.astral.sh/uv/getting-started/installation/)
 2. if the `MADS-DAV` folder isnt already cloned with git, add it with the command `git clone https://github.com/raoulg/MADS-DAV.git`
 3. Navigate to the MADS-DAV folder where the `pyproject.toml` is located with `cd MADS-DAV` and run `uv sync --all-extras`. This should create a virtual environment (a .venv folder) and install all dependencies there.
 4. Read through the [uv docs](https://docs.astral.sh/uv/guides/projects/) "working on projects" intro into `uv`
 
 # Run the preprocessor
-Download a chat from Whatsapp and put it in the `data/raw` folder. Rename the file to `chat.txt' and run the following command to activate the virtual environment you have created in the previous step.
+Download a chat from Whatsapp and put it in the `data/raw` folder. Rename the file to `_chat.txt` (or change the `config.toml` file) and run the following command to activate the virtual environment you have created in the previous step.
 
 ```bash
 source .venv/bin/activate
