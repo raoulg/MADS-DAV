@@ -16,3 +16,4 @@ data/processed/*.parq
 *reference.json
 .lycheecache
 .notebookcache
+**/personal.ipynb
