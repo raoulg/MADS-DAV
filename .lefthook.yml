@@ -24,3 +24,6 @@ pre-commit:
       run: mypy --pretty {staged_files} --ignore-missing-imports
     lychee:
       run: lychee . --suggest --max-concurrency 32 --cache --format detailed --header "accept=*/*" --max-cache-age 7d
+    notebooktester:
+      glob: '*.ipynb'
+      run: notebooktester {staged_files}
