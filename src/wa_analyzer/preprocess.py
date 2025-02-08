@@ -50,17 +50,25 @@ class WhatsappPreprocessor:
                 ts = re.match(tsreg, line)
                 if ts:
                     try:
-                        timestamp = datetime.strptime(ts.groups()[0], self.datetime_format)
+                        timestamp = datetime.strptime(
+                            ts.groups()[0], self.datetime_format
+                        )
                     except ValueError as e:
-                        logger.error(f"Error while processing timestamp of line {line_number}: {e}")
+                        logger.error(
+                            f"Error while processing timestamp of line {line_number}: {e}"
+                        )
                         continue
                     msg = re.search(messagereg, line)
                     author = re.search(authorreg, line)
                     if msg is None:
-                        logger.error(f"Could not find a message for line {line_number}. Please check the data and / or the message regex")
+                        logger.error(
+                            f"Could not find a message for line {line_number}. Please check the data and / or the message regex"
+                        )
                         continue
                     if author is None:
-                        logger.error(f"Could not find an author for line {line_number}. Please check the data and / or the author regex")
+                        logger.error(
+                            f"Could not find an author for line {line_number}. Please check the data and / or the author regex"
+                        )
                         continue
                     author = author.groups()[0].strip()
                     msg = msg.groups()[0].strip()
