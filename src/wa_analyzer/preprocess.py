@@ -19,9 +19,10 @@ logger.debug(f"Python path: {sys.path}")
 
 
 class WhatsappPreprocessor:
-    def __init__(self, folders: Folders, regexes: BaseRegexes):
+    def __init__(self, folders: Folders, regexes: BaseRegexes, datetime_format: str):
         self.folders = folders
         self.regexes = regexes
+        self.datetime_format = datetime_format
 
     def __call__(self):
         records, _ = self.process()
@@ -41,28 +42,35 @@ class WhatsappPreprocessor:
         datafile = self.folders.raw / self.folders.datafile
 
         tsreg = self.regexes.timestamp
-        clearreg = self.regexes.clear
+        messagereg = self.regexes.message
         authorreg = self.regexes.author
-        fmt = self.regexes.fmt
 
         with datafile.open(encoding="utf-8") as f:
-            for line in f.readlines():
-                ts = re.search(tsreg, line)
+            for line_number, line in enumerate(f.readlines()):
+                ts = re.match(tsreg, line)
                 if ts:
-                    timestamp = datetime.strptime(ts.group(0), fmt)
-                    msg = re.sub(clearreg, "", line)
+                    try:
+                        timestamp = datetime.strptime(ts.groups()[0], self.datetime_format)
+                    except ValueError as e:
+                        logger.error(f"Error while processing timestamp of line {line_number}: {e}")
+                        continue
+                    msg = re.search(messagereg, line)
                     author = re.search(authorreg, line)
-                    if author:
-                        name = author.group(0)
-                    else:
-                        name = "Unknown"
-                    records.append((timestamp, name, msg))
-                else:
+                    if msg is None:
+                        logger.error(f"Could not find a message for line {line_number}. Please check the data and / or the message regex")
+                        continue
+                    if author is None:
+                        logger.error(f"Could not find an author for line {line_number}. Please check the data and / or the author regex")
+                        continue
+                    author = author.groups()[0].strip()
+                    msg = msg.groups()[0].strip()
+                    records.append((timestamp, author, msg))
+                elif len(records) > 0:
                     appended.append(timestamp)
-                    msg = msg + re.sub(clearreg, "", line)
-                    records[-1] = (timestamp, name, msg)
+                    msg += " " + line.strip()
+                    records[-1] = (timestamp, author, msg)
 
-        logger.info(f"Found {len(records)} records")
+        logger.info(f"Found {len(records)} valid records")
         logger.info(f"Appended {len(appended)} records")
         return records, appended
 
@@ -70,6 +78,13 @@ class WhatsappPreprocessor:
 @click.command()
 @click.option("--device", default="android", help="Device type: iOS or Android")
 def main(device: str):
+    with open("config.toml", "rb") as f:
+        config = tomllib.load(f)
+        raw = Path(config["raw"])
+        processed = Path(config["processed"])
+        datafile = Path(config["input"])
+        datetime_format = config["datetime_format"]
+
     if device.lower() == "ios":
         logger.info("Using iOS regexes")
         regexes: BaseRegexes = iosRegexes
@@ -79,12 +94,6 @@ def main(device: str):
     else:
         logger.info("Using Android regexes")
         regexes: BaseRegexes = androidRegexes  # type: ignore
-
-    with open("config.toml", "rb") as f:
-        config = tomllib.load(f)
-        raw = Path(config["raw"])
-        processed = Path(config["processed"])
-        datafile = Path(config["input"])
 
     if not (raw / datafile).exists():
         logger.error(f"File {raw / datafile} not found")
@@ -96,7 +105,7 @@ def main(device: str):
         processed=processed,
         datafile=datafile,
     )
-    preprocessor = WhatsappPreprocessor(folders, regexes)
+    preprocessor = WhatsappPreprocessor(folders, regexes, datetime_format)
     preprocessor()
 
 

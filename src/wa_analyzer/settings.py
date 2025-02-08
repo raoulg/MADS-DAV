@@ -7,30 +7,26 @@ from pydantic import BaseModel
 class BaseRegexes(BaseModel):
     timestamp: str
     author: str
-    clear: str
-    fmt: str
+    message: str
 
 
 iosRegexes = BaseRegexes(
-    timestamp=r"(?<=\[)\d{2}-\d{2}-\d{4},? \d{1,2}:\d{2}:\d{2}(?=\])",
-    author=r"(?<=\]\s)(.*?)(?=:)",
-    clear=r"\[.*].*:",
-    fmt="%d-%m-%Y, %H:%M:%S",
+    timestamp=r"\[(.+?)]\s.+?:.+",
+    author=r"\[.+?]\s(.+?):.+",
+    message=r"\[.+?]\s.+?:(.+)",
 )
 
 
 androidRegexes = BaseRegexes(
-    timestamp=r"^\d{2}-\d{2}-\d{4} \d{2}:\d{2}",
-    author=r"(?<=\s-\s)(.*?)(?=:)",
-    clear=r"^\d{2}-\d{2}-\d{4} \d{2}:\d{2}[-~a-zA-Z\s]+:",
-    fmt="%d-%m-%Y %H:%M",
+    timestamp=r"(.+?)\s-\s.+?:.+",
+    author=r".+?\s-\s(.+?):.+",
+    message=r".+?\s-\s.+?:(.*)",
 )
 
 oldRegexes = BaseRegexes(
     timestamp=r"^\d{1,2}/\d{1,2}/\d{2}, \d{2}:\d{2}",
     author=r"(?<=\s-\s)(.*?)(?=:)",
-    clear=r"^\d{1,2}/\d{1,2}/\d{2}, \d{2}:\d{2}[-~a-zA-Z0-9\s]+:",
-    fmt="%m/%d/%y, %H:%M",
+    message=r"^\d{1,2}/\d{1,2}/\d{2}, \d{2}:\d{2}[-~a-zA-Z0-9\s]+:",
 )
 
 
