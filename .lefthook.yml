@@ -26,4 +26,4 @@ pre-commit:
       run: lychee . --suggest --max-concurrency 32 --cache --format detailed --header "accept=*/*" --max-cache-age 7d
     notebooktester:
       glob: '*.ipynb'
-      run: notebooktester {staged_files}
+      run: notebooktester notebooks
