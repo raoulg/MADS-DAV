@@ -17,3 +17,4 @@ data/processed/*.parq
 .lycheecache
 .notebookcache
 **/personal.ipynb
+config.toml
