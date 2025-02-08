@@ -10,7 +10,10 @@ The manual for setting up the VM can be found in the `references` folder, in add
 4. Read through the [uv docs](https://docs.astral.sh/uv/guides/projects/) "working on projects" intro into `uv`
 
 # Run the preprocessor
-Download a chat from Whatsapp and put it in the `data/raw` folder. Rename the file to `_chat.txt` (or change the `config.toml` file). This preprocesser uses the datetime module to convert strings with a date and / or time into datetime objects. The preprocessor needs to know the formatting of the timestamps in your `_chat.txt` file. Therefore, you might need to update the `datetime_format` variable in the `config.toml` file accordingly. You can find the formatting in the [documentation](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes) of the datetime module.
+Copy the `config.example.toml` file to a `config.toml` file. Update the contents after running the preprocessor.
+Download a chat from Whatsapp and put it in the `data/raw` folder. Rename the file to `_chat.txt` (or change the `config.toml` file). 
+
+This preprocesser uses the datetime module to convert strings with a date and / or time into datetime objects. The preprocessor needs to know the formatting of the timestamps in your `_chat.txt` file. Therefore, you might need to update the `datetime_format` variable in the `config.toml` file accordingly. You can find the formatting in the [documentation](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes) of the datetime module.
 
 Now you can run the following command to activate the virtual environment you have created in the previous step.
 
@@ -42,6 +45,11 @@ You should see some logs, like this:
 ```
 
 Inside the `log` folder you will find a logfile, which has some additional information that might be useful for debugging.
+
+After this, put the name of the .csv file that is save to `inputpath` in the `config.toml` file.
+You can then run the `01-cleaning.ipynb` notebook. This will save a cleaned `.parq` file. Put the name of that file after the `current` key in the `config.toml` file.
+
+This `config.toml` file should make it easier to run the code with multiple input files; you can simply change the `current` value and run all notebooks for the file specified there.
 
 ## codestyle
 During the course, you will continue to improve your coding skills. 
