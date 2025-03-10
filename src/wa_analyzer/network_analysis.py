@@ -299,9 +299,10 @@ class WhatsAppNetworkAnalyzer:
             node_x.append(x)
             node_y.append(y)
             node_text.append(f"{node}<br>Degree: {G_filtered.degree(node)}")
+            # Scale node size more directly with degree
             node_size.append(
-                10 + 10 * np.log1p(G_filtered.degree(node))
-            )  # Smaller default size
+                15 + 15 * G_filtered.degree(node)
+            )  # Size directly proportional to degree
             node_color.append(
                 f"rgb({int(255 * self.node_colors[node][0])},"
                 f"{int(255 * self.node_colors[node][1])},"
@@ -386,7 +387,7 @@ class WhatsAppNetworkAnalyzer:
                 y=[self.pos[node][1] for node in G_filtered.nodes()],
                 marker=dict(
                     size=[
-                        10 + 10 * size_factor * np.log1p(G_filtered.degree(node))
+                        15 + 15 * size_factor * G_filtered.degree(node)
                         for node in G_filtered.nodes()
                     ]
                 ),
@@ -474,7 +475,8 @@ class WhatsAppNetworkAnalyzer:
                 node_x.append(x)
                 node_y.append(y)
                 node_text.append(f"{node}<br>Degree: {G.degree(node)}")
-                node_size.append(10 + 20 * np.log1p(G.degree(node)))
+                # Scale node size directly with degree
+                node_size.append(15 + 15 * G.degree(node))
                 node_color.append(
                     f"rgb({int(255 * self.node_colors[node][0])},"
                     f"{int(255 * self.node_colors[node][1])},"
