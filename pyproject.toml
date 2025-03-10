@@ -9,6 +9,7 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "click>=8.1.8",
     "loguru>=0.7.3",
+    "networkx>=3.4.2",
     "numpy>=2.2.1",
     "pandas>=2.2.3",
     "plotly>=5.24.1",
@@ -33,7 +34,6 @@ huggingface = [
     "torch>=2.5.1",
     "transformers>=4.47.1",
 ]
-
 plotting = [
     "mads-datasets>=0.3.14",
     "plotly>=5.24.1",
