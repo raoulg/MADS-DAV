@@ -8,6 +8,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import streamlit as st
 from loguru import logger
 
@@ -307,29 +308,45 @@ class WhatsAppNetworkAnalyzer:
         # Show the figure in Streamlit
         st.plotly_chart(fig, use_container_width=True)
 
-    def visualize_time_series(self, output_path: Optional[Path] = None) -> None:
-        """Visualize the network evolution over time using Plotly."""
+    def visualize_time_series(self) -> None:
+        """Visualize the network evolution over time as a static grid of the last 9 timeframes."""
         if not self.graphs_by_window or not self.pos:
             raise ValueError(
                 "No time window graphs available. Create time window graphs first."
             )
 
-        # Create frames for animation
-        frames = []
-        for i, (timestamp, G) in enumerate(self.graphs_by_window):
+        # Get the last 9 timeframes
+        last_windows = self.graphs_by_window[-9:]
+        num_windows = len(last_windows)
+        
+        # Create subplots
+        fig = make_subplots(
+            rows=3, 
+            cols=3,
+            subplot_titles=[f"Window {i+1}" for i in range(num_windows)],
+            horizontal_spacing=0.05,
+            vertical_spacing=0.1
+        )
+
+        # Plot each timeframe
+        for i, (timestamp, G) in enumerate(last_windows):
+            row = (i // 3) + 1
+            col = (i % 3) + 1
+            
             # Create edge traces
-            edge_trace = []
             for edge in G.edges():
                 x0, y0 = self.pos[edge[0]]
                 x1, y1 = self.pos[edge[1]]
-                edge_trace.append(
+                fig.add_trace(
                     go.Scatter(
                         x=[x0, x1, None],
                         y=[y0, y1, None],
                         line=dict(width=1, color="#888"),
                         hoverinfo="none",
                         mode="lines",
-                    )
+                    ),
+                    row=row,
+                    col=col
                 )
 
             # Create node trace
@@ -340,7 +357,6 @@ class WhatsAppNetworkAnalyzer:
             node_color = []
 
             for node in G.nodes():
-                # Get position if it exists, otherwise use default (0,0)
                 x, y = self.pos.get(node, (0, 0))
                 node_x.append(x)
                 node_y.append(y)
@@ -352,66 +368,41 @@ class WhatsAppNetworkAnalyzer:
                     f"{int(255 * self.node_colors[node][2])})"
                 )
 
-            node_trace = go.Scatter(
-                x=node_x,
-                y=node_y,
-                mode="markers+text",
-                text=[node.split()[0] for node in G.nodes()],
-                textposition="top center",
-                hovertext=node_text,
-                hoverinfo="text",
-                marker=dict(
-                    showscale=True,
-                    colorscale="YlGnBu",
-                    size=node_size,
-                    color=node_color,
-                    line_width=2,
-                ),
-            )
-
-            # Create frame
-            window_start = timestamp.strftime("%Y-%m-%d")
-            window_end = (
-                timestamp + datetime.timedelta(seconds=self.config.time_window)
-            ).strftime("%Y-%m-%d")
-            frames.append(
-                go.Frame(
-                    data=edge_trace + [node_trace],
-                    name=str(i),
-                    layout=go.Layout(
-                        title=f"WhatsApp Interactions: {window_start} to {window_end}"
+            fig.add_trace(
+                go.Scatter(
+                    x=node_x,
+                    y=node_y,
+                    mode="markers+text",
+                    text=[node.split()[0] for node in G.nodes()],
+                    textposition="top center",
+                    hovertext=node_text,
+                    hoverinfo="text",
+                    marker=dict(
+                        showscale=True,
+                        colorscale="YlGnBu",
+                        size=node_size,
+                        color=node_color,
+                        line_width=2,
                     ),
-                )
+                ),
+                row=row,
+                col=col
             )
 
-        # Create figure with animation
-        fig = go.Figure(
-            data=frames[0].data,
-            layout=go.Layout(
-                title=dict(
-                    text="WhatsApp Network Evolution",
-                    font=dict(size=16)
-                ),
-                showlegend=False,
-                hovermode="closest",
-                margin=dict(b=20, l=5, r=5, t=40),
-                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                updatemenus=[
-                    dict(
-                        type="buttons",
-                        buttons=[dict(label="Play", method="animate", args=[None])],
-                    )
-                ],
-            ),
-            frames=frames,
+            # Format subplot
+            fig.update_xaxes(showgrid=False, zeroline=False, showticklabels=False, row=row, col=col)
+            fig.update_yaxes(showgrid=False, zeroline=False, showticklabels=False, row=row, col=col)
+
+        # Update layout
+        fig.update_layout(
+            title_text="WhatsApp Network Evolution - Last 9 Time Windows",
+            showlegend=False,
+            height=900,
+            margin=dict(b=20, l=20, r=20, t=100)
         )
 
-        if output_path:
-            fig.write_html(output_path)
-            logger.info(f"Animation saved to {output_path}")
-        else:
-            fig.show()
+        # Show in Streamlit
+        st.plotly_chart(fig, use_container_width=True)
 
     def export_graph_data(self, output_dir: Optional[Path] = None) -> None:
         """Export graph data in formats compatible with other visualization tools."""
