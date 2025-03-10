@@ -203,15 +203,18 @@ class WhatsAppNetworkAnalyzer:
                 line_width=2))
         
         # Create figure
-        fig = go.Figure(data=edge_trace + [node_trace],
-                       layout=go.Layout(
-                           title=title,
-                           titlefont_size=16,
-                           showlegend=False,
-                           hovermode='closest',
-                           margin=dict(b=20,l=5,r=5,t=40),
-                           xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                           yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
+        fig = go.Figure(
+            data=edge_trace + [node_trace],
+            layout=go.Layout(
+                title=title,
+                titlefont_size=16,
+                showlegend=False,
+                hovermode='closest',
+                margin=dict(b=20,l=5,r=5,t=40),
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
+            )
+        )
         
         # Add interactive controls
         k_slider = widgets.FloatSlider(
