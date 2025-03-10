@@ -156,17 +156,34 @@ class WhatsAppNetworkAnalyzer:
             
         plt.figure(figsize=(12, 10))
         
-        # Use consistent layout if available
-        pos = self.pos if self.pos is not None else nx.spring_layout(G, seed=42)
-        
+        # Use consistent layout if available, otherwise create a new one with better parameters
+        if self.pos is None:
+            # Create a new layout with better spacing
+            pos = nx.spring_layout(
+                G,
+                k=0.3,  # Optimal distance between nodes (increased from 0.15)
+                iterations=500,  # More iterations for better layout
+                scale=3.0,  # Spread out more
+                seed=42
+            )
+            self.pos = pos
+        else:
+            pos = self.pos
+            
         # Remove isolated nodes for better visualization
         non_isolated_nodes = [node for node in G.nodes() if G.degree(node) > 0]
         G_filtered = G.subgraph(non_isolated_nodes)
         pos_filtered = {node: pos[node] for node in non_isolated_nodes}
         
+        # Apply a scaling factor to spread out nodes more
+        scale_factor = 2.0
+        pos_filtered = {node: (x * scale_factor, y * scale_factor) 
+                       for node, (x, y) in pos_filtered.items()}
+        
         # Calculate node sizes based on degree centrality for filtered nodes
         degree_dict = dict(G_filtered.degree())
-        node_sizes = [300 + (degree_dict[node] * 100) for node in G_filtered.nodes()]
+        # Use logarithmic scaling for node sizes to reduce size differences
+        node_sizes = [300 + (np.log1p(degree_dict[node]) * 300 for node in G_filtered.nodes()]
         
         # Scale edge weights for better visualization using filtered graph
         edge_weights = [G_filtered[u][v].get('weight', 1) for u, v in G_filtered.edges()]
@@ -186,7 +203,9 @@ class WhatsAppNetworkAnalyzer:
             pos_filtered,
             node_color=[self.node_colors.get(node, (0.5, 0.5, 0.5)) for node in G_filtered.nodes()],
             node_size=node_sizes, 
-            alpha=0.8
+            alpha=0.8,
+            linewidths=2,  # Add borders to nodes
+            edgecolors='black'  # Black borders for better visibility
         )
         
         nx.draw_networkx_edges(G_filtered, pos_filtered, width=edge_widths, alpha=0.5,
