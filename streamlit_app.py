@@ -44,9 +44,7 @@ with st.sidebar:
                 f.write(f"{key} = \"{value}\"\n")
         st.rerun()
     
-    # Analysis parameters
-    st.subheader("Analysis Parameters")
-    # Persistent settings storage
+    # Initialize slider settings
     if 'slider_settings' not in st.session_state:
         st.session_state.slider_settings = {
             'response_window': {'min': 300, 'max': 3600},
@@ -61,24 +59,9 @@ with st.sidebar:
             'layout_scale': {'min': 0.5, 'max': 3.0}
         }
 
-    # Layout algorithm selection
-    layout_algorithms = {
-        'Spring Layout': nx.spring_layout,
-        'Kamada-Kawai': nx.kamada_kawai_layout,
-        'Circular Layout': nx.circular_layout,
-        'Spectral Layout': nx.spectral_layout
-    }
-    selected_layout = st.selectbox(
-        "Layout Algorithm",
-        list(layout_algorithms.keys()),
-        index=0
-    )
-
     def create_slider_with_controls(label, key, default_value, step, help_text):
-        # Min/max controls
+        """Helper function to create sliders with min/max controls"""
         st.markdown(f"**{label} Range**")
-        
-        # Use columns for min/max controls
         col1, col2 = st.columns(2)
         with col1:
             new_min = st.number_input(
@@ -94,12 +77,8 @@ with st.sidebar:
                 step=step,
                 key=f"{key}_max"
             )
-            
-        # Update stored values
         st.session_state.slider_settings[key]['min'] = new_min
         st.session_state.slider_settings[key]['max'] = new_max
-        
-        # Create slider
         return st.slider(
             label,
             min_value=new_min,
@@ -109,106 +88,9 @@ with st.sidebar:
             help=help_text
         )
 
-    # Response window settings
-    st.markdown("**Response Window Settings**")
-    response_window = create_slider_with_controls(
-        "Response Window (seconds)",
-        'response_window',
-        default_value=1800,
-        step=60,
-        help_text="Time window to consider messages as responses"
-    )
-    
-    # Time window settings
-    st.markdown("**Time Window Settings**")
-    time_window = create_slider_with_controls(
-        "Time Window (days)",
-        'time_window',
-        default_value=60,
-        step=1,
-        help_text="Size of each analysis window"
-    ) * 86400  # Convert to seconds
-    
-    time_overlap = create_slider_with_controls(
-        "Time Overlap (days)",
-        'time_overlap',
-        default_value=15,
-        step=1,
-        help_text="Overlap between time windows"
-    ) * 86400  # Convert to seconds
-    
-    # Edge weight settings
-    st.markdown("**Edge Weight Settings**")
-    edge_weight = create_slider_with_controls(
-        "Edge Weight Multiplier",
-        'edge_weight',
-        default_value=1.0,
-        step=0.1,
-        help_text="Multiplier for edge weights"
-    )
-    
-    min_edge_weight = create_slider_with_controls(
-        "Minimum Edge Weight",
-        'min_edge_weight',
-        default_value=0.5,
-        step=0.1,
-        help_text="Minimum weight for edges to be included"
-    )
-    
-    # Visualization parameters
-    st.subheader("Visualization Parameters")
-    
-    # Layout controls
-    with st.expander("Layout Parameters"):
-        default_node_spacing = create_slider_with_controls(
-            "Node Spacing (k)",
-            'node_spacing',
-            default_value=0.15,
-            step=0.01,
-            help_text="Optimal distance between nodes (k parameter)"
-        )
-        
-        layout_iterations = create_slider_with_controls(
-            "Layout Iterations",
-            'layout_iterations',
-            default_value=500,
-            step=50,
-            help_text="Number of iterations for layout algorithm"
-        )
-        
-        layout_scale = create_slider_with_controls(
-            "Layout Scale",
-            'layout_scale',
-            default_value=1.5,
-            step=0.1,
-            help_text="Scale factor for node positions"
-        )
-    
-    # Node appearance
-    with st.expander("Node Appearance"):
-        filter_single_connections = st.checkbox(
-            "Filter nodes with only one connection",
-            value=False,
-            help="Remove nodes that only have one connection to simplify the graph"
-        )
-        default_node_size = create_slider_with_controls(
-            "Node Size",
-            'node_size',
-            default_value=0.5,
-            step=0.1,
-            help_text="Base size of nodes in the visualization"
-        )
-        
-        node_size_multiplier = create_slider_with_controls(
-            "Node Size Multiplier",
-            'node_size_multiplier',
-            default_value=0.5,
-            step=0.1,
-            help_text="Multiplier for node size based on degree (lower values = smaller nodes)"
-        )
-    
-    # Time cutoff for visualization
-    with st.expander("Time Cutoff Settings"):
+    # Data Selection & Time Settings
+    with st.expander("📅 Data Selection & Time Settings", expanded=True):
+        # Time cutoff settings
         use_time_cutoff = st.checkbox("Use Time Cutoff", value=False)
         if use_time_cutoff:
             time_cutoff_days = st.slider(
@@ -221,6 +103,117 @@ with st.sidebar:
             )
         else:
             time_cutoff_days = None
+
+        # Time window settings
+        st.markdown("**Time Window Settings**")
+        time_window = create_slider_with_controls(
+            "Time Window (days)",
+            'time_window',
+            default_value=60,
+            step=1,
+            help_text="Size of each analysis window"
+        ) * 86400  # Convert to seconds
+        
+        time_overlap = create_slider_with_controls(
+            "Time Overlap (days)",
+            'time_overlap',
+            default_value=15,
+            step=1,
+            help_text="Overlap between time windows"
+        ) * 86400  # Convert to seconds
+
+    # Network Analysis Parameters
+    with st.expander("🔍 Network Analysis Parameters", expanded=True):
+        # Response window settings
+        response_window = create_slider_with_controls(
+            "Response Window (seconds)",
+            'response_window',
+            default_value=1800,
+            step=60,
+            help_text="Time window to consider messages as responses"
+        )
+        
+        # Edge weight settings
+        edge_weight = create_slider_with_controls(
+            "Edge Weight Multiplier",
+            'edge_weight',
+            default_value=1.0,
+            step=0.1,
+            help_text="Multiplier for edge weights"
+        )
+        
+        min_edge_weight = create_slider_with_controls(
+            "Minimum Edge Weight",
+            'min_edge_weight',
+            default_value=0.5,
+            step=0.1,
+            help_text="Minimum weight for edges to be included"
+        )
+
+    # Visualization Settings
+    with st.expander("🎨 Visualization Settings", expanded=True):
+        # Layout algorithm selection
+        layout_algorithms = {
+            'Spring Layout': nx.spring_layout,
+            'Kamada-Kawai': nx.kamada_kawai_layout,
+            'Circular Layout': nx.circular_layout,
+            'Spectral Layout': nx.spectral_layout
+        }
+        selected_layout = st.selectbox(
+            "Layout Algorithm",
+            list(layout_algorithms.keys()),
+            index=0,
+            help="Choose the algorithm for node positioning"
+        )
+
+        # Layout parameters
+        with st.expander("⚙️ Layout Parameters"):
+            default_node_spacing = create_slider_with_controls(
+                "Node Spacing (k)",
+                'node_spacing',
+                default_value=0.15,
+                step=0.01,
+                help_text="Optimal distance between nodes (k parameter)"
+            )
+            
+            layout_iterations = create_slider_with_controls(
+                "Layout Iterations",
+                'layout_iterations',
+                default_value=500,
+                step=50,
+                help_text="Number of iterations for layout algorithm"
+            )
+            
+            layout_scale = create_slider_with_controls(
+                "Layout Scale",
+                'layout_scale',
+                default_value=1.5,
+                step=0.1,
+                help_text="Scale factor for node positions"
+            )
+
+        # Node appearance
+        with st.expander("🔘 Node Appearance"):
+            filter_single_connections = st.checkbox(
+                "Filter nodes with only one connection",
+                value=False,
+                help="Remove nodes that only have one connection to simplify the graph"
+            )
+            default_node_size = create_slider_with_controls(
+                "Node Size",
+                'node_size',
+                default_value=0.5,
+                step=0.1,
+                help_text="Base size of nodes in the visualization"
+            )
+            
+            node_size_multiplier = create_slider_with_controls(
+                "Node Size Multiplier",
+                'node_size_multiplier',
+                default_value=0.5,
+                step=0.1,
+                help_text="Multiplier for node size based on degree (lower values = smaller nodes)"
+            )
     
     # Analysis buttons
     col1, col2 = st.columns(2)
