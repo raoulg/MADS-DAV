@@ -72,39 +72,37 @@ with st.sidebar:
     )
 
     def create_slider_with_controls(label, key, default_value, step, help_text):
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            # Min/max controls
-            st.markdown(f"**{label} Range**")
-            min_col, max_col = st.columns(2)
-            with min_col:
-                new_min = st.number_input(
-                    f"Min {label}",
-                    value=st.session_state.slider_settings[key]['min'],
-                    step=step,
-                    key=f"{key}_min"
-                )
-            with max_col:
-                new_max = st.number_input(
-                    f"Max {label}",
-                    value=st.session_state.slider_settings[key]['max'],
-                    step=step,
-                    key=f"{key}_max"
-                )
+        # Min/max controls
+        st.markdown(f"**{label} Range**")
+        
+        # Use expander for min/max controls to save space
+        with st.expander("Adjust range"):
+            new_min = st.number_input(
+                f"Min {label}",
+                value=st.session_state.slider_settings[key]['min'],
+                step=step,
+                key=f"{key}_min"
+            )
+            new_max = st.number_input(
+                f"Max {label}",
+                value=st.session_state.slider_settings[key]['max'],
+                step=step,
+                key=f"{key}_max"
+            )
             
             # Update stored values
             st.session_state.slider_settings[key]['min'] = new_min
             st.session_state.slider_settings[key]['max'] = new_max
-            
-            # Create slider
-            return st.slider(
-                label,
-                min_value=new_min,
-                max_value=new_max,
-                value=default_value,
-                step=step,
-                help=help_text
-            )
+        
+        # Create slider
+        return st.slider(
+            label,
+            min_value=new_min,
+            max_value=new_max,
+            value=default_value,
+            step=step,
+            help=help_text
+        )
 
     # Response window settings
     st.markdown("**Response Window Settings**")
