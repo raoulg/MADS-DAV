@@ -9,7 +9,7 @@ import pandas as pd
 from loguru import logger
 
 from wa_analyzer.settings import (BaseRegexes, Folders, androidRegexes,
-                                  iosRegexes, oldRegexes)
+                                  csvRegexes, iosRegexes, oldRegexes)
 
 logger.remove()
 logger.add("logs/logfile.log", rotation="1 week", level="DEBUG")
@@ -84,7 +84,7 @@ class WhatsappPreprocessor:
 
 
 @click.command()
-@click.option("--device", default="android", help="Device type: iOS or Android")
+@click.option("--device", default="android", help="Device type: iOS, Android, old, or csv")
 def main(device: str):
     with open("config.toml", "rb") as f:
         config = tomllib.load(f)
@@ -99,6 +99,9 @@ def main(device: str):
     elif device.lower() == "old":
         logger.info("Using old version regexes")
         regexes: BaseRegexes = oldRegexes  # type: ignore
+    elif device.lower() == "csv":
+        logger.info("Using CSV regexes")
+        regexes: BaseRegexes = csvRegexes  # type: ignore
     else:
         logger.info("Using Android regexes")
         regexes: BaseRegexes = androidRegexes  # type: ignore

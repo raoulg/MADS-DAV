@@ -1,0 +1,294 @@
+import datetime
+from collections import defaultdict
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
+
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import pandas as pd
+from loguru import logger
+from matplotlib.animation import FuncAnimation
+
+from wa_analyzer.settings import NetworkAnalysisConfig
+
+
+class WhatsAppNetworkAnalyzer:
+    """Analyze WhatsApp chat data as a network of users."""
+
+    def __init__(self, config: NetworkAnalysisConfig = None):
+        """Initialize the network analyzer with configuration."""
+        self.config = config or NetworkAnalysisConfig()
+        self.data = None
+        self.graph = None
+        self.pos = None
+        self.time_windows = []
+        self.graphs_by_window = []
+        self.node_colors = {}
+        
+    def load_data(self, filepath: Path) -> None:
+        """Load preprocessed WhatsApp data."""
+        logger.info(f"Loading data from {filepath}")
+        self.data = pd.read_csv(filepath)
+        
+        # Convert timestamp to datetime
+        self.data['timestamp'] = pd.to_datetime(self.data['timestamp'])
+        
+        # Sort by timestamp
+        self.data = self.data.sort_values('timestamp')
+        
+        logger.info(f"Loaded {len(self.data)} messages from {len(self.data['author'].unique())} users")
+        
+    def create_full_graph(self) -> nx.Graph:
+        """Create a graph of all interactions."""
+        if self.data is None:
+            raise ValueError("No data loaded. Call load_data() first.")
+            
+        G = nx.Graph()
+        
+        # Add all users as nodes
+        for user in self.data['author'].unique():
+            G.add_node(user)
+            
+        # Assign random colors to nodes
+        self.node_colors = {user: np.random.rand(3,) for user in G.nodes()}
+        
+        # Process all messages to create edges
+        self._process_interactions(G, self.data)
+        
+        self.graph = G
+        
+        # Generate a layout that will be reused
+        self.pos = nx.spring_layout(G, seed=42)
+        
+        return G
+        
+    def create_time_window_graphs(self) -> List[Tuple[datetime.datetime, nx.Graph]]:
+        """Create graphs for overlapping time windows."""
+        if self.data is None:
+            raise ValueError("No data loaded. Call load_data() first.")
+            
+        # Calculate time windows
+        start_time = self.data['timestamp'].min()
+        end_time = self.data['timestamp'].max()
+        
+        window_size = datetime.timedelta(seconds=self.config.time_window)
+        overlap = datetime.timedelta(seconds=self.config.time_overlap)
+        
+        # Create time windows with overlap
+        current_start = start_time
+        self.time_windows = []
+        
+        while current_start < end_time:
+            current_end = current_start + window_size
+            self.time_windows.append((current_start, current_end))
+            current_start = current_end - overlap
+            
+        logger.info(f"Created {len(self.time_windows)} time windows")
+        
+        # Create a graph for each time window
+        self.graphs_by_window = []
+        
+        for i, (window_start, window_end) in enumerate(self.time_windows):
+            window_data = self.data[(self.data['timestamp'] >= window_start) & 
+                                    (self.data['timestamp'] <= window_end)]
+            
+            G = nx.Graph()
+            
+            # Add all users as nodes (from the full dataset to maintain consistency)
+            for user in self.data['author'].unique():
+                G.add_node(user)
+                
+            # Process messages in this time window
+            self._process_interactions(G, window_data)
+            
+            self.graphs_by_window.append((window_start, G))
+            logger.info(f"Window {i+1}: {window_start} to {window_end} - {len(window_data)} messages")
+            
+        return self.graphs_by_window
+    
+    def _process_interactions(self, G: nx.Graph, data: pd.DataFrame) -> None:
+        """Process interactions to create edges between users."""
+        # Track interactions within the response window
+        interactions = defaultdict(int)
+        
+        # Group by timestamp to process in order
+        for timestamp, group in data.groupby('timestamp'):
+            # Get authors in this timestamp group
+            current_authors = group['author'].unique()
+            
+            # Find recent messages within response window
+            response_cutoff = timestamp - datetime.timedelta(seconds=self.config.response_window)
+            recent_messages = data[(data['timestamp'] >= response_cutoff) & 
+                                  (data['timestamp'] < timestamp)]
+            
+            # Get unique recent authors
+            recent_authors = set(recent_messages['author'].unique())
+            
+            # Create edges between current authors and recent authors
+            for current_author in current_authors:
+                for recent_author in recent_authors:
+                    if current_author != recent_author:
+                        # Increment the interaction count
+                        interactions[(current_author, recent_author)] += 1
+                        interactions[(recent_author, current_author)] += 1
+        
+        # Add edges with weights based on interaction counts
+        for (user1, user2), count in interactions.items():
+            weight = count * self.config.edge_weight_multiplier
+            if weight >= self.config.min_edge_weight:
+                G.add_edge(user1, user2, weight=weight)
+    
+    def visualize_graph(self, G: Optional[nx.Graph] = None, title: str = "WhatsApp Interaction Network") -> None:
+        """Visualize the network graph."""
+        if G is None:
+            G = self.graph
+            
+        if G is None:
+            raise ValueError("No graph available. Create a graph first.")
+            
+        plt.figure(figsize=(12, 10))
+        
+        # Use consistent layout if available
+        pos = self.pos if self.pos is not None else nx.spring_layout(G, seed=42)
+        
+        # Get edge weights for line thickness
+        edge_weights = [G[u][v].get('weight', 1) for u, v in G.edges()]
+        
+        # Draw the network
+        nx.draw_networkx_nodes(G, pos, 
+                              node_color=[self.node_colors.get(node, (0.5, 0.5, 0.5)) for node in G.nodes()],
+                              node_size=500, alpha=0.8)
+        
+        nx.draw_networkx_edges(G, pos, width=edge_weights, alpha=0.5)
+        nx.draw_networkx_labels(G, pos, font_size=10, font_family='sans-serif')
+        
+        plt.title(title)
+        plt.axis('off')
+        plt.tight_layout()
+        plt.show()
+        
+    def visualize_time_series(self, output_path: Optional[Path] = None) -> None:
+        """Visualize the network evolution over time."""
+        if not self.graphs_by_window:
+            raise ValueError("No time window graphs available. Create time window graphs first.")
+            
+        # Create a figure for the animation
+        fig, ax = plt.subplots(figsize=(12, 10))
+        
+        def update(i):
+            """Update function for animation."""
+            ax.clear()
+            timestamp, G = self.graphs_by_window[i]
+            
+            # Get edge weights for line thickness
+            edge_weights = [G[u][v].get('weight', 1) for u, v in G.edges()]
+            
+            # Draw the network
+            nx.draw_networkx_nodes(G, self.pos, 
+                                  node_color=[self.node_colors.get(node, (0.5, 0.5, 0.5)) for node in G.nodes()],
+                                  node_size=500, alpha=0.8, ax=ax)
+            
+            nx.draw_networkx_edges(G, self.pos, width=edge_weights, alpha=0.5, ax=ax)
+            nx.draw_networkx_labels(G, self.pos, font_size=10, font_family='sans-serif', ax=ax)
+            
+            window_start = timestamp.strftime('%Y-%m-%d')
+            window_end = (timestamp + datetime.timedelta(seconds=self.config.time_window)).strftime('%Y-%m-%d')
+            ax.set_title(f"WhatsApp Interactions: {window_start} to {window_end}")
+            ax.axis('off')
+            
+        # Create the animation
+        ani = FuncAnimation(fig, update, frames=len(self.graphs_by_window), interval=1000, repeat=True)
+        
+        if output_path:
+            ani.save(output_path, writer='pillow', fps=1)
+            logger.info(f"Animation saved to {output_path}")
+        else:
+            plt.tight_layout()
+            plt.show()
+            
+    def export_graph_metrics(self, output_path: Optional[Path] = None) -> pd.DataFrame:
+        """Export network metrics for all time windows."""
+        if not self.graphs_by_window:
+            raise ValueError("No time window graphs available. Create time window graphs first.")
+            
+        metrics = []
+        
+        # Calculate metrics for each time window
+        for timestamp, G in self.graphs_by_window:
+            window_metrics = {
+                'timestamp': timestamp,
+                'node_count': G.number_of_nodes(),
+                'edge_count': G.number_of_edges(),
+                'density': nx.density(G),
+                'avg_clustering': nx.average_clustering(G),
+            }
+            
+            # Add centrality metrics for each node
+            degree_centrality = nx.degree_centrality(G)
+            betweenness_centrality = nx.betweenness_centrality(G)
+            
+            for node in G.nodes():
+                window_metrics[f'degree_{node}'] = degree_centrality.get(node, 0)
+                window_metrics[f'betweenness_{node}'] = betweenness_centrality.get(node, 0)
+                
+            metrics.append(window_metrics)
+            
+        # Create DataFrame
+        metrics_df = pd.DataFrame(metrics)
+        
+        if output_path:
+            metrics_df.to_csv(output_path, index=False)
+            logger.info(f"Metrics exported to {output_path}")
+            
+        return metrics_df
+
+
+def analyze_whatsapp_network(
+    data_path: Path,
+    response_window: int = 3600,  # 1 hour in seconds
+    time_window: int = 60 * 60 * 24 * 30 * 2,  # 2 months in seconds
+    time_overlap: int = 60 * 60 * 24 * 30,  # 1 month in seconds
+    edge_weight_multiplier: float = 1.0,
+    min_edge_weight: float = 0.5,
+    output_dir: Optional[Path] = None
+) -> WhatsAppNetworkAnalyzer:
+    """Analyze WhatsApp chat data as a network and generate visualizations."""
+    # Create configuration
+    config = NetworkAnalysisConfig(
+        response_window=response_window,
+        time_window=time_window,
+        time_overlap=time_overlap,
+        edge_weight_multiplier=edge_weight_multiplier,
+        min_edge_weight=min_edge_weight
+    )
+    
+    # Initialize analyzer
+    analyzer = WhatsAppNetworkAnalyzer(config)
+    
+    # Load data
+    analyzer.load_data(data_path)
+    
+    # Create full graph
+    analyzer.create_full_graph()
+    
+    # Create time window graphs
+    analyzer.create_time_window_graphs()
+    
+    # Create output directory if specified
+    if output_dir:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save full graph visualization
+        plt.figure(figsize=(12, 10))
+        analyzer.visualize_graph(title="Complete WhatsApp Interaction Network")
+        plt.savefig(output_dir / "full_network.png")
+        plt.close()
+        
+        # Save time series animation
+        analyzer.visualize_time_series(output_dir / "network_evolution.gif")
+        
+        # Export metrics
+        analyzer.export_graph_metrics(output_dir / "network_metrics.csv")
+    
+    return analyzer
