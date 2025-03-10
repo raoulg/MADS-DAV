@@ -309,7 +309,7 @@ class WhatsAppNetworkAnalyzer:
 
     def visualize_time_series(self, output_path: Optional[Path] = None) -> None:
         """Visualize the network evolution over time using Plotly."""
-        if not self.graphs_by_window:
+        if not self.graphs_by_window or not self.pos:
             raise ValueError(
                 "No time window graphs available. Create time window graphs first."
             )
@@ -340,7 +340,8 @@ class WhatsAppNetworkAnalyzer:
             node_color = []
 
             for node in G.nodes():
-                x, y = self.pos[node]
+                # Get position if it exists, otherwise use default (0,0)
+                x, y = self.pos.get(node, (0, 0))
                 node_x.append(x)
                 node_y.append(y)
                 node_text.append(f"{node}<br>Degree: {G.degree(node)}")
