@@ -76,13 +76,21 @@ class WhatsAppNetworkAnalyzer:
         main_component = max(connected_components, key=len)
         other_components = [comp for comp in connected_components if comp != main_component]
 
-        # Generate layout for main component with tighter spacing
-        main_pos = nx.spring_layout(
+        # Generate layout for main component using selected algorithm
+        layout_func = layout_algorithms[selected_layout]
+        layout_kwargs = {
+            'seed': 42,
+            'k': default_node_spacing,
+            'iterations': 500,
+            'scale': 1.5
+        }
+        
+        if selected_layout == 'Kamada-Kawai':
+            layout_kwargs.pop('k')  # Kamada-Kawai doesn't use k parameter
+            
+        main_pos = layout_func(
             G.subgraph(main_component),
-            seed=42,
-            k=0.1,  # Tighter spacing for main cluster
-            iterations=500,
-            scale=1.5
+            **layout_kwargs
         )
 
         # Position other components around the main one

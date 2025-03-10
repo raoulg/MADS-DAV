@@ -46,89 +46,128 @@ with st.sidebar:
     
     # Analysis parameters
     st.subheader("Analysis Parameters")
+    # Persistent settings storage
+    if 'slider_settings' not in st.session_state:
+        st.session_state.slider_settings = {
+            'response_window': {'min': 300, 'max': 3600},
+            'time_window': {'min': 1, 'max': 90},
+            'time_overlap': {'min': 0, 'max': 30},
+            'edge_weight': {'min': 0.1, 'max': 5.0},
+            'min_edge_weight': {'min': 0.1, 'max': 2.0},
+            'node_spacing': {'min': 0.05, 'max': 1.0},
+            'node_size': {'min': 0.1, 'max': 2.0}
+        }
+
+    # Layout algorithm selection
+    layout_algorithms = {
+        'Spring Layout': nx.spring_layout,
+        'Kamada-Kawai': nx.kamada_kawai_layout,
+        'Circular Layout': nx.circular_layout,
+        'Spectral Layout': nx.spectral_layout
+    }
+    selected_layout = st.selectbox(
+        "Layout Algorithm",
+        list(layout_algorithms.keys()),
+        index=0
+    )
+
+    def create_slider_with_controls(label, key, default_value, step, help_text):
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            # Min/max controls
+            st.markdown(f"**{label} Range**")
+            min_col, max_col = st.columns(2)
+            with min_col:
+                new_min = st.number_input(
+                    f"Min {label}",
+                    value=st.session_state.slider_settings[key]['min'],
+                    step=step,
+                    key=f"{key}_min"
+                )
+            with max_col:
+                new_max = st.number_input(
+                    f"Max {label}",
+                    value=st.session_state.slider_settings[key]['max'],
+                    step=step,
+                    key=f"{key}_max"
+                )
+            
+            # Update stored values
+            st.session_state.slider_settings[key]['min'] = new_min
+            st.session_state.slider_settings[key]['max'] = new_max
+            
+            # Create slider
+            return st.slider(
+                label,
+                min_value=new_min,
+                max_value=new_max,
+                value=default_value,
+                step=step,
+                help=help_text
+            )
+
     # Response window settings
     st.markdown("**Response Window Settings**")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        min_response = st.number_input(
-            "Minimum Response Window (seconds)",
-            min_value=60,
-            max_value=3600,
-            value=300,  # 5 minutes
-            step=60,
-            help="Minimum time window to consider messages as responses"
-        )
-    
-    with col2:
-        max_response = st.number_input(
-            "Maximum Response Window (seconds)",
-            min_value=600,  # 10 minutes
-            max_value=14400,  # 4 hours
-            value=3600,  # 1 hour
-            step=300,  # 5 minute steps
-            help="Maximum time window to consider messages as responses"
-        )
-    
-    response_window = st.slider(
+    response_window = create_slider_with_controls(
         "Response Window (seconds)",
-        min_value=min_response,
-        max_value=max_response,
-        value=1800,  # 30 minutes
+        'response_window',
+        default_value=1800,
         step=60,
-        help="Time window to consider messages as responses"
+        help_text="Time window to consider messages as responses"
     )
     
-    time_window = st.slider(
+    # Time window settings
+    st.markdown("**Time Window Settings**")
+    time_window = create_slider_with_controls(
         "Time Window (days)",
-        min_value=1,
-        max_value=90,
-        value=60,
+        'time_window',
+        default_value=60,
         step=1,
-        help="Size of each analysis window"
+        help_text="Size of each analysis window"
     ) * 86400  # Convert to seconds
     
-    time_overlap = st.slider(
+    time_overlap = create_slider_with_controls(
         "Time Overlap (days)",
-        min_value=0,
-        max_value=30,
-        value=15,
+        'time_overlap',
+        default_value=15,
         step=1,
-        help="Overlap between time windows"
+        help_text="Overlap between time windows"
     ) * 86400  # Convert to seconds
     
-    edge_weight = st.slider(
+    # Edge weight settings
+    st.markdown("**Edge Weight Settings**")
+    edge_weight = create_slider_with_controls(
         "Edge Weight Multiplier",
-        min_value=0.1,
-        max_value=5.0,
-        value=1.0,
-        step=0.1
+        'edge_weight',
+        default_value=1.0,
+        step=0.1,
+        help_text="Multiplier for edge weights"
     )
     
-    min_edge_weight = st.slider(
+    min_edge_weight = create_slider_with_controls(
         "Minimum Edge Weight",
-        min_value=0.1,
-        max_value=2.0,
-        value=0.5,
-        step=0.1
+        'min_edge_weight',
+        default_value=0.5,
+        step=0.1,
+        help_text="Minimum weight for edges to be included"
     )
     
     # Visualization parameters
     st.subheader("Visualization Parameters")
-    default_node_spacing = st.slider(
+    default_node_spacing = create_slider_with_controls(
         "Default Node Spacing",
-        min_value=0.05,
-        max_value=1.0,
-        value=0.15,
-        step=0.05
+        'node_spacing',
+        default_value=0.15,
+        step=0.05,
+        help_text="Spacing between nodes in the visualization"
     )
     
-    default_node_size = st.slider(
+    default_node_size = create_slider_with_controls(
         "Default Node Size",
-        min_value=0.1,
-        max_value=2.0,
-        value=0.5,
-        step=0.1
+        'node_size',
+        default_value=0.5,
+        step=0.1,
+        help_text="Base size of nodes in the visualization"
     )
     
     # Recalculate button
