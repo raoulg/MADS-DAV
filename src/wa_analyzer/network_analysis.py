@@ -1,16 +1,14 @@
 import datetime
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Tuple
 
 import networkx as nx
 import numpy as np
 import pandas as pd
 from loguru import logger
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import ipywidgets as widgets
-from IPython.display import display
 
 from wa_analyzer.settings import NetworkAnalysisConfig
 
