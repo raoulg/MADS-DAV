@@ -262,11 +262,7 @@ class WhatsAppNetworkAnalyzer:
         # Recalculate layout if forced or if positions don't exist
         if force_layout or self.pos is None:
             self._calculate_layout(G)
-        if G is None:
-            G = self.graph
-
-        if G is None:
-            raise ValueError("No graph available. Create a graph first.")
+            st.session_state.layout_calculated = True
 
         # Remove isolated nodes for better visualization
         non_isolated_nodes = [node for node in G.nodes() if G.degree(node) > 0]
@@ -504,8 +500,15 @@ class WhatsAppNetworkAnalyzer:
 
     def _calculate_layout(self, G: nx.Graph) -> None:
         """Calculate node positions using the selected layout algorithm."""
+        # Log the layout calculation
+        st.write(f"Calculating layout using {self.selected_layout}...")
+        
         # Separate nodes into connected components
         connected_components = list(nx.connected_components(G))
+        if not connected_components:
+            st.warning("Graph has no connected components")
+            return
+            
         main_component = max(connected_components, key=len)
         other_components = [comp for comp in connected_components if comp != main_component]
 
@@ -538,11 +541,24 @@ class WhatsAppNetworkAnalyzer:
                 'weight': 'weight',
                 'scale': self.layout_scale
             })
-            
-        main_pos = layout_func(
-            G.subgraph(main_component),
-            **layout_kwargs
-        )
+        
+        # Create subgraph of main component
+        main_subgraph = G.subgraph(main_component)
+        
+        try:
+            main_pos = layout_func(
+                main_subgraph,
+                **layout_kwargs
+            )
+        except Exception as e:
+            st.error(f"Error calculating layout: {e}")
+            # Fall back to spring layout
+            main_pos = nx.spring_layout(
+                main_subgraph,
+                seed=42,
+                k=self.default_node_spacing,
+                iterations=self.layout_iterations
+            )
 
         # Position other components around the main one
         self.pos = main_pos.copy()

@@ -202,6 +202,7 @@ with st.sidebar:
     with col2:
         if st.button("Recalculate Layout"):
             st.session_state.force_layout = True
+            st.session_state.prev_layout = None  # Force layout recalculation
 
 # Main content
 st.title("WhatsApp Network Analyzer")
@@ -235,13 +236,13 @@ if selected_file:
         # Force layout recalculation if layout algorithm changed
         if st.session_state.prev_layout != selected_layout:
             st.session_state.force_layout = True
-            st.rerun()
+            analyzer.pos = None
+            st.session_state.prev_layout = selected_layout
             
         # Force layout recalculation if needed
         if 'force_layout' in st.session_state and st.session_state.force_layout:
             analyzer.pos = None
             st.session_state.force_layout = False
-            st.session_state.prev_layout = selected_layout
         
         # Create graphs
         with st.spinner("Creating network graphs..."):
