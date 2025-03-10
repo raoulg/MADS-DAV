@@ -46,11 +46,35 @@ with st.sidebar:
     
     # Analysis parameters
     st.subheader("Analysis Parameters")
+    # Response window settings
+    st.markdown("**Response Window Settings**")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        min_response = st.number_input(
+            "Minimum Response Window (seconds)",
+            min_value=60,
+            max_value=3600,
+            value=300,  # 5 minutes
+            step=60,
+            help="Minimum time window to consider messages as responses"
+        )
+    
+    with col2:
+        max_response = st.number_input(
+            "Maximum Response Window (seconds)",
+            min_value=600,  # 10 minutes
+            max_value=14400,  # 4 hours
+            value=3600,  # 1 hour
+            step=300,  # 5 minute steps
+            help="Maximum time window to consider messages as responses"
+        )
+    
     response_window = st.slider(
         "Response Window (seconds)",
-        min_value=60,
-        max_value=86400,
-        value=3600,
+        min_value=min_response,
+        max_value=max_response,
+        value=1800,  # 30 minutes
         step=60,
         help="Time window to consider messages as responses"
     )
