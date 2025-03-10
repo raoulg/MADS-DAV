@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 import plotly.graph_objects as go
+import tomllib
 from wa_analyzer.network_analysis import WhatsAppNetworkAnalyzer
 from wa_analyzer.settings import NetworkAnalysisConfig
 
