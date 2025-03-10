@@ -13,6 +13,9 @@ The manual for setting up the VM can be found in the `references` folder, in add
 Copy the `config.example.toml` file to a `config.toml` file. Update the contents after running the preprocessor.
 Download a chat from Whatsapp and put it in the `data/raw` folder. Rename the file to `_chat.txt` (or change the `config.toml` file). 
 
+# NOTE
+If you want to use my code in your own repo, do not copy paste everything. Instead, install it as a package; I published it on [pypi](https://pypi.org/project/wa-analyzer/) so simply do `uv add wa-analyzer`.
+
 This preprocesser uses the datetime module to convert strings with a date and / or time into datetime objects. The preprocessor needs to know the formatting of the timestamps in your `_chat.txt` file. Therefore, you might need to update the `datetime_format` variable in the `config.toml` file accordingly. You can find the formatting in the [documentation](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes) of the datetime module.
 
 Now you can run the following command to activate the virtual environment you have created in the previous step.
