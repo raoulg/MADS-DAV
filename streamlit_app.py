@@ -193,6 +193,21 @@ with st.sidebar:
             help_text="Base size of nodes in the visualization"
         )
     
+    # Time cutoff for visualization
+    with st.expander("Time Cutoff Settings"):
+        use_time_cutoff = st.checkbox("Use Time Cutoff", value=False)
+        if use_time_cutoff:
+            time_cutoff_days = st.slider(
+                "Show only last X days",
+                min_value=1,
+                max_value=365,
+                value=60,
+                step=1,
+                help="Only show data from the last X days"
+            )
+        else:
+            time_cutoff_days = None
+    
     # Analysis buttons
     col1, col2 = st.columns(2)
     with col1:
@@ -220,6 +235,12 @@ if selected_file:
             edge_weight_multiplier=edge_weight,
             min_edge_weight=min_edge_weight
         )
+        
+        # Apply time cutoff if enabled
+        if use_time_cutoff and time_cutoff_days:
+            cutoff_date = pd.Timestamp.now() - pd.Timedelta(days=time_cutoff_days)
+            data = data[data['timestamp'] >= cutoff_date]
+            st.info(f"Showing data from the last {time_cutoff_days} days only ({len(data)} messages)")
         
         # Initialize analyzer with layout settings
         analyzer = WhatsAppNetworkAnalyzer(config)

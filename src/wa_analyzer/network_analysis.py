@@ -413,15 +413,19 @@ class WhatsAppNetworkAnalyzer:
         # Show the figure in Streamlit
         st.plotly_chart(fig, use_container_width=True)
 
-    def visualize_time_series(self) -> None:
-        """Visualize the network evolution over time as a static grid of the last 9 timeframes."""
+    def visualize_time_series(self, max_windows=9) -> None:
+        """Visualize the network evolution over time as a static grid of timeframes.
+        
+        Args:
+            max_windows: Maximum number of windows to display (default: 9)
+        """
         if not self.graphs_by_window or not self.pos:
             raise ValueError(
                 "No time window graphs available. Create time window graphs first."
             )
 
-        # Get the last 9 timeframes
-        last_windows = self.graphs_by_window[-9:]
+        # Get the last N timeframes (up to max_windows)
+        last_windows = self.graphs_by_window[-max_windows:]
         num_windows = len(last_windows)
         
         # Create subplots
@@ -504,7 +508,7 @@ class WhatsAppNetworkAnalyzer:
 
         # Update layout
         fig.update_layout(
-            title_text="WhatsApp Network Evolution - Last 9 Time Windows",
+            title_text=f"WhatsApp Network Evolution - Last {num_windows} Time Windows",
             showlegend=False,
             height=900,
             margin=dict(b=20, l=20, r=20, t=100)
