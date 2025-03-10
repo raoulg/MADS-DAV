@@ -37,6 +37,8 @@ class WhatsAppNetworkAnalyzer:
         }
         self.selected_layout = 'Spring Layout'
         self.default_node_spacing = 0.15
+        self.layout_iterations = 500
+        self.layout_scale = 1.5
 
     def load_data(self, filepath: Path) -> None:
         """Load preprocessed WhatsApp data."""
@@ -91,7 +93,7 @@ class WhatsAppNetworkAnalyzer:
         
         # Common layout parameters
         layout_kwargs = {
-            'scale': 1.5
+            'scale': self.layout_scale
         }
         
         # Add algorithm-specific parameters
@@ -99,21 +101,21 @@ class WhatsAppNetworkAnalyzer:
             layout_kwargs.update({
                 'seed': 42,
                 'k': self.default_node_spacing,
-                'iterations': 500
+                'iterations': self.layout_iterations
             })
         elif self.selected_layout == 'Kamada-Kawai':
             layout_kwargs.update({
                 'weight': 'weight',
-                'scale': 1.5
+                'scale': self.layout_scale
             })
         elif self.selected_layout == 'Circular Layout':
             layout_kwargs.update({
-                'scale': 1.5
+                'scale': self.layout_scale
             })
         elif self.selected_layout == 'Spectral Layout':
             layout_kwargs.update({
                 'weight': 'weight',
-                'scale': 1.5
+                'scale': self.layout_scale
             })
             
         main_pos = layout_func(
