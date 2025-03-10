@@ -18,8 +18,30 @@ st.set_page_config(
 with st.sidebar:
     st.title("Settings")
     
-    # File upload
-    uploaded_file = st.file_uploader("Upload WhatsApp CSV", type=["csv"])
+    # File selection
+    processed_dir = Path("data/processed")
+    available_files = [f.name for f in processed_dir.glob("*.csv")]
+    
+    # Get current file from config
+    with open("config.toml", "rb") as f:
+        config = tomllib.load(f)
+        current_file = config.get("current_file", available_files[0] if available_files else "")
+    
+    selected_file = st.selectbox(
+        "Select chat file",
+        available_files,
+        index=available_files.index(current_file) if current_file in available_files else 0
+    )
+    
+    # Update config if file changed
+    if selected_file != current_file:
+        with open("config.toml", "r") as f:
+            config = tomllib.load(f)
+        config["current_file"] = selected_file
+        with open("config.toml", "w") as f:
+            for key, value in config.items():
+                f.write(f"{key} = \"{value}\"\n")
+        st.rerun()
     
     # Analysis parameters
     st.subheader("Analysis Parameters")
@@ -91,10 +113,10 @@ with st.sidebar:
 # Main content
 st.title("WhatsApp Network Analyzer")
 
-if uploaded_file is not None:
+if selected_file:
     if 'run_analysis' in st.session_state and st.session_state.run_analysis:
-        # Load data
-        data = pd.read_csv(uploaded_file)
+        # Load data from selected file
+        data = pd.read_csv(processed_dir / selected_file)
         
         # Create config
         config = NetworkAnalysisConfig(
