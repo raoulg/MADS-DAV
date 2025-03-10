@@ -32,11 +32,15 @@ class WhatsAppNetworkAnalyzer:
         logger.info(f"Loading data from {filepath}")
         self.data = pd.read_csv(filepath)
 
-        # Convert timestamp to datetime
-        self.data["timestamp"] = pd.to_datetime(self.data["timestamp"])
-
-        # Sort by timestamp
-        self.data = self.data.sort_values("timestamp")
+        # Convert timestamp to datetime and ensure proper timezone handling
+        self.data["timestamp"] = pd.to_datetime(self.data["timestamp"], utc=True)
+        
+        # Sort by timestamp and reset index
+        self.data = self.data.sort_values("timestamp").reset_index(drop=True)
+        
+        # Verify timestamp conversion
+        if not pd.api.types.is_datetime64_any_dtype(self.data["timestamp"]):
+            raise ValueError("Timestamp conversion failed - check input data format")
 
         logger.info(
             f"Loaded {len(self.data)} messages from {len(self.data['author'].unique())} users"
@@ -128,8 +132,14 @@ class WhatsAppNetworkAnalyzer:
         # Track interactions within the response window
         interactions = defaultdict(int)
 
-        # Group by timestamp to process in order
+        # Ensure timestamp is datetime and group by timestamp to process in order
+        if not pd.api.types.is_datetime64_any_dtype(data["timestamp"]):
+            data["timestamp"] = pd.to_datetime(data["timestamp"], utc=True)
+                
         for timestamp, group in data.groupby("timestamp"):
+            # Ensure timestamp is a datetime object
+            if isinstance(timestamp, str):
+                timestamp = pd.to_datetime(timestamp, utc=True)
             # Get authors in this timestamp group
             current_authors = group["author"].unique()
 
