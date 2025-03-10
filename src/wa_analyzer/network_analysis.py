@@ -183,7 +183,7 @@ class WhatsAppNetworkAnalyzer:
             node_x.append(x)
             node_y.append(y)
             node_text.append(f"{node}<br>Degree: {G_filtered.degree(node)}")
-            node_size.append(10 + 20 * np.log1p(G_filtered.degree(node)))
+            node_size.append(10 + 10 * np.log1p(G_filtered.degree(node)))  # Smaller default size
             node_color.append(f"rgb({int(255*self.node_colors[node][0])},"
                             f"{int(255*self.node_colors[node][1])},"
                             f"{int(255*self.node_colors[node][2])})")
@@ -218,28 +218,42 @@ class WhatsAppNetworkAnalyzer:
         
         # Add interactive controls
         k_slider = widgets.FloatSlider(
-            value=0.3,
-            min=0.1,
+            value=0.15,  # Start with tighter spacing
+            min=0.05,   # Allow closer spacing
             max=1.0,
-            step=0.1,
+            step=0.05,  # Finer control
             description='Node spacing:',
             continuous_update=False
         )
         
-        def update_layout(k):
-            """Update the layout with new spacing parameter."""
+        size_slider = widgets.FloatSlider(
+            value=0.5,
+            min=0.1,
+            max=2.0,
+            step=0.1,
+            description='Node size:',
+            continuous_update=False
+        )
+        
+        def update_layout(k, size_factor):
+            """Update the layout with new spacing and size parameters."""
+            # Update layout with new spacing
             self.pos = nx.spring_layout(
                 G_filtered,
                 k=k,
                 iterations=500,
                 seed=42
             )
-            # Update node positions
+            
+            # Update node positions and sizes
             fig.update_traces(
                 x=[self.pos[node][0] for node in G_filtered.nodes()],
                 y=[self.pos[node][1] for node in G_filtered.nodes()],
+                marker=dict(size=[10 + 10 * size_factor * np.log1p(G_filtered.degree(node)) 
+                                for node in G_filtered.nodes()]),
                 selector={'mode': 'markers+text'}
             )
+            
             # Update edge positions
             for i, edge in enumerate(G_filtered.edges()):
                 x0, y0 = self.pos[edge[0]]
@@ -247,8 +261,8 @@ class WhatsAppNetworkAnalyzer:
                 fig.data[i].x = [x0, x1, None]
                 fig.data[i].y = [y0, y1, None]
         
-        # Connect slider to update function
-        widgets.interact(update_layout, k=k_slider)
+        # Connect sliders to update function
+        widgets.interact(update_layout, k=k_slider, size_factor=size_slider)
         
         # Show the figure
         fig.show()
