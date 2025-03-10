@@ -55,7 +55,9 @@ with st.sidebar:
             'edge_weight': {'min': 0.1, 'max': 5.0},
             'min_edge_weight': {'min': 0.1, 'max': 2.0},
             'node_spacing': {'min': 0.05, 'max': 1.0},
-            'node_size': {'min': 0.1, 'max': 2.0}
+            'node_size': {'min': 0.1, 'max': 2.0},
+            'layout_iterations': {'min': 50, 'max': 1000},
+            'layout_scale': {'min': 0.5, 'max': 3.0}
         }
 
     # Layout algorithm selection
