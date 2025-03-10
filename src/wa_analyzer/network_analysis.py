@@ -254,58 +254,92 @@ class WhatsAppNetworkAnalyzer:
         fig.show()
         
     def visualize_time_series(self, output_path: Optional[Path] = None) -> None:
-        """Visualize the network evolution over time."""
+        """Visualize the network evolution over time using Plotly."""
         if not self.graphs_by_window:
             raise ValueError("No time window graphs available. Create time window graphs first.")
             
-        # Create a figure for the animation
-        fig, ax = plt.subplots(figsize=(12, 10))
-        
-        def update(i):
-            """Update function for animation."""
-            ax.clear()
-            timestamp, G = self.graphs_by_window[i]
+        # Create frames for animation
+        frames = []
+        for i, (timestamp, G) in enumerate(self.graphs_by_window):
+            # Create edge traces
+            edge_trace = []
+            for edge in G.edges():
+                x0, y0 = self.pos[edge[0]]
+                x1, y1 = self.pos[edge[1]]
+                edge_trace.append(go.Scatter(
+                    x=[x0, x1, None], y=[y0, y1, None],
+                    line=dict(width=1, color='#888'),
+                    hoverinfo='none',
+                    mode='lines'))
             
-            # Calculate node sizes based on degree centrality
-            degree_dict = dict(G.degree())
-            node_sizes = [300 + (degree_dict[node] * 100) for node in G.nodes()]
+            # Create node trace
+            node_x = []
+            node_y = []
+            node_text = []
+            node_size = []
+            node_color = []
             
-            # Scale edge weights for better visualization
-            edge_weights = [G[u][v].get('weight', 1) for u, v in G.edges()]
-            if edge_weights:
-                max_weight = max(edge_weights)
-                min_weight = min(edge_weights)
-                if max_weight > min_weight:
-                    edge_widths = [1 + 5 * (w - min_weight) / (max_weight - min_weight) for w in edge_weights]
-                else:
-                    edge_widths = [1.5 for _ in edge_weights]
-            else:
-                edge_widths = []
+            for node in G.nodes():
+                x, y = self.pos[node]
+                node_x.append(x)
+                node_y.append(y)
+                node_text.append(f"{node}<br>Degree: {G.degree(node)}")
+                node_size.append(10 + 20 * np.log1p(G.degree(node)))
+                node_color.append(f"rgb({int(255*self.node_colors[node][0])},"
+                                f"{int(255*self.node_colors[node][1])},"
+                                f"{int(255*self.node_colors[node][2])})")
+                
+            node_trace = go.Scatter(
+                x=node_x, y=node_y,
+                mode='markers+text',
+                text=[node.split()[0] for node in G.nodes()],
+                textposition="top center",
+                hovertext=node_text,
+                hoverinfo='text',
+                marker=dict(
+                    showscale=True,
+                    colorscale='YlGnBu',
+                    size=node_size,
+                    color=node_color,
+                    line_width=2))
             
-            # Draw the network
-            nx.draw_networkx_nodes(G, self.pos, 
-                                  node_color=[self.node_colors.get(node, (0.5, 0.5, 0.5)) for node in G.nodes()],
-                                  node_size=node_sizes, alpha=0.8, ax=ax)
-            
-            nx.draw_networkx_edges(G, self.pos, width=edge_widths, alpha=0.5, 
-                                  edge_color='gray', style='solid', ax=ax)
-            nx.draw_networkx_labels(G, self.pos, font_size=10, font_family='sans-serif',
-                                   font_weight='bold', font_color='black', ax=ax)
-            
+            # Create frame
             window_start = timestamp.strftime('%Y-%m-%d')
             window_end = (timestamp + datetime.timedelta(seconds=self.config.time_window)).strftime('%Y-%m-%d')
-            ax.set_title(f"WhatsApp Interactions: {window_start} to {window_end}")
-            ax.axis('off')
+            frames.append(go.Frame(
+                data=edge_trace + [node_trace],
+                name=str(i),
+                layout=go.Layout(
+                    title=f"WhatsApp Interactions: {window_start} to {window_end}"
+                )
+            ))
             
-        # Create the animation with faster frame rate
-        ani = FuncAnimation(fig, update, frames=len(self.graphs_by_window), interval=500, repeat=True)
+        # Create figure with animation
+        fig = go.Figure(
+            data=frames[0].data,
+            layout=go.Layout(
+                title="WhatsApp Network Evolution",
+                titlefont_size=16,
+                showlegend=False,
+                hovermode='closest',
+                margin=dict(b=20,l=5,r=5,t=40),
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                updatemenus=[dict(
+                    type="buttons",
+                    buttons=[dict(label="Play",
+                                 method="animate",
+                                 args=[None])]
+                )]
+            ),
+            frames=frames
+        )
         
         if output_path:
-            ani.save(output_path, writer='pillow', fps=1)
+            fig.write_html(output_path)
             logger.info(f"Animation saved to {output_path}")
         else:
-            plt.tight_layout()
-            plt.show()
+            fig.show()
             
     def export_graph_data(self, output_dir: Optional[Path] = None) -> None:
         """Export graph data in formats compatible with other visualization tools."""
@@ -420,10 +454,9 @@ def analyze_whatsapp_network(
         output_dir.mkdir(parents=True, exist_ok=True)
         
         # Save full graph visualization
-        plt.figure(figsize=(12, 10))
         analyzer.visualize_graph(title="Complete WhatsApp Interaction Network")
-        plt.savefig(output_dir / "full_network.png")
-        plt.close()
+        fig = analyzer.visualize_graph(title="Complete WhatsApp Interaction Network")
+        fig.write_html(output_dir / "full_network.html")
         
         # Save time series animation
         analyzer.visualize_time_series(output_dir / "network_evolution.gif")
