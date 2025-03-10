@@ -71,15 +71,52 @@ class WhatsAppNetworkAnalyzer:
 
         self.graph = G
 
-        # Generate a better layout with optimized parameters
-        self.pos = nx.spring_layout(
-            G,
+        # Separate nodes into connected components
+        connected_components = list(nx.connected_components(G))
+        main_component = max(connected_components, key=len)
+        other_components = [comp for comp in connected_components if comp != main_component]
+
+        # Generate layout for main component with tighter spacing
+        main_pos = nx.spring_layout(
+            G.subgraph(main_component),
             seed=42,
-            k=0.15,  # Optimal distance between nodes
-            iterations=200,  # More iterations for better layout
-            scale=2.0,  # Spread out more
-            pos=nx.circular_layout(G),  # Start from circular layout
+            k=0.1,  # Tighter spacing for main cluster
+            iterations=500,
+            scale=1.5
         )
+
+        # Position other components around the main one
+        self.pos = main_pos.copy()
+        if other_components:
+            # Calculate bounding box of main component
+            main_x = [pos[0] for pos in main_pos.values()]
+            main_y = [pos[1] for pos in main_pos.values()]
+            x_min, x_max = min(main_x), max(main_x)
+            y_min, y_max = min(main_y), max(main_y)
+            width = x_max - x_min
+            height = y_max - y_min
+            
+            # Position other components in a circle around main component
+            radius = max(width, height) * 1.5
+            angle_step = 2 * np.pi / len(other_components)
+            
+            for i, component in enumerate(other_components):
+                angle = i * angle_step
+                center_x = radius * np.cos(angle)
+                center_y = radius * np.sin(angle)
+                
+                # Layout the component
+                component_pos = nx.spring_layout(
+                    G.subgraph(component),
+                    seed=42,
+                    k=0.05,
+                    iterations=100,
+                    scale=0.5
+                )
+                
+                # Offset to position around main component
+                for node, (x, y) in component_pos.items():
+                    self.pos[node] = (x + center_x, y + center_y)
 
         return G
 
