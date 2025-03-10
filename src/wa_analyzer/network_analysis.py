@@ -9,6 +9,7 @@ import pandas as pd
 from loguru import logger
 import plotly.graph_objects as go
 import ipywidgets as widgets
+import streamlit as st
 
 from wa_analyzer.settings import NetworkAnalysisConfig
 
