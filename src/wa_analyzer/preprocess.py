@@ -52,7 +52,7 @@ class WhatsappPreprocessor:
                     try:
                         timestamp = datetime.strptime(
                             ts.groups()[0], self.datetime_format
-                        )
+                        ).replace(tzinfo=datetime.timezone.utc)
                     except ValueError as e:
                         logger.error(
                             f"Error while processing timestamp of line {line_number}: {e}"

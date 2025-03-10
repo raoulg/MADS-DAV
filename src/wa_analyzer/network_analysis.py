@@ -48,7 +48,7 @@ class WhatsAppNetworkAnalyzer:
 
         # Convert timestamp to datetime and ensure proper timezone handling
         try:
-            self.data["timestamp"] = pd.to_datetime(self.data["timestamp"], utc=True)
+            self.data["timestamp"] = pd.to_datetime(self.data["timestamp"], utc=True).dt.tz_convert('UTC')
         except Exception as e:
             logger.error(f"Error converting timestamps: {e}")
             logger.info("Attempting alternative timestamp conversion...")
