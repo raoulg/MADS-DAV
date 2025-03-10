@@ -23,8 +23,10 @@ from wa_analyzer.network_analysis import analyze_whatsapp_network
               help='Directory to save output files (optional)')
 @click.option('--interactive/--no-interactive', default=True,
               help='Show interactive visualizations (default: True)')
+@click.option('--streamlit/--no-streamlit', default=False,
+              help='Launch Streamlit web interface (default: False)')
 def main(data_file, response_window, time_window, time_overlap, 
-         edge_weight, min_edge_weight, output_dir, interactive):
+         edge_weight, min_edge_weight, output_dir, interactive, streamlit):
     """Analyze WhatsApp chat data as a network of users."""
     
     # Load config file to get processed data path
@@ -68,8 +70,12 @@ def main(data_file, response_window, time_window, time_overlap,
         output_dir=output_dir
     )
     
-    # Show interactive visualizations if requested
-    if interactive:
+    # Show appropriate interface
+    if streamlit:
+        logger.info("Launching Streamlit interface")
+        import subprocess
+        subprocess.run(["streamlit", "run", "streamlit_app.py"])
+    elif interactive:
         logger.info("Displaying interactive visualizations")
         analyzer.visualize_graph()
         analyzer.visualize_time_series()

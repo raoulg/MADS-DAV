@@ -146,7 +146,8 @@ class WhatsAppNetworkAnalyzer:
             if weight >= self.config.min_edge_weight:
                 G.add_edge(user1, user2, weight=weight)
     
-    def visualize_graph(self, G: Optional[nx.Graph] = None, title: str = "WhatsApp Interaction Network") -> None:
+    def visualize_graph(self, G: Optional[nx.Graph] = None, title: str = "WhatsApp Interaction Network",
+                      default_k: float = 0.15, default_size: float = 0.5) -> None:
         """Visualize the network graph interactively using Plotly."""
         if G is None:
             G = self.graph
@@ -216,7 +217,7 @@ class WhatsAppNetworkAnalyzer:
         
         # Add interactive controls
         k_slider = widgets.FloatSlider(
-            value=0.15,  # Start with tighter spacing
+            value=default_k,  # Use provided default spacing
             min=0.05,   # Allow closer spacing
             max=1.0,
             step=0.05,  # Finer control
@@ -225,7 +226,7 @@ class WhatsAppNetworkAnalyzer:
         )
         
         size_slider = widgets.FloatSlider(
-            value=0.5,
+            value=default_size,
             min=0.1,
             max=2.0,
             step=0.1,
@@ -262,8 +263,8 @@ class WhatsAppNetworkAnalyzer:
         # Connect sliders to update function
         widgets.interact(update_layout, k=k_slider, size_factor=size_slider)
         
-        # Show the figure
-        fig.show()
+        # Show the figure in Streamlit
+        st.plotly_chart(fig, use_container_width=True)
         
     def visualize_time_series(self, output_path: Optional[Path] = None) -> None:
         """Visualize the network evolution over time using Plotly."""
