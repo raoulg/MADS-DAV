@@ -270,15 +270,19 @@ class WhatsAppNetworkAnalyzer:
 
         # Create edge trace
         edge_trace = []
-        for edge in G_filtered.edges():
+        for edge in G_filtered.edges(data=True):
             x0, y0 = self.pos[edge[0]]
             x1, y1 = self.pos[edge[1]]
+            weight = edge[2].get('weight', 1)
+            # Scale width based on weight
+            width = 1 + 2 * np.log1p(weight)
             edge_trace.append(
                 go.Scatter(
                     x=[x0, x1, None],
                     y=[y0, y1, None],
-                    line=dict(width=1, color="#888"),
-                    hoverinfo="none",
+                    line=dict(width=width, color="#888"),
+                    hoverinfo="text",
+                    hovertext=f"Interactions: {weight:.1f}",
                     mode="lines",
                 )
             )
@@ -390,11 +394,18 @@ class WhatsAppNetworkAnalyzer:
             )
 
             # Update edge positions
-            for i, edge in enumerate(G_filtered.edges()):
+            edge_index = 0
+            for edge in G_filtered.edges(data=True):
+                if edge_index >= len(fig.data) - 1:  # Last trace is for nodes
+                    break
                 x0, y0 = self.pos[edge[0]]
                 x1, y1 = self.pos[edge[1]]
-                fig.data[i].x = [x0, x1, None]
-                fig.data[i].y = [y0, y1, None]
+                weight = edge[2].get('weight', 1)
+                width = 1 + 2 * np.log1p(weight)
+                fig.data[edge_index].x = [x0, x1, None]
+                fig.data[edge_index].y = [y0, y1, None]
+                fig.data[edge_index].line.width = width
+                edge_index += 1
 
         # Connect sliders to update function
         widgets.interact(update_layout, k=k_slider, size_factor=size_slider)
@@ -428,15 +439,19 @@ class WhatsAppNetworkAnalyzer:
             col = (i % 3) + 1
             
             # Create edge traces
-            for edge in G.edges():
+            for edge in G.edges(data=True):
                 x0, y0 = self.pos[edge[0]]
                 x1, y1 = self.pos[edge[1]]
+                weight = edge[2].get('weight', 1)
+                # Scale width based on weight
+                width = 1 + 2 * np.log1p(weight)
                 fig.add_trace(
                     go.Scatter(
                         x=[x0, x1, None],
                         y=[y0, y1, None],
-                        line=dict(width=1, color="#888"),
-                        hoverinfo="none",
+                        line=dict(width=width, color="#888"),
+                        hoverinfo="text",
+                        hovertext=f"Interactions: {weight:.1f}",
                         mode="lines",
                     ),
                     row=row,
