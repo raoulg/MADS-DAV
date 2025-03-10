@@ -159,6 +159,11 @@ class WhatsAppNetworkAnalyzer:
         # Use consistent layout if available
         pos = self.pos if self.pos is not None else nx.spring_layout(G, seed=42)
         
+        # Remove isolated nodes for better visualization
+        non_isolated_nodes = [node for node in G.nodes() if G.degree(node) > 0]
+        G_filtered = G.subgraph(non_isolated_nodes)
+        pos_filtered = {node: pos[node] for node in non_isolated_nodes}
+        
         # Calculate node sizes based on degree centrality for filtered nodes
         degree_dict = dict(G_filtered.degree())
         node_sizes = [300 + (degree_dict[node] * 100) for node in G_filtered.nodes()]
@@ -174,11 +179,6 @@ class WhatsAppNetworkAnalyzer:
                 edge_widths = [1.5 for _ in edge_weights]
         else:
             edge_widths = []
-        
-        # Remove isolated nodes for better visualization
-        non_isolated_nodes = [node for node in G.nodes() if G.degree(node) > 0]
-        G_filtered = G.subgraph(non_isolated_nodes)
-        pos_filtered = {node: pos[node] for node in non_isolated_nodes}
         
         # Draw the filtered network with consistent node sizes
         nx.draw_networkx_nodes(
