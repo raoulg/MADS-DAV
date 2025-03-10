@@ -232,9 +232,13 @@ if selected_file:
         if 'prev_layout' not in st.session_state:
             st.session_state.prev_layout = selected_layout
             
+        # Force layout recalculation if layout algorithm changed
+        if st.session_state.prev_layout != selected_layout:
+            st.session_state.force_layout = True
+            st.rerun()
+            
         # Force layout recalculation if needed
-        if ('force_layout' in st.session_state and st.session_state.force_layout) or \
-           st.session_state.prev_layout != selected_layout:
+        if 'force_layout' in st.session_state and st.session_state.force_layout:
             analyzer.pos = None
             st.session_state.force_layout = False
             st.session_state.prev_layout = selected_layout

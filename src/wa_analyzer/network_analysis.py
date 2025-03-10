@@ -262,7 +262,6 @@ class WhatsAppNetworkAnalyzer:
         # Recalculate layout if forced or if positions don't exist
         if force_layout or self.pos is None:
             self._calculate_layout(G)
-        """Visualize the network graph interactively using Plotly."""
         if G is None:
             G = self.graph
 
@@ -365,8 +364,21 @@ class WhatsAppNetworkAnalyzer:
 
         def update_layout(k, size_factor):
             """Update the layout with new spacing and size parameters."""
-            # Update layout with new spacing
-            self.pos = nx.spring_layout(G_filtered, k=k, iterations=500, seed=42)
+            # Update layout with new spacing but maintain the current layout algorithm
+            layout_func = self.layout_algorithms.get(self.selected_layout, nx.spring_layout)
+        
+            # Set parameters based on layout algorithm
+            if self.selected_layout == 'Spring Layout':
+                self.pos = layout_func(G_filtered, k=k, iterations=500, seed=42)
+            elif self.selected_layout == 'Kamada-Kawai':
+                self.pos = layout_func(G_filtered, weight='weight', scale=self.layout_scale)
+            elif self.selected_layout == 'Circular Layout':
+                self.pos = layout_func(G_filtered, scale=self.layout_scale)
+            elif self.selected_layout == 'Spectral Layout':
+                self.pos = layout_func(G_filtered, weight='weight', scale=self.layout_scale)
+            else:
+                # Default to spring layout
+                self.pos = nx.spring_layout(G_filtered, k=k, iterations=500, seed=42)
 
             # Update node positions and sizes
             fig.update_traces(
