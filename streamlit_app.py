@@ -36,7 +36,7 @@ with st.sidebar:
     
     # Update config if file changed
     if selected_file != current_file:
-        with open("config.toml", "r") as f:
+        with open("config.toml", "rb") as f:
             config = tomllib.load(f)
         config["current_file"] = selected_file
         with open("config.toml", "w") as f:
