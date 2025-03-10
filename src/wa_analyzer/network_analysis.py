@@ -262,6 +262,7 @@ class WhatsAppNetworkAnalyzer:
         default_k: float = 0.15,
         default_size: float = 0.5,
         force_layout: bool = False,
+        filter_single_connections: bool = False,
     ) -> None:
         """Visualize the network graph with optional layout recalculation."""
         if G is None:

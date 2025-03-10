@@ -298,7 +298,8 @@ if selected_file:
                 title="WhatsApp Interaction Network",
                 default_k=default_node_spacing,
                 default_size=default_node_size,
-                force_layout=('force_layout' in st.session_state and st.session_state.force_layout)
+                force_layout=('force_layout' in st.session_state and st.session_state.force_layout),
+                filter_single_connections=filter_single_connections
             )
             
         with tab2:
