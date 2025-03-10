@@ -464,6 +464,10 @@ class WhatsAppNetworkAnalyzer:
             
             # Create edge traces
             for edge in G.edges(data=True):
+                # Skip edges where nodes don't have positions
+                if edge[0] not in self.pos or edge[1] not in self.pos:
+                    continue
+                    
                 x0, y0 = self.pos[edge[0]]
                 x1, y1 = self.pos[edge[1]]
                 weight = edge[2].get('weight', 1)
@@ -490,7 +494,11 @@ class WhatsAppNetworkAnalyzer:
             node_color = []
 
             for node in G.nodes():
-                x, y = self.pos.get(node, (0, 0))
+                # Skip nodes that don't have positions
+                if node not in self.pos:
+                    continue
+                    
+                x, y = self.pos[node]
                 node_x.append(x)
                 node_y.append(y)
                 node_text.append(f"{node}<br>Degree: {G.degree(node)}")
