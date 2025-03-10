@@ -27,6 +27,16 @@ class WhatsAppNetworkAnalyzer:
         self.time_windows = []
         self.graphs_by_window = []
         self.node_colors = {}
+        
+        # Layout settings
+        self.layout_algorithms = {
+            'Spring Layout': nx.spring_layout,
+            'Kamada-Kawai': nx.kamada_kawai_layout,
+            'Circular Layout': nx.circular_layout,
+            'Spectral Layout': nx.spectral_layout
+        }
+        self.selected_layout = 'Spring Layout'
+        self.default_node_spacing = 0.15
 
     def load_data(self, filepath: Path) -> None:
         """Load preprocessed WhatsApp data."""
@@ -77,15 +87,15 @@ class WhatsAppNetworkAnalyzer:
         other_components = [comp for comp in connected_components if comp != main_component]
 
         # Generate layout for main component using selected algorithm
-        layout_func = layout_algorithms[selected_layout]
+        layout_func = self.layout_algorithms[self.selected_layout]
         layout_kwargs = {
             'seed': 42,
-            'k': default_node_spacing,
+            'k': self.default_node_spacing,
             'iterations': 500,
             'scale': 1.5
         }
         
-        if selected_layout == 'Kamada-Kawai':
+        if self.selected_layout == 'Kamada-Kawai':
             layout_kwargs.pop('k')  # Kamada-Kawai doesn't use k parameter
             
         main_pos = layout_func(

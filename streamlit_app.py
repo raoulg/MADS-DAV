@@ -191,9 +191,11 @@ if selected_file:
             min_edge_weight=min_edge_weight
         )
         
-        # Initialize analyzer
+        # Initialize analyzer with layout settings
         analyzer = WhatsAppNetworkAnalyzer(config)
         analyzer.data = data
+        analyzer.selected_layout = selected_layout
+        analyzer.default_node_spacing = default_node_spacing
         
         # Create graphs
         with st.spinner("Creating network graphs..."):
