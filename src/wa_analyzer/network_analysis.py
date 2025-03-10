@@ -200,7 +200,7 @@ class WhatsAppNetworkAnalyzer:
             isolated_pos = {node: (0, i) for i, node in enumerate(isolated_nodes)}  # Vertical stack
             nx.draw_networkx_nodes(G, isolated_pos, nodelist=isolated_nodes,
                                  node_color='lightgray', node_size=300, alpha=0.6)
-            nx.draw_networkx_labels(G, isolated_pos, nodelist=isolated_nodes,
+            nx.draw_networkx_labels(G, isolated_pos, 
                                   font_size=8, font_family='sans-serif',
                                   font_weight='normal', font_color='darkgray')
         
