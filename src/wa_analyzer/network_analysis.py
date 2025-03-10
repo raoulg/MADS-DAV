@@ -183,7 +183,7 @@ class WhatsAppNetworkAnalyzer:
         # Calculate node sizes based on degree centrality for filtered nodes
         degree_dict = dict(G_filtered.degree())
         # Use logarithmic scaling for node sizes to reduce size differences
-        node_sizes = [300 + (np.log1p(degree_dict[node]) * 300 for node in G_filtered.nodes()]
+        node_sizes = [300 + np.log1p(degree_dict[node]) * 300 for node in G_filtered.nodes()]
         
         # Scale edge weights for better visualization using filtered graph
         edge_weights = [G_filtered[u][v].get('weight', 1) for u, v in G_filtered.edges()]
