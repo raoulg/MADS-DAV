@@ -228,10 +228,16 @@ if selected_file:
         analyzer.layout_iterations = layout_iterations
         analyzer.layout_scale = layout_scale
         
+        # Track layout changes
+        if 'prev_layout' not in st.session_state:
+            st.session_state.prev_layout = selected_layout
+            
         # Force layout recalculation if needed
-        if 'force_layout' in st.session_state and st.session_state.force_layout:
+        if ('force_layout' in st.session_state and st.session_state.force_layout) or \
+           st.session_state.prev_layout != selected_layout:
             analyzer.pos = None
             st.session_state.force_layout = False
+            st.session_state.prev_layout = selected_layout
         
         # Create graphs
         with st.spinner("Creating network graphs..."):

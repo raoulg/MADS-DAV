@@ -253,8 +253,15 @@ class WhatsAppNetworkAnalyzer:
         force_layout: bool = False,
     ) -> None:
         """Visualize the network graph with optional layout recalculation."""
-        if force_layout:
-            self.pos = None
+        if G is None:
+            G = self.graph
+
+        if G is None:
+            raise ValueError("No graph available. Create a graph first.")
+
+        # Recalculate layout if forced or if positions don't exist
+        if force_layout or self.pos is None:
+            self._calculate_layout(G)
         """Visualize the network graph interactively using Plotly."""
         if G is None:
             G = self.graph
@@ -265,10 +272,6 @@ class WhatsAppNetworkAnalyzer:
         # Remove isolated nodes for better visualization
         non_isolated_nodes = [node for node in G.nodes() if G.degree(node) > 0]
         G_filtered = G.subgraph(non_isolated_nodes)
-
-        # Recalculate layout if needed
-        if self.pos is None or force_layout:
-            self._calculate_layout(G_filtered)
 
         # Create edge trace
         edge_trace = []
