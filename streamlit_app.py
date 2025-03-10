@@ -150,8 +150,8 @@ with st.sidebar:
             help_text="Minimum weight for edges to be included"
         )
 
-    # Visualization Settings
-    with st.expander("🎨 Visualization Settings", expanded=True):
+    # Layout Settings
+    with st.expander("⚙️ Layout Settings", expanded=True):
         # Layout algorithm selection
         layout_algorithms = {
             'Spring Layout': nx.spring_layout,
@@ -166,34 +166,32 @@ with st.sidebar:
             help="Choose the algorithm for node positioning"
         )
 
-        # Layout parameters
-        with st.expander("⚙️ Layout Parameters"):
-            default_node_spacing = create_slider_with_controls(
-                "Node Spacing (k)",
-                'node_spacing',
-                default_value=0.15,
-                step=0.01,
-                help_text="Optimal distance between nodes (k parameter)"
-            )
-            
-            layout_iterations = create_slider_with_controls(
-                "Layout Iterations",
-                'layout_iterations',
-                default_value=500,
-                step=50,
-                help_text="Number of iterations for layout algorithm"
-            )
-            
-            layout_scale = create_slider_with_controls(
-                "Layout Scale",
-                'layout_scale',
-                default_value=1.5,
-                step=0.1,
-                help_text="Scale factor for node positions"
-            )
+        default_node_spacing = create_slider_with_controls(
+            "Node Spacing (k)",
+            'node_spacing',
+            default_value=0.15,
+            step=0.01,
+            help_text="Optimal distance between nodes (k parameter)"
+        )
+        
+        layout_iterations = create_slider_with_controls(
+            "Layout Iterations",
+            'layout_iterations',
+            default_value=500,
+            step=50,
+            help_text="Number of iterations for layout algorithm"
+        )
+        
+        layout_scale = create_slider_with_controls(
+            "Layout Scale",
+            'layout_scale',
+            default_value=1.5,
+            step=0.1,
+            help_text="Scale factor for node positions"
+        )
 
-        # Node appearance
-        with st.expander("🔘 Node Appearance"):
+    # Node Appearance Settings
+    with st.expander("🔘 Node Appearance", expanded=True):
             filter_single_connections = st.checkbox(
                 "Filter nodes with only one connection",
                 value=False,
