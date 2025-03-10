@@ -387,8 +387,10 @@ class WhatsAppNetworkAnalyzer:
         fig = go.Figure(
             data=frames[0].data,
             layout=go.Layout(
-                title="WhatsApp Network Evolution",
-                titlefont_size=16,
+                title=dict(
+                    text="WhatsApp Network Evolution",
+                    font=dict(size=16)
+                ),
                 showlegend=False,
                 hovermode="closest",
                 margin=dict(b=20, l=5, r=5, t=40),
