@@ -39,6 +39,7 @@ class WhatsAppNetworkAnalyzer:
         self.default_node_spacing = 0.15
         self.layout_iterations = 500
         self.layout_scale = 1.5
+        self.node_size_multiplier = 0.5  # Default multiplier for node size
 
     def load_data(self, filepath: Path) -> None:
         """Load preprocessed WhatsApp data."""
@@ -309,10 +310,10 @@ class WhatsAppNetworkAnalyzer:
             node_x.append(x)
             node_y.append(y)
             node_text.append(f"{node}<br>Degree: {G_filtered.degree(node)}")
-            # Scale node size more directly with degree
+            # Scale node size with degree and apply multiplier
             node_size.append(
-                15 + 15 * G_filtered.degree(node)
-            )  # Size directly proportional to degree
+                10 + 5 * self.node_size_multiplier * G_filtered.degree(node)
+            )  # Size proportional to degree but controlled by multiplier
             node_color.append(
                 f"rgb({int(255 * self.node_colors[node][0])},"
                 f"{int(255 * self.node_colors[node][1])},"
@@ -397,7 +398,7 @@ class WhatsAppNetworkAnalyzer:
                 y=[self.pos[node][1] for node in G_filtered.nodes()],
                 marker=dict(
                     size=[
-                        15 + 15 * size_factor * G_filtered.degree(node)
+                        10 + 5 * size_factor * self.node_size_multiplier * G_filtered.degree(node)
                         for node in G_filtered.nodes()
                     ]
                 ),
@@ -485,8 +486,8 @@ class WhatsAppNetworkAnalyzer:
                 node_x.append(x)
                 node_y.append(y)
                 node_text.append(f"{node}<br>Degree: {G.degree(node)}")
-                # Scale node size directly with degree
-                node_size.append(15 + 15 * G.degree(node))
+                # Scale node size with degree and apply multiplier
+                node_size.append(10 + 5 * self.node_size_multiplier * G.degree(node))
                 node_color.append(
                     f"rgb({int(255 * self.node_colors[node][0])},"
                     f"{int(255 * self.node_colors[node][1])},"

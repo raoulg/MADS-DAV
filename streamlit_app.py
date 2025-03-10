@@ -192,6 +192,14 @@ with st.sidebar:
             step=0.1,
             help_text="Base size of nodes in the visualization"
         )
+        
+        node_size_multiplier = create_slider_with_controls(
+            "Node Size Multiplier",
+            'node_size_multiplier',
+            default_value=0.5,
+            step=0.1,
+            help_text="Multiplier for node size based on degree (lower values = smaller nodes)"
+        )
     
     # Time cutoff for visualization
     with st.expander("Time Cutoff Settings"):
@@ -253,6 +261,7 @@ if selected_file:
         analyzer.default_node_spacing = default_node_spacing
         analyzer.layout_iterations = layout_iterations
         analyzer.layout_scale = layout_scale
+        analyzer.node_size_multiplier = node_size_multiplier
         
         # Track layout changes
         if 'prev_layout' not in st.session_state:
