@@ -197,10 +197,16 @@ class WhatsAppNetworkAnalyzer:
         # Draw isolated nodes separately if any
         isolated_nodes = [node for node in G.nodes() if G.degree(node) == 0]
         if isolated_nodes:
-            isolated_pos = {node: (0, i) for i, node in enumerate(isolated_nodes)}  # Vertical stack
+            # Create positions for isolated nodes in a vertical stack
+            isolated_pos = {node: (0, i) for i, node in enumerate(isolated_nodes)}
+            
+            # Draw isolated nodes with consistent positions
             nx.draw_networkx_nodes(G, isolated_pos, nodelist=isolated_nodes,
                                  node_color='lightgray', node_size=300, alpha=0.6)
-            nx.draw_networkx_labels(G, isolated_pos, 
+            
+            # Only draw labels for nodes that have positions
+            valid_labels = {node: node for node in isolated_nodes if node in isolated_pos}
+            nx.draw_networkx_labels(G, isolated_pos, labels=valid_labels,
                                   font_size=8, font_family='sans-serif',
                                   font_weight='normal', font_color='darkgray')
         
