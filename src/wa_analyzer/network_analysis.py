@@ -250,6 +250,7 @@ class WhatsAppNetworkAnalyzer:
         title: str = "WhatsApp Interaction Network",
         default_k: float = 0.15,
         default_size: float = 0.5,
+        force_layout: bool = False,
     ) -> None:
         """Visualize the network graph interactively using Plotly."""
         if G is None:
@@ -261,6 +262,10 @@ class WhatsAppNetworkAnalyzer:
         # Remove isolated nodes for better visualization
         non_isolated_nodes = [node for node in G.nodes() if G.degree(node) > 0]
         G_filtered = G.subgraph(non_isolated_nodes)
+
+        # Recalculate layout if needed
+        if self.pos is None or force_layout:
+            self._calculate_layout(G_filtered)
 
         # Create edge trace
         edge_trace = []
@@ -478,6 +483,81 @@ class WhatsAppNetworkAnalyzer:
 
         # Show in Streamlit
         st.plotly_chart(fig, use_container_width=True)
+
+    def _calculate_layout(self, G: nx.Graph) -> None:
+        """Calculate node positions using the selected layout algorithm."""
+        # Separate nodes into connected components
+        connected_components = list(nx.connected_components(G))
+        main_component = max(connected_components, key=len)
+        other_components = [comp for comp in connected_components if comp != main_component]
+
+        # Generate layout for main component using selected algorithm
+        layout_func = self.layout_algorithms[self.selected_layout]
+        
+        # Common layout parameters
+        layout_kwargs = {
+            'scale': self.layout_scale
+        }
+        
+        # Add algorithm-specific parameters
+        if self.selected_layout == 'Spring Layout':
+            layout_kwargs.update({
+                'seed': 42,
+                'k': self.default_node_spacing,
+                'iterations': self.layout_iterations
+            })
+        elif self.selected_layout == 'Kamada-Kawai':
+            layout_kwargs.update({
+                'weight': 'weight',
+                'scale': self.layout_scale
+            })
+        elif self.selected_layout == 'Circular Layout':
+            layout_kwargs.update({
+                'scale': self.layout_scale
+            })
+        elif self.selected_layout == 'Spectral Layout':
+            layout_kwargs.update({
+                'weight': 'weight',
+                'scale': self.layout_scale
+            })
+            
+        main_pos = layout_func(
+            G.subgraph(main_component),
+            **layout_kwargs
+        )
+
+        # Position other components around the main one
+        self.pos = main_pos.copy()
+        if other_components:
+            # Calculate bounding box of main component
+            main_x = [pos[0] for pos in main_pos.values()]
+            main_y = [pos[1] for pos in main_pos.values()]
+            x_min, x_max = min(main_x), max(main_x)
+            y_min, y_max = min(main_y), max(main_y)
+            width = x_max - x_min
+            height = y_max - y_min
+            
+            # Position other components in a circle around main component
+            radius = max(width, height) * 1.5
+            angle_step = 2 * np.pi / len(other_components)
+            
+            for i, component in enumerate(other_components):
+                angle = i * angle_step
+                center_x = radius * np.cos(angle)
+                center_y = radius * np.sin(angle)
+                
+                # Layout the component
+                component_pos = nx.spring_layout(
+                    G.subgraph(component),
+                    seed=42,
+                    k=0.05,
+                    iterations=100,
+                    scale=0.5
+                )
+                
+                # Offset to position around main component
+                for node, (x, y) in component_pos.items():
+                    self.pos[node] = (x + center_x, y + center_y)
 
     def export_graph_data(self, output_dir: Optional[Path] = None) -> None:
         """Export graph data in formats compatible with other visualization tools."""

@@ -219,6 +219,11 @@ if selected_file:
         analyzer.data = data
         analyzer.selected_layout = selected_layout
         analyzer.default_node_spacing = default_node_spacing
+        analyzer.layout_iterations = layout_iterations
+        analyzer.layout_scale = layout_scale
+        
+        # Force layout recalculation
+        analyzer.pos = None
         
         # Create graphs
         with st.spinner("Creating network graphs..."):
