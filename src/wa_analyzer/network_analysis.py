@@ -58,8 +58,15 @@ class WhatsAppNetworkAnalyzer:
         
         self.graph = G
         
-        # Generate a layout that will be reused
-        self.pos = nx.spring_layout(G, seed=42)
+        # Generate a better layout with optimized parameters
+        self.pos = nx.spring_layout(
+            G, 
+            seed=42,
+            k=0.15,  # Optimal distance between nodes
+            iterations=200,  # More iterations for better layout
+            scale=2.0,  # Spread out more
+            pos=nx.circular_layout(G)  # Start from circular layout
+        )
         
         return G
         
@@ -168,15 +175,30 @@ class WhatsAppNetworkAnalyzer:
         else:
             edge_widths = []
         
-        # Draw the network
-        nx.draw_networkx_nodes(G, pos, 
-                              node_color=[self.node_colors.get(node, (0.5, 0.5, 0.5)) for node in G.nodes()],
-                              node_size=node_sizes, alpha=0.8)
+        # Remove isolated nodes for better visualization
+        non_isolated_nodes = [node for node in G.nodes() if G.degree(node) > 0]
+        G_filtered = G.subgraph(non_isolated_nodes)
+        pos_filtered = {node: pos[node] for node in non_isolated_nodes}
         
-        nx.draw_networkx_edges(G, pos, width=edge_widths, alpha=0.5, 
-                              edge_color='gray', style='solid')
-        nx.draw_networkx_labels(G, pos, font_size=10, font_family='sans-serif', 
-                               font_weight='bold', font_color='black')
+        # Draw the filtered network
+        nx.draw_networkx_nodes(G_filtered, pos_filtered,
+                             node_color=[self.node_colors.get(node, (0.5, 0.5, 0.5)) for node in G_filtered.nodes()],
+                             node_size=node_sizes, alpha=0.8)
+        
+        nx.draw_networkx_edges(G_filtered, pos_filtered, width=edge_widths, alpha=0.5,
+                             edge_color='gray', style='solid')
+        nx.draw_networkx_labels(G_filtered, pos_filtered, font_size=10, font_family='sans-serif',
+                              font_weight='bold', font_color='black')
+        
+        # Draw isolated nodes separately if any
+        isolated_nodes = [node for node in G.nodes() if G.degree(node) == 0]
+        if isolated_nodes:
+            isolated_pos = {node: (0, i) for i, node in enumerate(isolated_nodes)}  # Vertical stack
+            nx.draw_networkx_nodes(G, isolated_pos, nodelist=isolated_nodes,
+                                 node_color='lightgray', node_size=300, alpha=0.6)
+            nx.draw_networkx_labels(G, isolated_pos, nodelist=isolated_nodes,
+                                  font_size=8, font_family='sans-serif',
+                                  font_weight='normal', font_color='darkgray')
         
         plt.title(title, fontsize=16, fontweight='bold')
         plt.axis('off')
@@ -227,8 +249,8 @@ class WhatsAppNetworkAnalyzer:
             ax.set_title(f"WhatsApp Interactions: {window_start} to {window_end}")
             ax.axis('off')
             
-        # Create the animation
-        ani = FuncAnimation(fig, update, frames=len(self.graphs_by_window), interval=1000, repeat=True)
+        # Create the animation with faster frame rate
+        ani = FuncAnimation(fig, update, frames=len(self.graphs_by_window), interval=500, repeat=True)
         
         if output_path:
             ani.save(output_path, writer='pillow', fps=1)
