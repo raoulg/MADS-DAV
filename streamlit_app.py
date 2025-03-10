@@ -238,6 +238,10 @@ if selected_file:
         
         # Apply time cutoff if enabled
         if use_time_cutoff and time_cutoff_days:
+            # Ensure timestamp is datetime
+            if not pd.api.types.is_datetime64_any_dtype(data["timestamp"]):
+                data["timestamp"] = pd.to_datetime(data["timestamp"], utc=True)
+                
             cutoff_date = pd.Timestamp.now() - pd.Timedelta(days=time_cutoff_days)
             data = data[data['timestamp'] >= cutoff_date]
             st.info(f"Showing data from the last {time_cutoff_days} days only ({len(data)} messages)")

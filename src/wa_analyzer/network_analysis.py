@@ -46,7 +46,13 @@ class WhatsAppNetworkAnalyzer:
         self.data = pd.read_csv(filepath)
 
         # Convert timestamp to datetime and ensure proper timezone handling
-        self.data["timestamp"] = pd.to_datetime(self.data["timestamp"], utc=True)
+        try:
+            self.data["timestamp"] = pd.to_datetime(self.data["timestamp"], utc=True)
+        except Exception as e:
+            logger.error(f"Error converting timestamps: {e}")
+            logger.info("Attempting alternative timestamp conversion...")
+            # Try with a different format or approach
+            self.data["timestamp"] = pd.to_datetime(self.data["timestamp"], errors='coerce', utc=True)
         
         # Sort by timestamp and reset index
         self.data = self.data.sort_values("timestamp").reset_index(drop=True)
@@ -162,6 +168,10 @@ class WhatsAppNetworkAnalyzer:
         """Create graphs for overlapping time windows."""
         if self.data is None:
             raise ValueError("No data loaded. Call load_data() first.")
+
+        # Ensure timestamp is datetime
+        if not pd.api.types.is_datetime64_any_dtype(self.data["timestamp"]):
+            self.data["timestamp"] = pd.to_datetime(self.data["timestamp"], utc=True)
 
         # Calculate time windows
         start_time = self.data["timestamp"].min()
