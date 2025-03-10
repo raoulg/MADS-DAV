@@ -88,15 +88,33 @@ class WhatsAppNetworkAnalyzer:
 
         # Generate layout for main component using selected algorithm
         layout_func = self.layout_algorithms[self.selected_layout]
+        
+        # Common layout parameters
         layout_kwargs = {
-            'seed': 42,
-            'k': self.default_node_spacing,
-            'iterations': 500,
             'scale': 1.5
         }
         
-        if self.selected_layout == 'Kamada-Kawai':
-            layout_kwargs.pop('k')  # Kamada-Kawai doesn't use k parameter
+        # Add algorithm-specific parameters
+        if self.selected_layout == 'Spring Layout':
+            layout_kwargs.update({
+                'seed': 42,
+                'k': self.default_node_spacing,
+                'iterations': 500
+            })
+        elif self.selected_layout == 'Kamada-Kawai':
+            layout_kwargs.update({
+                'weight': 'weight',
+                'scale': 1.5
+            })
+        elif self.selected_layout == 'Circular Layout':
+            layout_kwargs.update({
+                'scale': 1.5
+            })
+        elif self.selected_layout == 'Spectral Layout':
+            layout_kwargs.update({
+                'weight': 'weight',
+                'scale': 1.5
+            })
             
         main_pos = layout_func(
             G.subgraph(main_component),
