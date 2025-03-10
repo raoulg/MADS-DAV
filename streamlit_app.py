@@ -193,9 +193,15 @@ with st.sidebar:
             help_text="Base size of nodes in the visualization"
         )
     
-    # Recalculate button
-    if st.button("Run Analysis"):
-        st.session_state.run_analysis = True
+    # Analysis buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Run Analysis"):
+            st.session_state.run_analysis = True
+            st.session_state.force_layout = True
+    with col2:
+        if st.button("Recalculate Layout"):
+            st.session_state.force_layout = True
 
 # Main content
 st.title("WhatsApp Network Analyzer")
@@ -222,8 +228,10 @@ if selected_file:
         analyzer.layout_iterations = layout_iterations
         analyzer.layout_scale = layout_scale
         
-        # Force layout recalculation
-        analyzer.pos = None
+        # Force layout recalculation if needed
+        if 'force_layout' in st.session_state and st.session_state.force_layout:
+            analyzer.pos = None
+            st.session_state.force_layout = False
         
         # Create graphs
         with st.spinner("Creating network graphs..."):
@@ -238,7 +246,8 @@ if selected_file:
             analyzer.visualize_graph(
                 title="WhatsApp Interaction Network",
                 default_k=default_node_spacing,
-                default_size=default_node_size
+                default_size=default_node_size,
+                force_layout=('force_layout' in st.session_state and st.session_state.force_layout)
             )
             
         with tab2:

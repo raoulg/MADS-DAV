@@ -252,6 +252,9 @@ class WhatsAppNetworkAnalyzer:
         default_size: float = 0.5,
         force_layout: bool = False,
     ) -> None:
+        """Visualize the network graph with optional layout recalculation."""
+        if force_layout:
+            self.pos = None
         """Visualize the network graph interactively using Plotly."""
         if G is None:
             G = self.graph
