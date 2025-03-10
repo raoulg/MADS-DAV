@@ -152,18 +152,33 @@ class WhatsAppNetworkAnalyzer:
         # Use consistent layout if available
         pos = self.pos if self.pos is not None else nx.spring_layout(G, seed=42)
         
-        # Get edge weights for line thickness
+        # Calculate node sizes based on degree centrality
+        degree_dict = dict(G.degree())
+        node_sizes = [300 + (degree_dict[node] * 100) for node in G.nodes()]
+        
+        # Scale edge weights for better visualization
         edge_weights = [G[u][v].get('weight', 1) for u, v in G.edges()]
+        if edge_weights:
+            max_weight = max(edge_weights)
+            min_weight = min(edge_weights)
+            if max_weight > min_weight:
+                edge_widths = [1 + 5 * (w - min_weight) / (max_weight - min_weight) for w in edge_weights]
+            else:
+                edge_widths = [1.5 for _ in edge_weights]
+        else:
+            edge_widths = []
         
         # Draw the network
         nx.draw_networkx_nodes(G, pos, 
                               node_color=[self.node_colors.get(node, (0.5, 0.5, 0.5)) for node in G.nodes()],
-                              node_size=500, alpha=0.8)
+                              node_size=node_sizes, alpha=0.8)
         
-        nx.draw_networkx_edges(G, pos, width=edge_weights, alpha=0.5)
-        nx.draw_networkx_labels(G, pos, font_size=10, font_family='sans-serif')
+        nx.draw_networkx_edges(G, pos, width=edge_widths, alpha=0.5, 
+                              edge_color='gray', style='solid')
+        nx.draw_networkx_labels(G, pos, font_size=10, font_family='sans-serif', 
+                               font_weight='bold', font_color='black')
         
-        plt.title(title)
+        plt.title(title, fontsize=16, fontweight='bold')
         plt.axis('off')
         plt.tight_layout()
         plt.show()
@@ -181,16 +196,31 @@ class WhatsAppNetworkAnalyzer:
             ax.clear()
             timestamp, G = self.graphs_by_window[i]
             
-            # Get edge weights for line thickness
+            # Calculate node sizes based on degree centrality
+            degree_dict = dict(G.degree())
+            node_sizes = [300 + (degree_dict[node] * 100) for node in G.nodes()]
+            
+            # Scale edge weights for better visualization
             edge_weights = [G[u][v].get('weight', 1) for u, v in G.edges()]
+            if edge_weights:
+                max_weight = max(edge_weights)
+                min_weight = min(edge_weights)
+                if max_weight > min_weight:
+                    edge_widths = [1 + 5 * (w - min_weight) / (max_weight - min_weight) for w in edge_weights]
+                else:
+                    edge_widths = [1.5 for _ in edge_weights]
+            else:
+                edge_widths = []
             
             # Draw the network
             nx.draw_networkx_nodes(G, self.pos, 
                                   node_color=[self.node_colors.get(node, (0.5, 0.5, 0.5)) for node in G.nodes()],
-                                  node_size=500, alpha=0.8, ax=ax)
+                                  node_size=node_sizes, alpha=0.8, ax=ax)
             
-            nx.draw_networkx_edges(G, self.pos, width=edge_weights, alpha=0.5, ax=ax)
-            nx.draw_networkx_labels(G, self.pos, font_size=10, font_family='sans-serif', ax=ax)
+            nx.draw_networkx_edges(G, self.pos, width=edge_widths, alpha=0.5, 
+                                  edge_color='gray', style='solid', ax=ax)
+            nx.draw_networkx_labels(G, self.pos, font_size=10, font_family='sans-serif',
+                                   font_weight='bold', font_color='black', ax=ax)
             
             window_start = timestamp.strftime('%Y-%m-%d')
             window_end = (timestamp + datetime.timedelta(seconds=self.config.time_window)).strftime('%Y-%m-%d')
@@ -207,6 +237,46 @@ class WhatsAppNetworkAnalyzer:
             plt.tight_layout()
             plt.show()
             
+    def export_graph_data(self, output_dir: Optional[Path] = None) -> None:
+        """Export graph data in formats compatible with other visualization tools."""
+        if self.graph is None:
+            raise ValueError("No graph available. Create a graph first.")
+            
+        if output_dir:
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Export node data
+            node_data = []
+            for node in self.graph.nodes():
+                degree = self.graph.degree(node)
+                node_data.append({
+                    'id': node,
+                    'label': node,
+                    'degree': degree,
+                    'color': ','.join(map(str, self.node_colors.get(node, (0.5, 0.5, 0.5))))
+                })
+            
+            node_df = pd.DataFrame(node_data)
+            node_df.to_csv(output_dir / "nodes.csv", index=False)
+            logger.info(f"Node data exported to {output_dir / 'nodes.csv'}")
+            
+            # Export edge data
+            edge_data = []
+            for u, v, data in self.graph.edges(data=True):
+                edge_data.append({
+                    'source': u,
+                    'target': v,
+                    'weight': data.get('weight', 1)
+                })
+            
+            edge_df = pd.DataFrame(edge_data)
+            edge_df.to_csv(output_dir / "edges.csv", index=False)
+            logger.info(f"Edge data exported to {output_dir / 'edges.csv'}")
+            
+            # Export as GraphML for use in tools like Gephi
+            nx.write_graphml(self.graph, output_dir / "network.graphml")
+            logger.info(f"GraphML exported to {output_dir / 'network.graphml'}")
+    
     def export_graph_metrics(self, output_path: Optional[Path] = None) -> pd.DataFrame:
         """Export network metrics for all time windows."""
         if not self.graphs_by_window:
@@ -288,7 +358,8 @@ def analyze_whatsapp_network(
         # Save time series animation
         analyzer.visualize_time_series(output_dir / "network_evolution.gif")
         
-        # Export metrics
+        # Export data and metrics
+        analyzer.export_graph_data(output_dir)
         analyzer.export_graph_metrics(output_dir / "network_metrics.csv")
     
     return analyzer

@@ -52,3 +52,4 @@ class NetworkAnalysisConfig:
     time_overlap: int = 60 * 60 * 24 * 30  # Default 1 month in seconds
     edge_weight_multiplier: float = 1.0
     min_edge_weight: float = 0.5
+    output_dir: Optional[Path] = None
