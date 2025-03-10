@@ -3,12 +3,14 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
 from loguru import logger
-from matplotlib.animation import FuncAnimation
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import ipywidgets as widgets
+from IPython.display import display
 
 from wa_analyzer.settings import NetworkAnalysisConfig
 
@@ -147,92 +149,106 @@ class WhatsAppNetworkAnalyzer:
                 G.add_edge(user1, user2, weight=weight)
     
     def visualize_graph(self, G: Optional[nx.Graph] = None, title: str = "WhatsApp Interaction Network") -> None:
-        """Visualize the network graph."""
+        """Visualize the network graph interactively using Plotly."""
         if G is None:
             G = self.graph
             
         if G is None:
             raise ValueError("No graph available. Create a graph first.")
             
-        plt.figure(figsize=(12, 10))
-        
-        # Use consistent layout if available, otherwise create a new one with better parameters
-        if self.pos is None:
-            # Create a new layout with better spacing
-            pos = nx.spring_layout(
-                G,
-                k=0.3,  # Optimal distance between nodes (increased from 0.15)
-                iterations=500,  # More iterations for better layout
-                scale=3.0,  # Spread out more
-                seed=42
-            )
-            self.pos = pos
-        else:
-            pos = self.pos
-            
         # Remove isolated nodes for better visualization
         non_isolated_nodes = [node for node in G.nodes() if G.degree(node) > 0]
         G_filtered = G.subgraph(non_isolated_nodes)
-        pos_filtered = {node: pos[node] for node in non_isolated_nodes}
         
-        # Apply a scaling factor to spread out nodes more
-        scale_factor = 2.0
-        pos_filtered = {node: (x * scale_factor, y * scale_factor) 
-                       for node, (x, y) in pos_filtered.items()}
+        # Create edge trace
+        edge_trace = []
+        for edge in G_filtered.edges():
+            x0, y0 = self.pos[edge[0]]
+            x1, y1 = self.pos[edge[1]]
+            edge_trace.append(go.Scatter(
+                x=[x0, x1, None], y=[y0, y1, None],
+                line=dict(width=1, color='#888'),
+                hoverinfo='none',
+                mode='lines'))
         
-        # Calculate node sizes based on degree centrality for filtered nodes
-        degree_dict = dict(G_filtered.degree())
-        # Use logarithmic scaling for node sizes to reduce size differences
-        node_sizes = [300 + np.log1p(degree_dict[node]) * 300 for node in G_filtered.nodes()]
+        # Create node trace
+        node_x = []
+        node_y = []
+        node_text = []
+        node_size = []
+        node_color = []
         
-        # Scale edge weights for better visualization using filtered graph
-        edge_weights = [G_filtered[u][v].get('weight', 1) for u, v in G_filtered.edges()]
-        if edge_weights:
-            max_weight = max(edge_weights)
-            min_weight = min(edge_weights)
-            if max_weight > min_weight:
-                edge_widths = [1 + 5 * (w - min_weight) / (max_weight - min_weight) for w in edge_weights]
-            else:
-                edge_widths = [1.5 for _ in edge_weights]
-        else:
-            edge_widths = []
+        for node in G_filtered.nodes():
+            x, y = self.pos[node]
+            node_x.append(x)
+            node_y.append(y)
+            node_text.append(f"{node}<br>Degree: {G_filtered.degree(node)}")
+            node_size.append(10 + 20 * np.log1p(G_filtered.degree(node)))
+            node_color.append(f"rgb({int(255*self.node_colors[node][0])},"
+                            f"{int(255*self.node_colors[node][1])},"
+                            f"{int(255*self.node_colors[node][2])})")
+            
+        node_trace = go.Scatter(
+            x=node_x, y=node_y,
+            mode='markers+text',
+            text=[node.split()[0] for node in G_filtered.nodes()],  # Show first name only
+            textposition="top center",
+            hovertext=node_text,
+            hoverinfo='text',
+            marker=dict(
+                showscale=True,
+                colorscale='YlGnBu',
+                size=node_size,
+                color=node_color,
+                line_width=2))
         
-        # Draw the filtered network with consistent node sizes
-        nx.draw_networkx_nodes(
-            G_filtered, 
-            pos_filtered,
-            node_color=[self.node_colors.get(node, (0.5, 0.5, 0.5)) for node in G_filtered.nodes()],
-            node_size=node_sizes, 
-            alpha=0.8,
-            linewidths=2,  # Add borders to nodes
-            edgecolors='black'  # Black borders for better visibility
+        # Create figure
+        fig = go.Figure(data=edge_trace + [node_trace],
+                       layout=go.Layout(
+                           title=title,
+                           titlefont_size=16,
+                           showlegend=False,
+                           hovermode='closest',
+                           margin=dict(b=20,l=5,r=5,t=40),
+                           xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                           yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
+        
+        # Add interactive controls
+        k_slider = widgets.FloatSlider(
+            value=0.3,
+            min=0.1,
+            max=1.0,
+            step=0.1,
+            description='Node spacing:',
+            continuous_update=False
         )
         
-        nx.draw_networkx_edges(G_filtered, pos_filtered, width=edge_widths, alpha=0.5,
-                             edge_color='gray', style='solid')
-        nx.draw_networkx_labels(G_filtered, pos_filtered, font_size=10, font_family='sans-serif',
-                              font_weight='bold', font_color='black')
+        def update_layout(k):
+            """Update the layout with new spacing parameter."""
+            self.pos = nx.spring_layout(
+                G_filtered,
+                k=k,
+                iterations=500,
+                seed=42
+            )
+            # Update node positions
+            fig.update_traces(
+                x=[self.pos[node][0] for node in G_filtered.nodes()],
+                y=[self.pos[node][1] for node in G_filtered.nodes()],
+                selector={'mode': 'markers+text'}
+            )
+            # Update edge positions
+            for i, edge in enumerate(G_filtered.edges()):
+                x0, y0 = self.pos[edge[0]]
+                x1, y1 = self.pos[edge[1]]
+                fig.data[i].x = [x0, x1, None]
+                fig.data[i].y = [y0, y1, None]
         
-        # Draw isolated nodes separately if any
-        isolated_nodes = [node for node in G.nodes() if G.degree(node) == 0]
-        if isolated_nodes:
-            # Create positions for isolated nodes in a vertical stack
-            isolated_pos = {node: (0, i) for i, node in enumerate(isolated_nodes)}
-            
-            # Draw isolated nodes with consistent positions
-            nx.draw_networkx_nodes(G, isolated_pos, nodelist=isolated_nodes,
-                                 node_color='lightgray', node_size=300, alpha=0.6)
-            
-            # Only draw labels for nodes that have positions
-            valid_labels = {node: node for node in isolated_nodes if node in isolated_pos}
-            nx.draw_networkx_labels(G, isolated_pos, labels=valid_labels,
-                                  font_size=8, font_family='sans-serif',
-                                  font_weight='normal', font_color='darkgray')
+        # Connect slider to update function
+        widgets.interact(update_layout, k=k_slider)
         
-        plt.title(title, fontsize=16, fontweight='bold')
-        plt.axis('off')
-        plt.tight_layout()
-        plt.show()
+        # Show the figure
+        fig.show()
         
     def visualize_time_series(self, output_path: Optional[Path] = None) -> None:
         """Visualize the network evolution over time."""
