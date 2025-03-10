@@ -275,9 +275,16 @@ class WhatsAppNetworkAnalyzer:
             self._calculate_layout(G)
             st.session_state.layout_calculated = True
 
-        # Remove isolated nodes for better visualization
-        non_isolated_nodes = [node for node in G.nodes() if G.degree(node) > 0]
-        G_filtered = G.subgraph(non_isolated_nodes)
+        # Filter nodes based on degree
+        if filter_single_connections:
+            # Remove nodes with degree <= 1
+            filtered_nodes = [node for node in G.nodes() if G.degree(node) > 1]
+            st.info(f"Filtered out {len(G.nodes()) - len(filtered_nodes)} nodes with only one connection")
+        else:
+            # Remove completely isolated nodes
+            filtered_nodes = [node for node in G.nodes() if G.degree(node) > 0]
+            
+        G_filtered = G.subgraph(filtered_nodes)
 
         # Create edge trace
         edge_trace = []

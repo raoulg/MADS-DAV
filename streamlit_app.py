@@ -186,6 +186,11 @@ with st.sidebar:
     
     # Node appearance
     with st.expander("Node Appearance"):
+        filter_single_connections = st.checkbox(
+            "Filter nodes with only one connection",
+            value=False,
+            help="Remove nodes that only have one connection to simplify the graph"
+        )
         default_node_size = create_slider_with_controls(
             "Node Size",
             'node_size',
