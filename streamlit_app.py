@@ -75,14 +75,16 @@ with st.sidebar:
         # Min/max controls
         st.markdown(f"**{label} Range**")
         
-        # Use expander for min/max controls to save space
-        with st.expander("Adjust range"):
+        # Use columns for min/max controls
+        col1, col2 = st.columns(2)
+        with col1:
             new_min = st.number_input(
                 f"Min {label}",
                 value=st.session_state.slider_settings[key]['min'],
                 step=step,
                 key=f"{key}_min"
             )
+        with col2:
             new_max = st.number_input(
                 f"Max {label}",
                 value=st.session_state.slider_settings[key]['max'],
@@ -90,9 +92,9 @@ with st.sidebar:
                 key=f"{key}_max"
             )
             
-            # Update stored values
-            st.session_state.slider_settings[key]['min'] = new_min
-            st.session_state.slider_settings[key]['max'] = new_max
+        # Update stored values
+        st.session_state.slider_settings[key]['min'] = new_min
+        st.session_state.slider_settings[key]['max'] = new_max
         
         # Create slider
         return st.slider(
