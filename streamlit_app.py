@@ -108,9 +108,12 @@ with st.sidebar:
                         f.write(" " * indent + f"[{key}]\n")
                         write_dict(value, indent + 2)
                     else:
-                        f.write(" " * indent + f"{key} = {repr(value)}\n")
+                        if isinstance(value, str):
+                            value = f'"{value}"'
+                        f.write(" " * indent + f"{key} = {value}\n")
             
             write_dict(st.session_state.settings)
+        logger.info("Settings saved to streamlit_settings.toml")
 
     # Reset button
     if st.button("Reset All Settings"):
@@ -169,10 +172,12 @@ with st.sidebar:
         use_time_cutoff = st.checkbox(
             "Use Time Cutoff", 
             value=st.session_state.settings['current_values'].get('use_time_cutoff', False),
-            key="use_time_cutoff"
+            key="use_time_cutoff",
+            on_change=lambda: (
+                st.session_state.settings['current_values'].__setitem__('use_time_cutoff', st.session_state.use_time_cutoff),
+                save_settings()
+            )
         )
-        st.session_state.settings['current_values']['use_time_cutoff'] = use_time_cutoff
-        save_settings()
         
         if use_time_cutoff:
             time_cutoff_days = st.slider(
@@ -182,10 +187,12 @@ with st.sidebar:
                 value=st.session_state.settings['current_values'].get('time_cutoff_days', 60),
                 step=1,
                 help="Only show data from the last X days",
-                key="time_cutoff_days"
+                key="time_cutoff_days",
+                on_change=lambda: (
+                    st.session_state.settings['current_values'].__setitem__('time_cutoff_days', st.session_state.time_cutoff_days),
+                    save_settings()
+                )
             )
-            st.session_state.settings['current_values']['time_cutoff_days'] = time_cutoff_days
-            save_settings()
         else:
             time_cutoff_days = None
 
@@ -262,10 +269,12 @@ with st.sidebar:
                 st.session_state.settings['current_values'].get('selected_layout', 'Spring Layout')
             ),
             help="Choose the algorithm for node positioning",
-            key="selected_layout"
+            key="selected_layout",
+            on_change=lambda: (
+                st.session_state.settings['current_values'].__setitem__('selected_layout', st.session_state.selected_layout),
+                save_settings()
+            )
         )
-        st.session_state.settings['current_values']['selected_layout'] = selected_layout
-        save_settings()
 
         default_node_spacing = create_slider_with_controls(
             "Node Spacing (k)",
@@ -297,10 +306,12 @@ with st.sidebar:
                 "Filter nodes with only one connection",
                 value=st.session_state.settings['current_values'].get('filter_single_connections', False),
                 help="Remove nodes that only have one connection to simplify the graph",
-                key="filter_single_connections"
+                key="filter_single_connections",
+                on_change=lambda: (
+                    st.session_state.settings['current_values'].__setitem__('filter_single_connections', st.session_state.filter_single_connections),
+                    save_settings()
+                )
             )
-            st.session_state.settings['current_values']['filter_single_connections'] = filter_single_connections
-            save_settings()
             default_node_size = create_slider_with_controls(
                 "Node Size",
                 'node_size',
