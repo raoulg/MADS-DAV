@@ -131,7 +131,7 @@ def main(
             sys.executable,  # Use the same Python interpreter
             "-m", "streamlit", 
             "run", 
-            str(Path(__file__).parent.parent.parent / "streamlit_app.py"
+            str(Path(__file__).parent.parent.parent / "streamlit_app.py")
         ]
         logger.info(f"Running: {' '.join(streamlit_cmd)}")
         subprocess.run(streamlit_cmd)

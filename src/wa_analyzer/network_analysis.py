@@ -392,8 +392,7 @@ class WhatsAppNetworkAnalyzer:
                 help="Scale factor for node sizes"
             )
 
-        if st.button("Update Layout"):
-            update_layout(k, size_factor)
+        def update_layout(k, size_factor):
             """Update the layout with new spacing and size parameters."""
             # Update layout with new spacing but maintain the current layout algorithm
             layout_func = self.layout_algorithms.get(
