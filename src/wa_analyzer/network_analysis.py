@@ -433,10 +433,11 @@ class WhatsAppNetworkAnalyzer:
         # Show the figure in Streamlit
         st.plotly_chart(fig, use_container_width=True)
 
-    def visualize_time_series(self, max_windows=9) -> None:
+    def visualize_time_series(self, output_path: Optional[Path] = None, max_windows: int = 9) -> None:
         """Visualize the network evolution over time as a static grid of timeframes.
         
         Args:
+            output_path: Optional path to save animation (not implemented yet)
             max_windows: Maximum number of windows to display (default: 9)
         """
         if not self.graphs_by_window or not self.pos:
@@ -766,8 +767,9 @@ def analyze_whatsapp_network(
             fig.write_html(output_dir / "full_network.html")
             logger.info(f"Saved network visualization to {output_dir / 'full_network.html'}")
 
-        # Save time series animation
-        analyzer.visualize_time_series(output_dir / "network_evolution.gif")
+        # Save time series visualization
+        analyzer.visualize_time_series()
+        # TODO: Implement animation export
 
         # Export data and metrics
         analyzer.export_graph_data(output_dir)
