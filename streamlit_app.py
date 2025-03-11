@@ -47,10 +47,18 @@ with st.sidebar:
     # Load or initialize settings
     settings_file = Path("streamlit_settings.toml")
     if settings_file.exists():
-        with open(settings_file, "rb") as f:
-            st.session_state.settings = tomllib.load(f)
+        try:
+            with open(settings_file, "rb") as f:
+                st.session_state.settings = tomllib.load(f)
+        except tomllib.TOMLDecodeError:
+            # If file is corrupted, reset to defaults
+            st.session_state.settings = get_default_settings()
     else:
-        st.session_state.settings = {
+        st.session_state.settings = get_default_settings()
+
+def get_default_settings():
+    """Return default settings dictionary"""
+    return {
             'slider_settings': {
                 'response_window': {'min': 300, 'max': 3600},
                 'time_window': {'min': 1, 'max': 90},
@@ -83,23 +91,13 @@ with st.sidebar:
     
     def save_settings():
         """Save current settings to file"""
+        import toml
         with open("streamlit_settings.toml", "w") as f:
-            for key, value in st.session_state.settings.items():
-                if isinstance(value, dict):
-                    f.write(f"[{key}]\n")
-                    for subkey, subvalue in value.items():
-                        if isinstance(subvalue, dict):
-                            f.write(f"  [{key}.{subkey}]\n")
-                            for k, v in subvalue.items():
-                                f.write(f"  {k} = {v}\n")
-                        else:
-                            f.write(f"  {subkey} = {subvalue}\n")
-                else:
-                    f.write(f"{key} = {value}\n")
+            toml.dump(st.session_state.settings, f)
 
     # Reset button
     if st.button("Reset All Settings"):
-        st.session_state.settings = {
+        st.session_state.settings = get_default_settings()
             'slider_settings': {
                 'response_window': {'min': 300, 'max': 3600},
                 'time_window': {'min': 1, 'max': 90},
