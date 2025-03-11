@@ -49,6 +49,29 @@ def get_default_settings():
         }
     }
 
+def save_settings():
+    """Save current settings to file"""
+    settings_file = Path("streamlit_settings.toml")
+    try:
+        with open(settings_file, "w") as f:
+            def write_dict(d, indent=0):
+                for key, value in d.items():
+                    if isinstance(value, dict):
+                        f.write(" " * indent + f"[{key}]\n")
+                        write_dict(value, indent + 2)
+                    else:
+                        if isinstance(value, str):
+                            value = f'"{value}"'
+                        elif isinstance(value, bool):
+                            value = str(value).lower()
+                        f.write(" " * indent + f"{key} = {value}\n")
+            
+            write_dict(st.session_state.settings)
+        logger.info("Settings saved to streamlit_settings.toml")
+    except Exception as e:
+        logger.error(f"Error saving settings: {e}")
+        st.error("Failed to save settings. Please check permissions.")
+
 # Initialize session state and settings
 if 'settings' not in st.session_state:
     settings_file = Path("streamlit_settings.toml")
@@ -114,28 +137,6 @@ with st.sidebar:
         st.rerun()
     
     
-    def save_settings():
-        """Save current settings to file"""
-        settings_file = Path("streamlit_settings.toml")
-        try:
-            with open(settings_file, "w") as f:
-                def write_dict(d, indent=0):
-                    for key, value in d.items():
-                        if isinstance(value, dict):
-                            f.write(" " * indent + f"[{key}]\n")
-                            write_dict(value, indent + 2)
-                        else:
-                            if isinstance(value, str):
-                                value = f'"{value}"'
-                            elif isinstance(value, bool):
-                                value = str(value).lower()
-                            f.write(" " * indent + f"{key} = {value}\n")
-                
-                write_dict(st.session_state.settings)
-            logger.info("Settings saved to streamlit_settings.toml")
-        except Exception as e:
-            logger.error(f"Error saving settings: {e}")
-            st.error("Failed to save settings. Please check permissions.")
 
     # Reset button
     if st.button("Reset All Settings"):
