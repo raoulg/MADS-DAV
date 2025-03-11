@@ -4,6 +4,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+DAY = 60 * 60 * 24
+
 
 class BaseRegexes(BaseModel):
     timestamp: str
@@ -44,9 +46,17 @@ class Folders:
     datafile: Path
 
 
+class PreprocessConfig(BaseModel):
+    folders: Folders
+    regexes: BaseRegexes
+    datetime_format: str
+    drop_authors: list[str] = []
+
+
 @dataclass
 class NetworkAnalysisConfig:
     """Configuration for network analysis."""
+
     response_window: int = 3600  # Default 1 hour in seconds
     time_window: int = 60 * 60 * 24 * 30 * 2  # Default 2 months in seconds
     time_overlap: int = 60 * 60 * 24 * 30  # Default 1 month in seconds

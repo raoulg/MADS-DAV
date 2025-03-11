@@ -1,15 +1,16 @@
 import re
 import sys
 import tomllib
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import click
 import pandas as pd
 from loguru import logger
 
-from wa_analyzer.settings import (BaseRegexes, Folders, androidRegexes,
-                                  csvRegexes, iosRegexes, oldRegexes)
+from wa_analyzer.settings import (BaseRegexes, Folders, PreprocessConfig,
+                                  androidRegexes, csvRegexes, iosRegexes,
+                                  oldRegexes)
 
 logger.remove()
 logger.add("logs/logfile.log", rotation="1 week", level="DEBUG")
@@ -19,10 +20,11 @@ logger.debug(f"Python path: {sys.path}")
 
 
 class WhatsappPreprocessor:
-    def __init__(self, folders: Folders, regexes: BaseRegexes, datetime_format: str):
-        self.folders = folders
-        self.regexes = regexes
-        self.datetime_format = datetime_format
+    def __init__(self, config: PreprocessConfig):
+        self.folders = config.folders
+        self.regexes = config.regexes
+        self.datetime_format = config.datetime_format
+        self.drop_authors = config.drop_authors
 
     def __call__(self):
         records, _ = self.process()
@@ -52,26 +54,31 @@ class WhatsappPreprocessor:
                     try:
                         timestamp = datetime.strptime(
                             ts.groups()[0], self.datetime_format
-                        ).replace(tzinfo=datetime.timezone.utc)
+                        ).replace(tzinfo=timezone.utc)
                     except ValueError as e:
                         logger.error(
                             f"Error while processing timestamp of line {line_number}: {e}"
                         )
                         continue
-                    msg = re.search(messagereg, line)
-                    author = re.search(authorreg, line)
-                    if msg is None:
+                    msg_ = re.search(messagereg, line)
+                    author_ = re.search(authorreg, line)
+                    if msg_ is None:
                         logger.error(
                             f"Could not find a message for line {line_number}. Please check the data and / or the message regex"
                         )
                         continue
-                    if author is None:
+                    if author_ is None:
                         logger.error(
                             f"Could not find an author for line {line_number}. Please check the data and / or the author regex"
                         )
                         continue
-                    author = author.groups()[0].strip()
-                    msg = msg.groups()[0].strip()
+                    author = author_.groups()[0].strip()
+                    if any(drop_author in author for drop_author in self.drop_authors):
+                        logger.warning(f"Skipping author {author}")
+                        continue
+                    clean_tilde = r"^~\u202f"
+                    author = re.sub(clean_tilde, "", author)
+                    msg = msg_.groups()[0].strip()
                     records.append((timestamp, author, msg))
                 elif len(records) > 0:
                     appended.append(timestamp)
@@ -84,7 +91,9 @@ class WhatsappPreprocessor:
 
 
 @click.command()
-@click.option("--device", default="android", help="Device type: iOS, Android, old, or csv")
+@click.option(
+    "--device", default="android", help="Device type: iOS, Android, old, or csv"
+)
 def main(device: str):
     with open("config.toml", "rb") as f:
         config = tomllib.load(f)
@@ -92,6 +101,7 @@ def main(device: str):
         processed = Path(config["processed"])
         datafile = Path(config["input"])
         datetime_format = config["datetime_format"]
+        drop_authors = config["drop_authors"]
 
     if device.lower() == "ios":
         logger.info("Using iOS regexes")
@@ -116,7 +126,13 @@ def main(device: str):
         processed=processed,
         datafile=datafile,
     )
-    preprocessor = WhatsappPreprocessor(folders, regexes, datetime_format)
+    preprocessconfig = PreprocessConfig(
+        folders=folders,
+        regexes=regexes,
+        datetime_format=datetime_format,
+        drop_authors=drop_authors,
+    )
+    preprocessor = WhatsappPreprocessor(preprocessconfig)
     preprocessor()
 
 
