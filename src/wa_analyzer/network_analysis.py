@@ -168,20 +168,43 @@ class WhatsAppNetworkAnalyzer:
         # Calculate time windows
         start_time = self.data["timestamp"].min()
         end_time = self.data["timestamp"].max()
+        total_duration = end_time - start_time
 
+        # Convert window and overlap to timedelta
         window_size = datetime.timedelta(seconds=self.config.time_window)
         overlap = datetime.timedelta(seconds=self.config.time_overlap)
+
+        # Validate window size
+        if window_size.total_seconds() <= 0:
+            raise ValueError("Time window must be greater than 0 seconds")
+            
+        if overlap >= window_size:
+            raise ValueError("Time overlap must be smaller than time window")
+
+        # Calculate maximum reasonable number of windows
+        max_windows = 100
+        min_window_size = total_duration / max_windows
+        
+        # Adjust window size if too small
+        if window_size < min_window_size:
+            st.warning(f"Time window too small - adjusting to create max {max_windows} windows")
+            window_size = min_window_size
+            overlap = window_size / 4  # Default to 25% overlap
+            self.config.time_window = window_size.total_seconds()
+            self.config.time_overlap = overlap.total_seconds()
 
         # Create time windows with overlap
         current_start = start_time
         self.time_windows = []
+        window_count = 0
 
-        while current_start < end_time:
+        while current_start < end_time and window_count < max_windows:
             current_end = current_start + window_size
             self.time_windows.append((current_start, current_end))
             current_start = current_end - overlap
+            window_count += 1
 
-        logger.info(f"Created {len(self.time_windows)} time windows")
+        logger.info(f"Created {len(self.time_windows)} time windows (window size: {window_size}, overlap: {overlap})")
 
         # Create a graph for each time window
         self.graphs_by_window = []

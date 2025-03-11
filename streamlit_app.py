@@ -186,27 +186,29 @@ with st.sidebar:
         time_window_days = create_slider_with_controls(
             "Time Window (days)",
             'time_window',
-            default_value=60,
+            default_value=30,  # Default to 30 days instead of 60
             step=1,
-            help_text="Size of each analysis window"
+            help_text="Size of each analysis window (minimum 7 days)",
+            min_value=7  # Minimum 1 week
         )
         time_window = time_window_days * 86400  # Convert to seconds
+        
+        # Calculate default overlap as 25% of window size
+        default_overlap = max(7, int(time_window_days * 0.25))  # Minimum 7 days overlap
         
         time_overlap_days = create_slider_with_controls(
             "Time Overlap (days)",
             'time_overlap',
-            default_value=15,
+            default_value=default_overlap,
             step=1,
-            help_text="Overlap between time windows"
+            help_text="Overlap between time windows (25% of window size recommended)",
+            max_value=time_window_days - 1  # Ensure overlap is smaller than window
         )
         time_overlap = time_overlap_days * 86400  # Convert to seconds
         
-        # Validate time window and overlap
-        if time_overlap >= time_window:
-            st.error("Time overlap must be smaller than time window")
-            time_overlap = time_window - 86400  # Set overlap to 1 day less than window
-            st.session_state.settings['current_values']['time_overlap'] = time_overlap_days - 1
-            save_settings()
+        # Show warning if overlap is too large
+        if time_overlap_days >= time_window_days * 0.5:
+            st.warning("Overlap is more than 50% of window size - consider reducing overlap for better results")
 
     # Network Analysis Parameters
     with st.expander("🔍 Network Analysis Parameters", expanded=True):
