@@ -318,16 +318,13 @@ class WhatsAppNetworkAnalyzer:
                     x=[x0, x1, None],
                     y=[y0, y1, None],
                     line=dict(width=width, color="#888"),
-                    hoverinfo="text" if edge_hover_info else "none",
-                    hovertext=f"{edge[0]} ↔ {edge[1]}\nInteractions: {weight:.2f}",
+                    hoverinfo="text",
                     mode="lines",
-                    customdata=[(edge[0], edge[1])],  # Store edge info for highlighting
+                    customdata=[[edge[0], edge[1], weight]],  # Store edge info for hover
                     hovertemplate=(
                         "<b>%{customdata[0]}</b> ↔ <b>%{customdata[1]}</b><br>"
-                        + f"Interactions: {weight:.2f}<extra></extra>"
-                    )
-                    if edge_hover_info
-                    else None,
+                        + "Interactions: %{customdata[2]:.2f}<extra></extra>"
+                    ),
                 )
             )
 
