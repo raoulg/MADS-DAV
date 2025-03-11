@@ -183,21 +183,30 @@ with st.sidebar:
 
         # Time window settings
         st.markdown("**Time Window Settings**")
-        time_window = create_slider_with_controls(
+        time_window_days = create_slider_with_controls(
             "Time Window (days)",
             'time_window',
             default_value=60,
             step=1,
             help_text="Size of each analysis window"
-        ) * 86400  # Convert to seconds
+        )
+        time_window = time_window_days * 86400  # Convert to seconds
         
-        time_overlap = create_slider_with_controls(
+        time_overlap_days = create_slider_with_controls(
             "Time Overlap (days)",
             'time_overlap',
             default_value=15,
             step=1,
             help_text="Overlap between time windows"
-        ) * 86400  # Convert to seconds
+        )
+        time_overlap = time_overlap_days * 86400  # Convert to seconds
+        
+        # Validate time window and overlap
+        if time_overlap >= time_window:
+            st.error("Time overlap must be smaller than time window")
+            time_overlap = time_window - 86400  # Set overlap to 1 day less than window
+            st.session_state.settings['current_values']['time_overlap'] = time_overlap_days - 1
+            save_settings()
 
     # Network Analysis Parameters
     with st.expander("🔍 Network Analysis Parameters", expanded=True):
@@ -383,6 +392,19 @@ if selected_file:
         # Create graphs
         with st.spinner("Creating network graphs..."):
             analyzer.create_full_graph()
+            
+            # Limit time windows to a reasonable number
+            max_windows = 100  # Maximum number of time windows to calculate
+            if time_window > 0:
+                total_days = (data['timestamp'].max() - data['timestamp'].min()).days
+                if total_days / (time_window_days - time_overlap_days) > max_windows:
+                    st.warning(f"Too many time windows - adjusting settings to create max {max_windows} windows")
+                    # Adjust time window size to create max_windows windows
+                    time_window_days = total_days / max_windows + time_overlap_days
+                    time_window = time_window_days * 86400
+                    st.session_state.settings['current_values']['time_window'] = time_window_days
+                    save_settings()
+            
             analyzer.create_time_window_graphs()
         
         # Visualization tabs
