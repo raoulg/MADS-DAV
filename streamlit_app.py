@@ -452,8 +452,7 @@ if selected_file:
                 
                 num_windows = time_span / step_size
                 
-                st.info(f"Data spans {time_span:.1f} days, creating approximately {num_windows:.0f} windows")
-                
+                # Only show warning if we're actually creating too many windows
                 if num_windows > max_windows:
                     st.warning(f"Too many time windows ({num_windows:.0f}) - adjusting settings to create max {max_windows} windows")
                     # Adjust time window size to create max_windows windows

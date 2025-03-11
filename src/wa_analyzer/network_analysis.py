@@ -318,9 +318,8 @@ class WhatsAppNetworkAnalyzer:
                     x=[x0, x1, None],
                     y=[y0, y1, None],
                     line=dict(width=width, color="#888"),
-                    hoverinfo="text",
                     mode="lines",
-                    customdata=[[edge[0], edge[1], weight]],  # Store edge info for hover
+                    customdata=np.array([[edge[0], edge[1], weight]]),  # Store edge info for hover
                     hovertemplate=(
                         "<b>%{customdata[0]}</b> ↔ <b>%{customdata[1]}</b><br>"
                         + "Interactions: %{customdata[2]:.2f}<extra></extra>"
@@ -527,13 +526,12 @@ class WhatsAppNetworkAnalyzer:
                         x=[x0, x1, None],
                         y=[y0, y1, None],
                         line=dict(width=width, color="#888"),
-                        hoverinfo="text",
-                        hovertext=f"{edge[0]} ↔ {edge[1]}\nInteractions: {weight:.2f}",
+                        mode="lines",
+                        customdata=np.array([[edge[0], edge[1], weight]]),
                         hovertemplate=(
                             "<b>%{customdata[0]}</b> ↔ <b>%{customdata[1]}</b><br>"
-                            + f"Interactions: {weight:.2f}<extra></extra>"
+                            + "Interactions: %{customdata[2]:.2f}<extra></extra>"
                         ),
-                        customdata=[(edge[0], edge[1])],
                         selectedpoints=[],  # Enable selection
                         mode="lines",
                     ),
