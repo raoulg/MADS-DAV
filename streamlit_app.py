@@ -443,14 +443,15 @@ if selected_file:
             if step_size <= 0:
                 step_size = 1  # Prevent division by zero
             
-            num_windows = time_span / step_size
+            # Calculate number of windows properly
+            num_windows = (time_span - time_window_days) / step_size + 1
             
             # Only show warning if we're actually creating too many windows
             max_windows = 100  # Maximum number of time windows to calculate
             if num_windows > max_windows:
                 st.warning(f"Too many time windows ({num_windows:.0f}) - adjusting settings to create max {max_windows} windows")
                 # Adjust time window size to create max_windows windows
-                new_step_size = time_span / max_windows
+                new_step_size = (time_span - time_window_days) / (max_windows - 1)
                 new_window_size = new_step_size + time_overlap_days
                 
                 time_window_days = new_window_size
