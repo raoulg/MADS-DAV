@@ -45,8 +45,8 @@ with st.sidebar:
         st.rerun()
     
     def get_default_settings():
-    """Return default settings dictionary"""
-    return {
+        """Return default settings dictionary"""
+        return {
             'slider_settings': {
                 'response_window': {'min': 300, 'max': 3600},
                 'time_window': {'min': 1, 'max': 90},
