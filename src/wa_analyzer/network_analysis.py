@@ -181,17 +181,25 @@ class WhatsAppNetworkAnalyzer:
         if overlap >= window_size:
             raise ValueError("Time overlap must be smaller than time window")
 
-        # Calculate maximum reasonable number of windows
+        # Calculate number of windows that would be created
+        step_size = window_size - overlap
+        if step_size.total_seconds() <= 0:
+            step_size = datetime.timedelta(days=1)  # Minimum step size of 1 day
+            
+        # Calculate number of windows
+        num_windows = total_duration / step_size
+            
+        # Only show warning if we're actually creating too many windows
         max_windows = 100
-        min_window_size = total_duration / max_windows
-        
-        # Adjust window size if too small
-        if window_size < min_window_size:
-            st.warning(f"Time window too small - adjusting to create max {max_windows} windows")
-            window_size = min_window_size
-            overlap = window_size / 4  # Default to 25% overlap
+        if num_windows > max_windows:
+            st.warning(f"Too many time windows ({num_windows:.0f}) - adjusting settings to create max {max_windows} windows")
+            # Adjust window size to create max_windows windows
+            new_step_size = total_duration / max_windows
+            new_window_size = new_step_size + overlap
+                
+            # Update window size and config
+            window_size = new_window_size
             self.config.time_window = window_size.total_seconds()
-            self.config.time_overlap = overlap.total_seconds()
 
         # Create time windows with overlap
         current_start = start_time
