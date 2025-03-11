@@ -117,7 +117,7 @@ with st.sidebar:
         st.session_state.settings = get_default_settings()
         st.rerun()
 
-    def create_slider_with_controls(label, key, default_value, step, help_text, min_value=None):
+    def create_slider_with_controls(label, key, default_value, step, help_text, min_value=None, max_value=None):
         """Helper function to create sliders with min/max controls"""
         st.markdown(f"**{label} Range**")
         col1, col2 = st.columns(2)
@@ -152,9 +152,11 @@ with st.sidebar:
             "key": f"{key}_slider"
         }
         
-        # Add min_value if provided
+        # Apply min/max constraints if provided
         if min_value is not None:
             slider_kwargs["min_value"] = max(min_value, new_min)
+        if max_value is not None:
+            slider_kwargs["max_value"] = min(max_value, new_max)
         
         value = st.slider(**slider_kwargs)
         st.session_state.settings['current_values'][key] = value
