@@ -3,7 +3,6 @@ from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-import ipywidgets as widgets
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -12,21 +11,21 @@ import streamlit as st
 from loguru import logger
 from plotly.subplots import make_subplots
 
-from wa_analyzer.settings import NetworkAnalysisConfig
+from wa_analyzer.settings import DAY, HOUR, NetworkAnalysisConfig
 
 
 class WhatsAppNetworkAnalyzer:
     """Analyze WhatsApp chat data as a network of users."""
 
-    def __init__(self, config: NetworkAnalysisConfig = None):
+    def __init__(self, config: NetworkAnalysisConfig):
         """Initialize the network analyzer with configuration."""
-        self.config = config or NetworkAnalysisConfig()
+        self.config = config
         self.data = None
         self.graph = None
         self.pos = None
-        self.time_windows = []
-        self.graphs_by_window = []
-        self.node_colors = {}
+        self.time_windows: list = []
+        self.graphs_by_window: list = []
+        self.node_colors: dict = {}
 
         # Layout settings
         self.layout_algorithms = {
@@ -48,26 +47,22 @@ class WhatsAppNetworkAnalyzer:
 
         # Convert timestamp to datetime and ensure proper timezone handling
         try:
-            self.data["timestamp"] = pd.to_datetime(
-                self.data["timestamp"], utc=True
+            self.data["timestamp"] = pd.to_datetime(  # type: ignore
+                self.data["timestamp"], utc=True  # type: ignore
             ).dt.tz_convert("UTC")
         except Exception as e:
             logger.error(f"Error converting timestamps: {e}")
             logger.info("Attempting alternative timestamp conversion...")
-            # Try with a different format or approach
-            self.data["timestamp"] = pd.to_datetime(
-                self.data["timestamp"], errors="coerce", utc=True
-            )
 
         # Sort by timestamp and reset index
-        self.data = self.data.sort_values("timestamp").reset_index(drop=True)
+        self.data = self.data.sort_values("timestamp").reset_index(drop=True)  # type: ignore
 
         # Verify timestamp conversion
-        if not pd.api.types.is_datetime64_any_dtype(self.data["timestamp"]):
-            raise ValueError("Timestamp conversion failed - check input data format")
+        if not pd.api.types.is_datetime64_any_dtype(self.data["timestamp"]):  # type: ignore
+            raise ValueError("Timestamp conversion failed - check input data format")  # type: ignore
 
         logger.info(
-            f"Loaded {len(self.data)} messages from {len(self.data['author'].unique())} users"
+            f"Loaded {len(self.data)} messages from {len(self.data['author'].unique())} users"  # type: ignore
         )
 
     def create_full_graph(self) -> nx.Graph:
@@ -177,7 +172,7 @@ class WhatsAppNetworkAnalyzer:
         # Validate window size
         if window_size.total_seconds() <= 0:
             raise ValueError("Time window must be greater than 0 seconds")
-            
+
         if overlap >= window_size:
             raise ValueError("Time overlap must be smaller than time window")
 
@@ -185,18 +180,20 @@ class WhatsAppNetworkAnalyzer:
         step_size = window_size - overlap
         if step_size.total_seconds() <= 0:
             step_size = datetime.timedelta(days=1)  # Minimum step size of 1 day
-            
+
         # Calculate number of windows
         num_windows = total_duration / step_size
-            
+
         # Only show warning if we're actually creating too many windows
         max_windows = 100
         if num_windows > max_windows:
-            st.warning(f"Too many time windows ({num_windows:.0f}) - adjusting settings to create max {max_windows} windows")
+            st.warning(
+                f"Too many time windows ({num_windows:.0f}) - adjusting settings to create max {max_windows} windows"
+            )
             # Adjust window size to create max_windows windows
             new_step_size = total_duration / max_windows
             new_window_size = new_step_size + overlap
-                
+
             # Update window size and config
             window_size = new_window_size
             self.config.time_window = window_size.total_seconds()
@@ -212,7 +209,9 @@ class WhatsAppNetworkAnalyzer:
             current_start = current_end - overlap
             window_count += 1
 
-        logger.info(f"Created {len(self.time_windows)} time windows (window size: {window_size}, overlap: {overlap})")
+        logger.info(
+            f"Created {len(self.time_windows)} time windows (window size: {window_size}, overlap: {overlap})"
+        )
 
         # Create a graph for each time window
         self.graphs_by_window = []
@@ -239,7 +238,7 @@ class WhatsAppNetworkAnalyzer:
     def _process_interactions(self, G: nx.Graph, data: pd.DataFrame) -> None:
         """Process interactions to create edges between users."""
         # Track interactions within the response window
-        interactions = defaultdict(int)
+        interactions: dict = defaultdict(int)
 
         # Ensure timestamp is datetime and group by timestamp to process in order
         if not pd.api.types.is_datetime64_any_dtype(data["timestamp"]):
@@ -316,8 +315,8 @@ class WhatsAppNetworkAnalyzer:
         # Create edge trace
         edge_trace = []
         for edge in G_filtered.edges(data=True):
-            x0, y0 = self.pos[edge[0]]
-            x1, y1 = self.pos[edge[1]]
+            x0, y0 = self.pos[edge[0]]  # type: ignore
+            x1, y1 = self.pos[edge[1]]  # type: ignore
             weight = edge[2].get("weight", 1)
             # Scale width based on weight
             width = 1 + 2 * np.log1p(weight)
@@ -327,7 +326,9 @@ class WhatsAppNetworkAnalyzer:
                     y=[y0, y1, None],
                     line=dict(width=width, color="#888"),
                     mode="lines",
-                    customdata=np.array([[edge[0], edge[1], weight]]),  # Store edge info for hover
+                    customdata=np.array(
+                        [[edge[0], edge[1], weight]]
+                    ),  # Store edge info for hover
                     hovertemplate=(
                         "<b>%{customdata[0]}</b> ↔ <b>%{customdata[1]}</b><br>"
                         + "Interactions: %{customdata[2]:.2f}<extra></extra>"
@@ -343,7 +344,7 @@ class WhatsAppNetworkAnalyzer:
         node_color = []
 
         for node in G_filtered.nodes():
-            x, y = self.pos[node]
+            x, y = self.pos[node]  # type: ignore
             node_x.append(x)
             node_y.append(y)
             node_text.append(f"{node}<br>Degree: {G_filtered.degree(node)}")
@@ -378,15 +379,14 @@ class WhatsAppNetworkAnalyzer:
 
         # Create figure with edge highlighting
         fig = go.Figure(
-            data=edge_trace + [node_trace], 
-            layout=go.Layout(
-                clickmode="event+select",
-                hovermode="closest"
-            )
+            data=edge_trace + [node_trace],
+            layout=go.Layout(clickmode="event+select", hovermode="closest"),
         )
 
         # Add edge highlighting on click
-        fig.update_traces(selected=dict(marker=dict(color=edge_highlight_color, size=12)))
+        fig.update_traces(
+            selected=dict(marker=dict(color=edge_highlight_color, size=12))
+        )
 
         # Update layout
         fig.update_layout(
@@ -401,22 +401,22 @@ class WhatsAppNetworkAnalyzer:
         # Add Streamlit controls
         col1, col2 = st.columns(2)
         with col1:
-            k = st.slider(
+            k = st.slider(  # noqa: F841
                 "Node spacing (k)",
                 min_value=0.05,
                 max_value=1.0,
                 value=default_k,
                 step=0.05,
-                help="Optimal distance between nodes"
+                help="Optimal distance between nodes",
             )
         with col2:
-            size_factor = st.slider(
+            size_factor = st.slider(  # noqa: F841
                 "Node size multiplier",
                 min_value=0.1,
                 max_value=2.0,
                 value=default_size,
                 step=0.1,
-                help="Scale factor for node sizes"
+                help="Scale factor for node sizes",
             )
 
         def update_layout(k, size_factor):
@@ -506,9 +506,11 @@ class WhatsAppNetworkAnalyzer:
         fig = make_subplots(
             rows=3,
             cols=3,
-            subplot_titles=window_titles[:num_windows]
-            if window_titles
-            else [f"Window {i + 1}" for i in range(num_windows)],
+            subplot_titles=(
+                window_titles[:num_windows]
+                if window_titles
+                else [f"Window {i + 1}" for i in range(num_windows)]
+            ),
             horizontal_spacing=0.05,
             vertical_spacing=0.1,
         )
@@ -645,11 +647,11 @@ class WhatsAppNetworkAnalyzer:
                 }
             )
         elif self.selected_layout == "Kamada-Kawai":
-            layout_kwargs.update({"weight": "weight", "scale": self.layout_scale})
+            layout_kwargs.update({"weight": "weight", "scale": self.layout_scale})  # type: ignore
         elif self.selected_layout == "Circular Layout":
             layout_kwargs.update({"scale": self.layout_scale})
         elif self.selected_layout == "Spectral Layout":
-            layout_kwargs.update({"weight": "weight", "scale": self.layout_scale})
+            layout_kwargs.update({"weight": "weight", "scale": self.layout_scale})  # type: ignore
 
         # Create subgraph of main component
         main_subgraph = G.subgraph(main_component)
@@ -693,7 +695,7 @@ class WhatsAppNetworkAnalyzer:
 
                 # Offset to position around main component
                 for node, (x, y) in component_pos.items():
-                    self.pos[node] = (x + center_x, y + center_y)
+                    self.pos[node] = (x + center_x, y + center_y)  # type: ignore
 
     def export_graph_data(self, output_dir: Optional[Path] = None) -> None:
         """Export graph data in formats compatible with other visualization tools."""
@@ -780,9 +782,9 @@ class WhatsAppNetworkAnalyzer:
 
 def analyze_whatsapp_network(
     data_path: Path,
-    response_window: int = 3600,  # 1 hour in seconds
-    time_window: int = 60 * 60 * 24 * 30 * 2,  # 2 months in seconds
-    time_overlap: int = 60 * 60 * 24 * 30,  # 1 month in seconds
+    response_window: int = HOUR,  # 1 hour in seconds
+    time_window: int = DAY * 30 * 2,  # 2 months in seconds
+    time_overlap: int = DAY * 10,  # 10 days in seconds
     edge_weight_multiplier: float = 1.0,
     min_edge_weight: float = 0.5,
     output_dir: Optional[Path] = None,
@@ -796,6 +798,7 @@ def analyze_whatsapp_network(
         edge_weight_multiplier=edge_weight_multiplier,
         min_edge_weight=min_edge_weight,
     )
+    logger.info(f"Using configuration: {config}")
 
     # Initialize analyzer
     analyzer = WhatsAppNetworkAnalyzer(config)

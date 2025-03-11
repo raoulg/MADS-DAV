@@ -4,7 +4,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-DAY = 60 * 60 * 24
+HOUR = 60 * 60
+DAY = HOUR * 24
 
 
 class BaseRegexes(BaseModel):
