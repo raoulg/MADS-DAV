@@ -15,6 +15,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Initialize session state
+if 'settings' not in st.session_state:
+    settings_file = Path("streamlit_settings.toml")
+    if settings_file.exists():
+        try:
+            with open(settings_file, "rb") as f:
+                st.session_state.settings = tomllib.load(f)
+        except tomllib.TOMLDecodeError:
+            st.session_state.settings = get_default_settings()
+    else:
+        st.session_state.settings = get_default_settings()
+
 # Sidebar for settings
 with st.sidebar:
     st.title("Settings")
