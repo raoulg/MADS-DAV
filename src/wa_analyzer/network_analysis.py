@@ -359,7 +359,7 @@ class WhatsAppNetworkAnalyzer:
         )
 
         # Add edge highlighting on click
-        fig.update_traces(selected=dict(line=dict(color=edge_highlight_color, width=4)))
+        fig.update_traces(selected=dict(marker=dict(color=edge_highlight_color, size=12)))
 
         # Update layout
         fig.update_layout(
