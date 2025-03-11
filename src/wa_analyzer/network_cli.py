@@ -124,15 +124,17 @@ def main(
     # Show appropriate interface
     if streamlit:
         logger.info("Launching Streamlit interface")
-        import subprocess
-
-        subprocess.run(["streamlit", "run", "streamlit_app.py"])
+        # Return analyzer to be used in Streamlit
+        return analyzer
     elif interactive:
         logger.info("Displaying interactive visualizations")
         analyzer.visualize_graph()
         analyzer.visualize_time_series()
-
-    logger.success("Analysis complete!")
+        logger.success("Analysis complete!")
+        return analyzer
+    else:
+        logger.success("Analysis complete! Data exported to {}".format(output_dir))
+        return analyzer
 
 
 if __name__ == "__main__":
