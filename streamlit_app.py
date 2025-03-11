@@ -15,6 +15,39 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+def get_default_settings():
+    """Return default settings dictionary"""
+    return {
+        'slider_settings': {
+            'response_window': {'min': 300, 'max': 3600},
+            'time_window': {'min': 1, 'max': 90},
+            'time_overlap': {'min': 0, 'max': 30},
+            'edge_weight': {'min': 0.1, 'max': 5.0},
+            'min_edge_weight': {'min': 0.1, 'max': 2.0},
+            'node_spacing': {'min': 0.05, 'max': 1.0},
+            'node_size': {'min': 0.1, 'max': 2.0},
+            'node_size_multiplier': {'min': 0.1, 'max': 2.0},
+            'layout_iterations': {'min': 50, 'max': 1000},
+            'layout_scale': {'min': 0.5, 'max': 3.0}
+        },
+        'current_values': {
+            'response_window': 1800,
+            'time_window': 60,
+            'time_overlap': 15,
+            'edge_weight': 1.0,
+            'min_edge_weight': 0.5,
+            'node_spacing': 0.15,
+            'node_size': 0.5,
+            'node_size_multiplier': 0.5,
+            'layout_iterations': 500,
+            'layout_scale': 1.5,
+            'selected_layout': 'Spring Layout',
+            'filter_single_connections': False,
+            'use_time_cutoff': False,
+            'time_cutoff_days': 60
+        }
+    }
+
 # Initialize session state
 if 'settings' not in st.session_state:
     settings_file = Path("streamlit_settings.toml")
@@ -63,38 +96,6 @@ with st.sidebar:
             write_dict(config)
         st.rerun()
     
-    def get_default_settings():
-        """Return default settings dictionary"""
-        return {
-            'slider_settings': {
-                'response_window': {'min': 300, 'max': 3600},
-                'time_window': {'min': 1, 'max': 90},
-                'time_overlap': {'min': 0, 'max': 30},
-                'edge_weight': {'min': 0.1, 'max': 5.0},
-                'min_edge_weight': {'min': 0.1, 'max': 2.0},
-                'node_spacing': {'min': 0.05, 'max': 1.0},
-                'node_size': {'min': 0.1, 'max': 2.0},
-                'node_size_multiplier': {'min': 0.1, 'max': 2.0},
-                'layout_iterations': {'min': 50, 'max': 1000},
-                'layout_scale': {'min': 0.5, 'max': 3.0}
-            },
-            'current_values': {
-                'response_window': 1800,
-                'time_window': 60,
-                'time_overlap': 15,
-                'edge_weight': 1.0,
-                'min_edge_weight': 0.5,
-                'node_spacing': 0.15,
-                'node_size': 0.5,
-                'node_size_multiplier': 0.5,
-                'layout_iterations': 500,
-                'layout_scale': 1.5,
-                'selected_layout': 'Spring Layout',
-                'filter_single_connections': False,
-                'use_time_cutoff': False,
-                'time_cutoff_days': 60
-            }
-        }
     
     def save_settings():
         """Save current settings to file"""
