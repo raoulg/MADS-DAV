@@ -40,8 +40,15 @@ with st.sidebar:
             config = tomllib.load(f)
         config["current_file"] = selected_file
         with open("config.toml", "w") as f:
-            for key, value in config.items():
-                f.write(f"{key} = \"{value}\"\n")
+            def write_dict(d, indent=0):
+                for key, value in d.items():
+                    if isinstance(value, dict):
+                        f.write(" " * indent + f"[{key}]\n")
+                        write_dict(value, indent + 2)
+                    else:
+                        f.write(" " * indent + f"{key} = {repr(value)}\n")
+            
+            write_dict(config)
         st.rerun()
     
     def get_default_settings():
@@ -79,9 +86,18 @@ with st.sidebar:
     
     def save_settings():
         """Save current settings to file"""
-        import toml
+        import tomllib
+        # tomllib doesn't have a dump function, so we'll write manually
         with open("streamlit_settings.toml", "w") as f:
-            toml.dump(st.session_state.settings, f)
+            def write_dict(d, indent=0):
+                for key, value in d.items():
+                    if isinstance(value, dict):
+                        f.write(" " * indent + f"[{key}]\n")
+                        write_dict(value, indent + 2)
+                    else:
+                        f.write(" " * indent + f"{key} = {repr(value)}\n")
+            
+            write_dict(st.session_state.settings)
 
     # Reset button
     if st.button("Reset All Settings"):
