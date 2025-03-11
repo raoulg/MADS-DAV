@@ -1,5 +1,7 @@
 import tomllib
 from pathlib import Path
+import subprocess
+import sys
 
 import click
 from loguru import logger
@@ -124,8 +126,16 @@ def main(
     # Show appropriate interface
     if streamlit:
         logger.info("Launching Streamlit interface")
-        # Return analyzer to be used in Streamlit
-        return analyzer
+        # Launch Streamlit directly with the correct command
+        streamlit_cmd = [
+            sys.executable,  # Use the same Python interpreter
+            "-m", "streamlit", 
+            "run", 
+            str(Path(__file__).parent.parent.parent / "streamlit_app.py"
+        ]
+        logger.info(f"Running: {' '.join(streamlit_cmd)}")
+        subprocess.run(streamlit_cmd)
+        return None
     elif interactive:
         logger.info("Displaying interactive visualizations")
         analyzer.visualize_graph()

@@ -371,26 +371,29 @@ class WhatsAppNetworkAnalyzer:
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         )
 
-        # Add interactive controls
-        k_slider = widgets.FloatSlider(
-            value=default_k,  # Use provided default spacing
-            min=0.05,  # Allow closer spacing
-            max=1.0,
-            step=0.05,  # Finer control
-            description="Node spacing:",
-            continuous_update=False,
-        )
+        # Add Streamlit controls
+        col1, col2 = st.columns(2)
+        with col1:
+            k = st.slider(
+                "Node spacing (k)",
+                min_value=0.05,
+                max_value=1.0,
+                value=default_k,
+                step=0.05,
+                help="Optimal distance between nodes"
+            )
+        with col2:
+            size_factor = st.slider(
+                "Node size multiplier",
+                min_value=0.1,
+                max_value=2.0,
+                value=default_size,
+                step=0.1,
+                help="Scale factor for node sizes"
+            )
 
-        size_slider = widgets.FloatSlider(
-            value=default_size,
-            min=0.1,
-            max=2.0,
-            step=0.1,
-            description="Node size:",
-            continuous_update=False,
-        )
-
-        def update_layout(k, size_factor):
+        if st.button("Update Layout"):
+            update_layout(k, size_factor)
             """Update the layout with new spacing and size parameters."""
             # Update layout with new spacing but maintain the current layout algorithm
             layout_func = self.layout_algorithms.get(
@@ -444,9 +447,6 @@ class WhatsAppNetworkAnalyzer:
                 fig.data[edge_index].y = [y0, y1, None]
                 fig.data[edge_index].line.width = width
                 edge_index += 1
-
-        # Connect sliders to update function
-        widgets.interact(update_layout, k=k_slider, size_factor=size_slider)
 
         # Show the figure in Streamlit
         st.plotly_chart(
