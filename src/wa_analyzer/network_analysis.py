@@ -351,7 +351,11 @@ class WhatsAppNetworkAnalyzer:
 
         # Create figure with edge highlighting
         fig = go.Figure(
-            data=edge_trace + [node_trace], layout=go.Layout(clickmode="event+select")
+            data=edge_trace + [node_trace], 
+            layout=go.Layout(
+                clickmode="event+select",
+                hovermode="closest"
+            )
         )
 
         # Add edge highlighting on click
@@ -511,6 +515,7 @@ class WhatsAppNetworkAnalyzer:
                             + f"Interactions: {weight:.2f}<extra></extra>"
                         ),
                         customdata=[(edge[0], edge[1])],
+                        selectedpoints=[],  # Enable selection
                         mode="lines",
                     ),
                     row=row,
