@@ -263,6 +263,8 @@ class WhatsAppNetworkAnalyzer:
         default_size: float = 0.5,
         force_layout: bool = False,
         filter_single_connections: bool = False,
+        edge_hover_info: bool = True,
+        edge_highlight_color: str = 'rgba(255, 0, 0, 0.8)'
     ) -> go.Figure:
         """Visualize the network graph with optional layout recalculation."""
         if G is None:
@@ -300,9 +302,14 @@ class WhatsAppNetworkAnalyzer:
                     x=[x0, x1, None],
                     y=[y0, y1, None],
                     line=dict(width=width, color="#888"),
-                    hoverinfo="text",
-                    hovertext=f"Interactions: {weight:.1f}",
+                    hoverinfo="text" if edge_hover_info else "none",
+                    hovertext=f"{edge[0]} ↔ {edge[1]}\nInteractions: {weight:.2f}",
                     mode="lines",
+                    customdata=[(edge[0], edge[1])],  # Store edge info for highlighting
+                    hovertemplate=(
+                        "<b>%{customdata[0]}</b> ↔ <b>%{customdata[1]}</b><br>" +
+                        f"Interactions: {weight:.2f}<extra></extra>"
+                    ) if edge_hover_info else None,
                 )
             )
 
@@ -347,9 +354,19 @@ class WhatsAppNetworkAnalyzer:
             ),
         )
 
-        # Create figure
+        # Create figure with edge highlighting
         fig = go.Figure(
             data=edge_trace + [node_trace],
+            layout=go.Layout(
+                clickmode='event+select'
+            )
+        )
+
+        # Add edge highlighting on click
+        fig.update_traces(
+            selected=dict(
+                line=dict(color=edge_highlight_color, width=4)
+        )
             layout=go.Layout(
                 title=dict(
                     text=title,
@@ -433,7 +450,12 @@ class WhatsAppNetworkAnalyzer:
         # Show the figure in Streamlit
         st.plotly_chart(fig, use_container_width=True, key=f"network_graph_{title.replace(' ', '_')}")
 
-    def visualize_time_series(self, output_path: Optional[Path] = None, max_windows: int = 9) -> None:
+    def visualize_time_series(
+        self, 
+        output_path: Optional[Path] = None, 
+        max_windows: int = 9,
+        window_titles: Optional[List[str]] = None
+    ) -> None:
         """Visualize the network evolution over time as a static grid of timeframes.
         
         Args:
@@ -453,7 +475,7 @@ class WhatsAppNetworkAnalyzer:
         fig = make_subplots(
             rows=3, 
             cols=3,
-            subplot_titles=[f"Window {i+1}" for i in range(num_windows)],
+            subplot_titles=window_titles[:num_windows] if window_titles else [f"Window {i+1}" for i in range(num_windows)],
             horizontal_spacing=0.05,
             vertical_spacing=0.1
         )
@@ -480,7 +502,12 @@ class WhatsAppNetworkAnalyzer:
                         y=[y0, y1, None],
                         line=dict(width=width, color="#888"),
                         hoverinfo="text",
-                        hovertext=f"Interactions: {weight:.1f}",
+                        hovertext=f"{edge[0]} ↔ {edge[1]}\nInteractions: {weight:.2f}",
+                        hovertemplate=(
+                            "<b>%{customdata[0]}</b> ↔ <b>%{customdata[1]}</b><br>" +
+                            f"Interactions: {weight:.2f}<extra></extra>"
+                        ),
+                        customdata=[(edge[0], edge[1])],
                         mode="lines",
                     ),
                     row=row,
