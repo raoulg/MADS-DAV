@@ -18,12 +18,14 @@ dependencies = [
     "scikit-learn>=1.6.0",
     "seaborn>=0.13.2",
     "statsmodels>=0.14.4",
+    "streamlit>=1.43.1",
 ]
 readme = "README.md"
 license = {text = "MIT"}
 
 [project.scripts]
 "analyzer" = "wa_analyzer.preprocess:main"
+"graphdashboard" = "wa_analyzer.network_cli:main"
 
 [project.urls]
 GitHub = "https://github.com/raoulg/MADS-DAV"

@@ -2421,6 +2421,7 @@ dependencies = [
     { name = "scikit-learn" },
     { name = "seaborn" },
     { name = "statsmodels" },
+    { name = "streamlit" },
 ]
 
 [package.optional-dependencies]
@@ -2461,6 +2462,7 @@ requires-dist = [
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "sentence-transformers", marker = "extra == 'huggingface'", specifier = ">=3.3.1" },
     { name = "statsmodels", specifier = ">=0.14.4" },
+    { name = "streamlit", specifier = ">=1.43.1" },
     { name = "streamlit", marker = "extra == 'plotting'", specifier = ">=1.41.1" },
     { name = "torch", marker = "extra == 'huggingface'", specifier = ">=2.5.1" },
     { name = "transformers", marker = "extra == 'huggingface'", specifier = ">=4.47.1" },

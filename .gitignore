@@ -19,3 +19,4 @@ data/processed/*.parq
 **/personal.ipynb
 config.toml
 .aider*
+data/processed/**
