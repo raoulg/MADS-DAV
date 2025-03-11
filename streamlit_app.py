@@ -44,19 +44,7 @@ with st.sidebar:
                 f.write(f"{key} = \"{value}\"\n")
         st.rerun()
     
-    # Load or initialize settings
-    settings_file = Path("streamlit_settings.toml")
-    if settings_file.exists():
-        try:
-            with open(settings_file, "rb") as f:
-                st.session_state.settings = tomllib.load(f)
-        except tomllib.TOMLDecodeError:
-            # If file is corrupted, reset to defaults
-            st.session_state.settings = get_default_settings()
-    else:
-        st.session_state.settings = get_default_settings()
-
-def get_default_settings():
+    def get_default_settings():
     """Return default settings dictionary"""
     return {
             'slider_settings': {
@@ -291,6 +279,22 @@ def get_default_settings():
         if st.button("Recalculate Layout"):
             st.session_state.force_layout = True
             st.session_state.prev_layout = None  # Force layout recalculation
+
+    # Get current settings from session state
+    response_window = st.session_state.settings['current_values']['response_window']
+    time_window = st.session_state.settings['current_values']['time_window']
+    time_overlap = st.session_state.settings['current_values']['time_overlap']
+    edge_weight = st.session_state.settings['current_values']['edge_weight']
+    min_edge_weight = st.session_state.settings['current_values']['min_edge_weight']
+    use_time_cutoff = st.session_state.settings['current_values']['use_time_cutoff']
+    time_cutoff_days = st.session_state.settings['current_values']['time_cutoff_days']
+    selected_layout = st.session_state.settings['current_values']['selected_layout']
+    default_node_spacing = st.session_state.settings['current_values']['node_spacing']
+    layout_iterations = st.session_state.settings['current_values']['layout_iterations']
+    layout_scale = st.session_state.settings['current_values']['layout_scale']
+    node_size_multiplier = st.session_state.settings['current_values']['node_size_multiplier']
+    default_node_size = st.session_state.settings['current_values']['node_size']
+    filter_single_connections = st.session_state.settings['current_values']['filter_single_connections']
 
 # Main content
 st.title("WhatsApp Network Analyzer")
