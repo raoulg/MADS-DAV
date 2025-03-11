@@ -431,7 +431,7 @@ class WhatsAppNetworkAnalyzer:
         widgets.interact(update_layout, k=k_slider, size_factor=size_slider)
 
         # Show the figure in Streamlit
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key=f"time_series_{timestamp}")
 
     def visualize_time_series(self, output_path: Optional[Path] = None, max_windows: int = 9) -> None:
         """Visualize the network evolution over time as a static grid of timeframes.
@@ -531,6 +531,8 @@ class WhatsAppNetworkAnalyzer:
                 row=row,
                 col=col
             )
+            # Add unique key to each subplot
+            fig.update_xaxes(title_text=f"Window {i+1}", row=row, col=col)
 
             # Format subplot
             fig.update_xaxes(showgrid=False, zeroline=False, showticklabels=False, row=row, col=col)
