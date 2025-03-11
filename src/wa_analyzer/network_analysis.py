@@ -263,7 +263,7 @@ class WhatsAppNetworkAnalyzer:
         default_size: float = 0.5,
         force_layout: bool = False,
         filter_single_connections: bool = False,
-    ) -> None:
+    ) -> go.Figure:
         """Visualize the network graph with optional layout recalculation."""
         if G is None:
             G = self.graph
@@ -545,6 +545,7 @@ class WhatsAppNetworkAnalyzer:
 
         # Show in Streamlit
         st.plotly_chart(fig, use_container_width=True)
+        return fig
 
     def _calculate_layout(self, G: nx.Graph) -> None:
         """Calculate node positions using the selected layout algorithm."""
@@ -760,9 +761,10 @@ def analyze_whatsapp_network(
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # Save full graph visualization
-        analyzer.visualize_graph(title="Complete WhatsApp Interaction Network")
         fig = analyzer.visualize_graph(title="Complete WhatsApp Interaction Network")
-        fig.write_html(output_dir / "full_network.html")
+        if fig:
+            fig.write_html(output_dir / "full_network.html")
+            logger.info(f"Saved network visualization to {output_dir / 'full_network.html'}")
 
         # Save time series animation
         analyzer.visualize_time_series(output_dir / "network_evolution.gif")
