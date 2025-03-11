@@ -431,7 +431,7 @@ class WhatsAppNetworkAnalyzer:
         widgets.interact(update_layout, k=k_slider, size_factor=size_slider)
 
         # Show the figure in Streamlit
-        st.plotly_chart(fig, use_container_width=True, key=f"time_series_{timestamp}")
+        st.plotly_chart(fig, use_container_width=True, key=f"network_graph_{title.replace(' ', '_')}")
 
     def visualize_time_series(self, output_path: Optional[Path] = None, max_windows: int = 9) -> None:
         """Visualize the network evolution over time as a static grid of timeframes.
