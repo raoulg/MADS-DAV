@@ -139,25 +139,12 @@ def main(
 
 if __name__ == "__main__":
     # Check if running via Streamlit
-    if "streamlit" in __import__("sys").argv[0]:
-        import streamlit as st
-        from streamlit.runtime.scriptrunner import get_script_run_ctx
-        
-        # Initialize Streamlit session state
-        if "analyzer" not in st.session_state:
-            analyzer = main()
-            st.session_state.analyzer = analyzer
+    if __name__ == "__main__":
+        if "--streamlit" in __import__("sys").argv:
+            # Launch Streamlit app directly
+            import subprocess
+            import sys
+            subprocess.run(["streamlit", "run", "streamlit_app.py"])
         else:
-            analyzer = st.session_state.analyzer
-            
-        # Streamlit interface
-        st.title("WhatsApp Network Analysis")
-        st.write("Interactive network visualization")
-        
-        # Show visualizations
-        if analyzer:
-            analyzer.visualize_graph()
-            analyzer.visualize_time_series()
-    else:
-        # Run as CLI
-        main()
+            # Run as CLI
+            main()

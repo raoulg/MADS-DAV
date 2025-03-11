@@ -227,8 +227,12 @@ with st.sidebar:
 # Main content
 st.title("WhatsApp Network Analyzer")
 
+# Initialize analyzer in session state
+if "analyzer" not in st.session_state:
+    st.session_state.analyzer = None
+
 if selected_file:
-    if 'run_analysis' in st.session_state and st.session_state.run_analysis:
+    if st.session_state.analyzer is None or ('run_analysis' in st.session_state and st.session_state.run_analysis):
         # Load data from selected file
         data = pd.read_csv(processed_dir / selected_file)
         
