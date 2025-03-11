@@ -44,8 +44,12 @@ with st.sidebar:
                 f.write(f"{key} = \"{value}\"\n")
         st.rerun()
     
-    # Initialize settings
-    if 'settings' not in st.session_state:
+    # Load or initialize settings
+    settings_file = Path("streamlit_settings.toml")
+    if settings_file.exists():
+        with open(settings_file, "rb") as f:
+            st.session_state.settings = tomllib.load(f)
+    else:
         st.session_state.settings = {
             'slider_settings': {
                 'response_window': {'min': 300, 'max': 3600},
@@ -77,6 +81,22 @@ with st.sidebar:
             }
         }
     
+    def save_settings():
+        """Save current settings to file"""
+        with open("streamlit_settings.toml", "w") as f:
+            for key, value in st.session_state.settings.items():
+                if isinstance(value, dict):
+                    f.write(f"[{key}]\n")
+                    for subkey, subvalue in value.items():
+                        if isinstance(subvalue, dict):
+                            f.write(f"  [{key}.{subkey}]\n")
+                            for k, v in subvalue.items():
+                                f.write(f"  {k} = {v}\n")
+                        else:
+                            f.write(f"  {subkey} = {subvalue}\n")
+                else:
+                    f.write(f"{key} = {value}\n")
+
     # Reset button
     if st.button("Reset All Settings"):
         st.session_state.settings = {
@@ -146,6 +166,7 @@ with st.sidebar:
             key=f"{key}_slider"
         )
         st.session_state.settings['current_values'][key] = value
+        save_settings()
         return value
 
     # Data Selection & Time Settings
@@ -157,6 +178,7 @@ with st.sidebar:
             key="use_time_cutoff"
         )
         st.session_state.settings['current_values']['use_time_cutoff'] = use_time_cutoff
+        save_settings()
         
         if use_time_cutoff:
             time_cutoff_days = st.slider(
@@ -169,6 +191,7 @@ with st.sidebar:
                 key="time_cutoff_days"
             )
             st.session_state.settings['current_values']['time_cutoff_days'] = time_cutoff_days
+            save_settings()
         else:
             time_cutoff_days = None
 
@@ -237,6 +260,7 @@ with st.sidebar:
             key="selected_layout"
         )
         st.session_state.settings['current_values']['selected_layout'] = selected_layout
+        save_settings()
 
         default_node_spacing = create_slider_with_controls(
             "Node Spacing (k)",
@@ -271,6 +295,7 @@ with st.sidebar:
                 key="filter_single_connections"
             )
             st.session_state.settings['current_values']['filter_single_connections'] = filter_single_connections
+            save_settings()
             default_node_size = create_slider_with_controls(
                 "Node Size",
                 'node_size',
