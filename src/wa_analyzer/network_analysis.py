@@ -533,7 +533,6 @@ class WhatsAppNetworkAnalyzer:
                             + "Interactions: %{customdata[2]:.2f}<extra></extra>"
                         ),
                         selectedpoints=[],  # Enable selection
-                        mode="lines",
                     ),
                     row=row,
                     col=col,
