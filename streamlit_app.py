@@ -435,34 +435,34 @@ if selected_file:
         with st.spinner("Creating network graphs..."):
             analyzer.create_full_graph()
             
-            # Limit time windows to a reasonable number
+            # Calculate total time span in days
+            time_span = (data['timestamp'].max() - data['timestamp'].min()).total_seconds() / 86400
+            
+            # Calculate number of windows that would be created
+            step_size = time_window_days - time_overlap_days
+            if step_size <= 0:
+                step_size = 1  # Prevent division by zero
+            
+            num_windows = time_span / step_size
+            
+            # Only show warning if we're actually creating too many windows
             max_windows = 100  # Maximum number of time windows to calculate
-            if time_window > 0:
-                # Ensure timestamp is datetime
-                if not pd.api.types.is_datetime64_any_dtype(data["timestamp"]):
-                    data["timestamp"] = pd.to_datetime(data["timestamp"], utc=True)
+            if num_windows > max_windows:
+                st.warning(f"Too many time windows ({num_windows:.0f}) - adjusting settings to create max {max_windows} windows")
+                # Adjust time window size to create max_windows windows
+                new_step_size = time_span / max_windows
+                new_window_size = new_step_size + time_overlap_days
                 
-                # Calculate total time span in days
-                time_span = (data['timestamp'].max() - data['timestamp'].min()).total_seconds() / 86400
-                
-                # Calculate number of windows that would be created
-                step_size = time_window_days - time_overlap_days
-                if step_size <= 0:
-                    step_size = 1  # Prevent division by zero
-                
-                num_windows = time_span / step_size
-                
-                # Only show warning if we're actually creating too many windows
-                if num_windows > max_windows:
-                    st.warning(f"Too many time windows ({num_windows:.0f}) - adjusting settings to create max {max_windows} windows")
-                    # Adjust time window size to create max_windows windows
-                    new_step_size = time_span / max_windows
-                    new_window_size = new_step_size + time_overlap_days
-                    
-                    time_window_days = new_window_size
-                    time_window = time_window_days * 86400
-                    st.session_state.settings['current_values']['time_window'] = time_window_days
-                    save_settings()
+                time_window_days = new_window_size
+                time_window = time_window_days * 86400
+                st.session_state.settings['current_values']['time_window'] = time_window_days
+                save_settings()
+            
+            # Show info about the time windows being created
+            st.info(f"Creating {num_windows:.0f} time windows with:")
+            st.info(f"- Window size: {time_window_days:.1f} days")
+            st.info(f"- Overlap: {time_overlap_days:.1f} days")
+            st.info(f"- Total time span: {time_span:.1f} days")
             
             analyzer.create_time_window_graphs()
         
