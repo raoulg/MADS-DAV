@@ -49,17 +49,33 @@ def get_default_settings():
         }
     }
 
-# Initialize session state
+# Initialize session state and settings
 if 'settings' not in st.session_state:
     settings_file = Path("streamlit_settings.toml")
     if settings_file.exists():
         try:
             with open(settings_file, "rb") as f:
-                st.session_state.settings = tomllib.load(f)
-        except tomllib.TOMLDecodeError:
+                # Convert TOML data to proper types
+                loaded_settings = tomllib.load(f)
+                # Ensure all required keys exist
+                default_settings = get_default_settings()
+                st.session_state.settings = {
+                    'slider_settings': {
+                        **default_settings['slider_settings'],
+                        **loaded_settings.get('slider_settings', {})
+                    },
+                    'current_values': {
+                        **default_settings['current_values'],
+                        **loaded_settings.get('current_values', {})
+                    }
+                }
+        except (tomllib.TOMLDecodeError, KeyError) as e:
+            logger.error(f"Error loading settings: {e}")
             st.session_state.settings = get_default_settings()
+            save_settings()
     else:
         st.session_state.settings = get_default_settings()
+        save_settings()
 
 # Sidebar for settings
 with st.sidebar:
@@ -100,21 +116,26 @@ with st.sidebar:
     
     def save_settings():
         """Save current settings to file"""
-        import tomllib
-        # tomllib doesn't have a dump function, so we'll write manually
-        with open("streamlit_settings.toml", "w") as f:
-            def write_dict(d, indent=0):
-                for key, value in d.items():
-                    if isinstance(value, dict):
-                        f.write(" " * indent + f"[{key}]\n")
-                        write_dict(value, indent + 2)
-                    else:
-                        if isinstance(value, str):
-                            value = f'"{value}"'
-                        f.write(" " * indent + f"{key} = {value}\n")
-            
-            write_dict(st.session_state.settings)
-        logger.info("Settings saved to streamlit_settings.toml")
+        settings_file = Path("streamlit_settings.toml")
+        try:
+            with open(settings_file, "w") as f:
+                def write_dict(d, indent=0):
+                    for key, value in d.items():
+                        if isinstance(value, dict):
+                            f.write(" " * indent + f"[{key}]\n")
+                            write_dict(value, indent + 2)
+                        else:
+                            if isinstance(value, str):
+                                value = f'"{value}"'
+                            elif isinstance(value, bool):
+                                value = str(value).lower()
+                            f.write(" " * indent + f"{key} = {value}\n")
+                
+                write_dict(st.session_state.settings)
+            logger.info("Settings saved to streamlit_settings.toml")
+        except Exception as e:
+            logger.error(f"Error saving settings: {e}")
+            st.error("Failed to save settings. Please check permissions.")
 
     # Reset button
     if st.button("Reset All Settings"):
@@ -174,11 +195,9 @@ with st.sidebar:
             "Use Time Cutoff", 
             value=st.session_state.settings['current_values'].get('use_time_cutoff', False),
             key="use_time_cutoff",
-            on_change=lambda: (
-                st.session_state.settings['current_values'].__setitem__('use_time_cutoff', st.session_state.use_time_cutoff),
-                save_settings()
-            )
+            on_change=lambda: save_settings()
         )
+        st.session_state.settings['current_values']['use_time_cutoff'] = st.session_state.use_time_cutoff
         
         if use_time_cutoff:
             time_cutoff_days = st.slider(
