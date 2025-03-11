@@ -8,9 +8,9 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import streamlit as st
 from loguru import logger
+from plotly.subplots import make_subplots
 
 from wa_analyzer.settings import NetworkAnalysisConfig
 
@@ -27,15 +27,15 @@ class WhatsAppNetworkAnalyzer:
         self.time_windows = []
         self.graphs_by_window = []
         self.node_colors = {}
-        
+
         # Layout settings
         self.layout_algorithms = {
-            'Spring Layout': nx.spring_layout,
-            'Kamada-Kawai': nx.kamada_kawai_layout,
-            'Circular Layout': nx.circular_layout,
-            'Spectral Layout': nx.spectral_layout
+            "Spring Layout": nx.spring_layout,
+            "Kamada-Kawai": nx.kamada_kawai_layout,
+            "Circular Layout": nx.circular_layout,
+            "Spectral Layout": nx.spectral_layout,
         }
-        self.selected_layout = 'Spring Layout'
+        self.selected_layout = "Spring Layout"
         self.default_node_spacing = 0.15
         self.layout_iterations = 500
         self.layout_scale = 1.5
@@ -48,16 +48,20 @@ class WhatsAppNetworkAnalyzer:
 
         # Convert timestamp to datetime and ensure proper timezone handling
         try:
-            self.data["timestamp"] = pd.to_datetime(self.data["timestamp"], utc=True).dt.tz_convert('UTC')
+            self.data["timestamp"] = pd.to_datetime(
+                self.data["timestamp"], utc=True
+            ).dt.tz_convert("UTC")
         except Exception as e:
             logger.error(f"Error converting timestamps: {e}")
             logger.info("Attempting alternative timestamp conversion...")
             # Try with a different format or approach
-            self.data["timestamp"] = pd.to_datetime(self.data["timestamp"], errors='coerce', utc=True)
-        
+            self.data["timestamp"] = pd.to_datetime(
+                self.data["timestamp"], errors="coerce", utc=True
+            )
+
         # Sort by timestamp and reset index
         self.data = self.data.sort_values("timestamp").reset_index(drop=True)
-        
+
         # Verify timestamp conversion
         if not pd.api.types.is_datetime64_any_dtype(self.data["timestamp"]):
             raise ValueError("Timestamp conversion failed - check input data format")
@@ -93,42 +97,33 @@ class WhatsAppNetworkAnalyzer:
         # Separate nodes into connected components
         connected_components = list(nx.connected_components(G))
         main_component = max(connected_components, key=len)
-        other_components = [comp for comp in connected_components if comp != main_component]
+        other_components = [
+            comp for comp in connected_components if comp != main_component
+        ]
 
         # Generate layout for main component using selected algorithm
         layout_func = self.layout_algorithms[self.selected_layout]
-        
+
         # Common layout parameters
-        layout_kwargs = {
-            'scale': self.layout_scale
-        }
-        
+        layout_kwargs = {"scale": self.layout_scale}
+
         # Add algorithm-specific parameters
-        if self.selected_layout == 'Spring Layout':
-            layout_kwargs.update({
-                'seed': 42,
-                'k': self.default_node_spacing,
-                'iterations': self.layout_iterations
-            })
-        elif self.selected_layout == 'Kamada-Kawai':
-            layout_kwargs.update({
-                'weight': 'weight',
-                'scale': self.layout_scale
-            })
-        elif self.selected_layout == 'Circular Layout':
-            layout_kwargs.update({
-                'scale': self.layout_scale
-            })
-        elif self.selected_layout == 'Spectral Layout':
-            layout_kwargs.update({
-                'weight': 'weight',
-                'scale': self.layout_scale
-            })
-            
-        main_pos = layout_func(
-            G.subgraph(main_component),
-            **layout_kwargs
-        )
+        if self.selected_layout == "Spring Layout":
+            layout_kwargs.update(
+                {
+                    "seed": 42,
+                    "k": self.default_node_spacing,
+                    "iterations": self.layout_iterations,
+                }
+            )
+        elif self.selected_layout == "Kamada-Kawai":
+            layout_kwargs.update({"weight": "weight", "scale": self.layout_scale})
+        elif self.selected_layout == "Circular Layout":
+            layout_kwargs.update({"scale": self.layout_scale})
+        elif self.selected_layout == "Spectral Layout":
+            layout_kwargs.update({"weight": "weight", "scale": self.layout_scale})
+
+        main_pos = layout_func(G.subgraph(main_component), **layout_kwargs)
 
         # Position other components around the main one
         self.pos = main_pos.copy()
@@ -140,25 +135,21 @@ class WhatsAppNetworkAnalyzer:
             y_min, y_max = min(main_y), max(main_y)
             width = x_max - x_min
             height = y_max - y_min
-            
+
             # Position other components in a circle around main component
             radius = max(width, height) * 1.5
             angle_step = 2 * np.pi / len(other_components)
-            
+
             for i, component in enumerate(other_components):
                 angle = i * angle_step
                 center_x = radius * np.cos(angle)
                 center_y = radius * np.sin(angle)
-                
+
                 # Layout the component
                 component_pos = nx.spring_layout(
-                    G.subgraph(component),
-                    seed=42,
-                    k=0.05,
-                    iterations=100,
-                    scale=0.5
+                    G.subgraph(component), seed=42, k=0.05, iterations=100, scale=0.5
                 )
-                
+
                 # Offset to position around main component
                 for node, (x, y) in component_pos.items():
                     self.pos[node] = (x + center_x, y + center_y)
@@ -222,7 +213,7 @@ class WhatsAppNetworkAnalyzer:
         # Ensure timestamp is datetime and group by timestamp to process in order
         if not pd.api.types.is_datetime64_any_dtype(data["timestamp"]):
             data["timestamp"] = pd.to_datetime(data["timestamp"], utc=True)
-                
+
         for timestamp, group in data.groupby("timestamp"):
             # Ensure timestamp is a datetime object
             if isinstance(timestamp, str):
@@ -264,7 +255,7 @@ class WhatsAppNetworkAnalyzer:
         force_layout: bool = False,
         filter_single_connections: bool = False,
         edge_hover_info: bool = True,
-        edge_highlight_color: str = 'rgba(255, 0, 0, 0.8)'
+        edge_highlight_color: str = "rgba(255, 0, 0, 0.8)",
     ) -> go.Figure:
         """Visualize the network graph with optional layout recalculation."""
         if G is None:
@@ -282,11 +273,13 @@ class WhatsAppNetworkAnalyzer:
         if filter_single_connections:
             # Remove nodes with degree <= 1
             filtered_nodes = [node for node in G.nodes() if G.degree(node) > 1]
-            st.info(f"Filtered out {len(G.nodes()) - len(filtered_nodes)} nodes with only one connection")
+            st.info(
+                f"Filtered out {len(G.nodes()) - len(filtered_nodes)} nodes with only one connection"
+            )
         else:
             # Remove completely isolated nodes
             filtered_nodes = [node for node in G.nodes() if G.degree(node) > 0]
-            
+
         G_filtered = G.subgraph(filtered_nodes)
 
         # Create edge trace
@@ -294,7 +287,7 @@ class WhatsAppNetworkAnalyzer:
         for edge in G_filtered.edges(data=True):
             x0, y0 = self.pos[edge[0]]
             x1, y1 = self.pos[edge[1]]
-            weight = edge[2].get('weight', 1)
+            weight = edge[2].get("weight", 1)
             # Scale width based on weight
             width = 1 + 2 * np.log1p(weight)
             edge_trace.append(
@@ -307,9 +300,11 @@ class WhatsAppNetworkAnalyzer:
                     mode="lines",
                     customdata=[(edge[0], edge[1])],  # Store edge info for highlighting
                     hovertemplate=(
-                        "<b>%{customdata[0]}</b> ↔ <b>%{customdata[1]}</b><br>" +
-                        f"Interactions: {weight:.2f}<extra></extra>"
-                    ) if edge_hover_info else None,
+                        "<b>%{customdata[0]}</b> ↔ <b>%{customdata[1]}</b><br>"
+                        + f"Interactions: {weight:.2f}<extra></extra>"
+                    )
+                    if edge_hover_info
+                    else None,
                 )
             )
 
@@ -356,28 +351,20 @@ class WhatsAppNetworkAnalyzer:
 
         # Create figure with edge highlighting
         fig = go.Figure(
-            data=edge_trace + [node_trace],
-            layout=go.Layout(
-                clickmode='event+select'
-            )
+            data=edge_trace + [node_trace], layout=go.Layout(clickmode="event+select")
         )
 
         # Add edge highlighting on click
-        fig.update_traces(
-            selected=dict(
-                line=dict(color=edge_highlight_color, width=4)
-        )
-            layout=go.Layout(
-                title=dict(
-                    text=title,
-                    font=dict(size=16)
-                ),
-                showlegend=False,
-                hovermode="closest",
-                margin=dict(b=20, l=5, r=5, t=40),
-                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            ),
+        fig.update_traces(selected=dict(line=dict(color=edge_highlight_color, width=4)))
+
+        # Update layout
+        fig.update_layout(
+            title=dict(text=title, font=dict(size=16)),
+            showlegend=False,
+            hovermode="closest",
+            margin=dict(b=20, l=5, r=5, t=40),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         )
 
         # Add interactive controls
@@ -402,17 +389,23 @@ class WhatsAppNetworkAnalyzer:
         def update_layout(k, size_factor):
             """Update the layout with new spacing and size parameters."""
             # Update layout with new spacing but maintain the current layout algorithm
-            layout_func = self.layout_algorithms.get(self.selected_layout, nx.spring_layout)
-        
+            layout_func = self.layout_algorithms.get(
+                self.selected_layout, nx.spring_layout
+            )
+
             # Set parameters based on layout algorithm
-            if self.selected_layout == 'Spring Layout':
+            if self.selected_layout == "Spring Layout":
                 self.pos = layout_func(G_filtered, k=k, iterations=500, seed=42)
-            elif self.selected_layout == 'Kamada-Kawai':
-                self.pos = layout_func(G_filtered, weight='weight', scale=self.layout_scale)
-            elif self.selected_layout == 'Circular Layout':
+            elif self.selected_layout == "Kamada-Kawai":
+                self.pos = layout_func(
+                    G_filtered, weight="weight", scale=self.layout_scale
+                )
+            elif self.selected_layout == "Circular Layout":
                 self.pos = layout_func(G_filtered, scale=self.layout_scale)
-            elif self.selected_layout == 'Spectral Layout':
-                self.pos = layout_func(G_filtered, weight='weight', scale=self.layout_scale)
+            elif self.selected_layout == "Spectral Layout":
+                self.pos = layout_func(
+                    G_filtered, weight="weight", scale=self.layout_scale
+                )
             else:
                 # Default to spring layout
                 self.pos = nx.spring_layout(G_filtered, k=k, iterations=500, seed=42)
@@ -423,7 +416,11 @@ class WhatsAppNetworkAnalyzer:
                 y=[self.pos[node][1] for node in G_filtered.nodes()],
                 marker=dict(
                     size=[
-                        10 + 5 * size_factor * self.node_size_multiplier * G_filtered.degree(node)
+                        10
+                        + 5
+                        * size_factor
+                        * self.node_size_multiplier
+                        * G_filtered.degree(node)
                         for node in G_filtered.nodes()
                     ]
                 ),
@@ -437,7 +434,7 @@ class WhatsAppNetworkAnalyzer:
                     break
                 x0, y0 = self.pos[edge[0]]
                 x1, y1 = self.pos[edge[1]]
-                weight = edge[2].get('weight', 1)
+                weight = edge[2].get("weight", 1)
                 width = 1 + 2 * np.log1p(weight)
                 fig.data[edge_index].x = [x0, x1, None]
                 fig.data[edge_index].y = [y0, y1, None]
@@ -448,16 +445,20 @@ class WhatsAppNetworkAnalyzer:
         widgets.interact(update_layout, k=k_slider, size_factor=size_slider)
 
         # Show the figure in Streamlit
-        st.plotly_chart(fig, use_container_width=True, key=f"network_graph_{title.replace(' ', '_')}")
+        st.plotly_chart(
+            fig,
+            use_container_width=True,
+            key=f"network_graph_{title.replace(' ', '_')}",
+        )
 
     def visualize_time_series(
-        self, 
-        output_path: Optional[Path] = None, 
+        self,
+        output_path: Optional[Path] = None,
         max_windows: int = 9,
-        window_titles: Optional[List[str]] = None
+        window_titles: Optional[List[str]] = None,
     ) -> None:
         """Visualize the network evolution over time as a static grid of timeframes.
-        
+
         Args:
             output_path: Optional path to save animation (not implemented yet)
             max_windows: Maximum number of windows to display (default: 9)
@@ -470,30 +471,32 @@ class WhatsAppNetworkAnalyzer:
         # Get the last N timeframes (up to max_windows)
         last_windows = self.graphs_by_window[-max_windows:]
         num_windows = len(last_windows)
-        
+
         # Create subplots
         fig = make_subplots(
-            rows=3, 
+            rows=3,
             cols=3,
-            subplot_titles=window_titles[:num_windows] if window_titles else [f"Window {i+1}" for i in range(num_windows)],
+            subplot_titles=window_titles[:num_windows]
+            if window_titles
+            else [f"Window {i + 1}" for i in range(num_windows)],
             horizontal_spacing=0.05,
-            vertical_spacing=0.1
+            vertical_spacing=0.1,
         )
 
         # Plot each timeframe
         for i, (timestamp, G) in enumerate(last_windows):
             row = (i // 3) + 1
             col = (i % 3) + 1
-            
+
             # Create edge traces
             for edge in G.edges(data=True):
                 # Skip edges where nodes don't have positions
                 if edge[0] not in self.pos or edge[1] not in self.pos:
                     continue
-                    
+
                 x0, y0 = self.pos[edge[0]]
                 x1, y1 = self.pos[edge[1]]
-                weight = edge[2].get('weight', 1)
+                weight = edge[2].get("weight", 1)
                 # Scale width based on weight
                 width = 1 + 2 * np.log1p(weight)
                 fig.add_trace(
@@ -504,14 +507,14 @@ class WhatsAppNetworkAnalyzer:
                         hoverinfo="text",
                         hovertext=f"{edge[0]} ↔ {edge[1]}\nInteractions: {weight:.2f}",
                         hovertemplate=(
-                            "<b>%{customdata[0]}</b> ↔ <b>%{customdata[1]}</b><br>" +
-                            f"Interactions: {weight:.2f}<extra></extra>"
+                            "<b>%{customdata[0]}</b> ↔ <b>%{customdata[1]}</b><br>"
+                            + f"Interactions: {weight:.2f}<extra></extra>"
                         ),
                         customdata=[(edge[0], edge[1])],
                         mode="lines",
                     ),
                     row=row,
-                    col=col
+                    col=col,
                 )
 
             # Create node trace
@@ -525,7 +528,7 @@ class WhatsAppNetworkAnalyzer:
                 # Skip nodes that don't have positions
                 if node not in self.pos:
                     continue
-                    
+
                 x, y = self.pos[node]
                 node_x.append(x)
                 node_y.append(y)
@@ -556,21 +559,25 @@ class WhatsAppNetworkAnalyzer:
                     ),
                 ),
                 row=row,
-                col=col
+                col=col,
             )
             # Add unique key to each subplot
-            fig.update_xaxes(title_text=f"Window {i+1}", row=row, col=col)
+            fig.update_xaxes(title_text=f"Window {i + 1}", row=row, col=col)
 
             # Format subplot
-            fig.update_xaxes(showgrid=False, zeroline=False, showticklabels=False, row=row, col=col)
-            fig.update_yaxes(showgrid=False, zeroline=False, showticklabels=False, row=row, col=col)
+            fig.update_xaxes(
+                showgrid=False, zeroline=False, showticklabels=False, row=row, col=col
+            )
+            fig.update_yaxes(
+                showgrid=False, zeroline=False, showticklabels=False, row=row, col=col
+            )
 
         # Update layout
         fig.update_layout(
             title_text=f"WhatsApp Network Evolution - Last {num_windows} Time Windows",
             showlegend=False,
             height=900,
-            margin=dict(b=20, l=20, r=20, t=100)
+            margin=dict(b=20, l=20, r=20, t=100),
         )
 
         # Show in Streamlit
@@ -581,54 +588,45 @@ class WhatsAppNetworkAnalyzer:
         """Calculate node positions using the selected layout algorithm."""
         # Log the layout calculation
         st.write(f"Calculating layout using {self.selected_layout}...")
-        
+
         # Separate nodes into connected components
         connected_components = list(nx.connected_components(G))
         if not connected_components:
             st.warning("Graph has no connected components")
             return
-            
+
         main_component = max(connected_components, key=len)
-        other_components = [comp for comp in connected_components if comp != main_component]
+        other_components = [
+            comp for comp in connected_components if comp != main_component
+        ]
 
         # Generate layout for main component using selected algorithm
         layout_func = self.layout_algorithms[self.selected_layout]
-        
+
         # Common layout parameters
-        layout_kwargs = {
-            'scale': self.layout_scale
-        }
-        
+        layout_kwargs = {"scale": self.layout_scale}
+
         # Add algorithm-specific parameters
-        if self.selected_layout == 'Spring Layout':
-            layout_kwargs.update({
-                'seed': 42,
-                'k': self.default_node_spacing,
-                'iterations': self.layout_iterations
-            })
-        elif self.selected_layout == 'Kamada-Kawai':
-            layout_kwargs.update({
-                'weight': 'weight',
-                'scale': self.layout_scale
-            })
-        elif self.selected_layout == 'Circular Layout':
-            layout_kwargs.update({
-                'scale': self.layout_scale
-            })
-        elif self.selected_layout == 'Spectral Layout':
-            layout_kwargs.update({
-                'weight': 'weight',
-                'scale': self.layout_scale
-            })
-        
+        if self.selected_layout == "Spring Layout":
+            layout_kwargs.update(
+                {
+                    "seed": 42,
+                    "k": self.default_node_spacing,
+                    "iterations": self.layout_iterations,
+                }
+            )
+        elif self.selected_layout == "Kamada-Kawai":
+            layout_kwargs.update({"weight": "weight", "scale": self.layout_scale})
+        elif self.selected_layout == "Circular Layout":
+            layout_kwargs.update({"scale": self.layout_scale})
+        elif self.selected_layout == "Spectral Layout":
+            layout_kwargs.update({"weight": "weight", "scale": self.layout_scale})
+
         # Create subgraph of main component
         main_subgraph = G.subgraph(main_component)
-        
+
         try:
-            main_pos = layout_func(
-                main_subgraph,
-                **layout_kwargs
-            )
+            main_pos = layout_func(main_subgraph, **layout_kwargs)
         except Exception as e:
             st.error(f"Error calculating layout: {e}")
             # Fall back to spring layout
@@ -636,7 +634,7 @@ class WhatsAppNetworkAnalyzer:
                 main_subgraph,
                 seed=42,
                 k=self.default_node_spacing,
-                iterations=self.layout_iterations
+                iterations=self.layout_iterations,
             )
 
         # Position other components around the main one
@@ -649,25 +647,21 @@ class WhatsAppNetworkAnalyzer:
             y_min, y_max = min(main_y), max(main_y)
             width = x_max - x_min
             height = y_max - y_min
-            
+
             # Position other components in a circle around main component
             radius = max(width, height) * 1.5
             angle_step = 2 * np.pi / len(other_components)
-            
+
             for i, component in enumerate(other_components):
                 angle = i * angle_step
                 center_x = radius * np.cos(angle)
                 center_y = radius * np.sin(angle)
-                
+
                 # Layout the component
                 component_pos = nx.spring_layout(
-                    G.subgraph(component),
-                    seed=42,
-                    k=0.05,
-                    iterations=100,
-                    scale=0.5
+                    G.subgraph(component), seed=42, k=0.05, iterations=100, scale=0.5
                 )
-                
+
                 # Offset to position around main component
                 for node, (x, y) in component_pos.items():
                     self.pos[node] = (x + center_x, y + center_y)
@@ -794,7 +788,9 @@ def analyze_whatsapp_network(
         fig = analyzer.visualize_graph(title="Complete WhatsApp Interaction Network")
         if fig:
             fig.write_html(output_dir / "full_network.html")
-            logger.info(f"Saved network visualization to {output_dir / 'full_network.html'}")
+            logger.info(
+                f"Saved network visualization to {output_dir / 'full_network.html'}"
+            )
 
         # Save time series visualization
         analyzer.visualize_time_series()
