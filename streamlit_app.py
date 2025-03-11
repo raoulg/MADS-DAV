@@ -44,20 +44,72 @@ with st.sidebar:
                 f.write(f"{key} = \"{value}\"\n")
         st.rerun()
     
-    # Initialize slider settings
-    if 'slider_settings' not in st.session_state:
-        st.session_state.slider_settings = {
-            'response_window': {'min': 300, 'max': 3600},
-            'time_window': {'min': 1, 'max': 90},
-            'time_overlap': {'min': 0, 'max': 30},
-            'edge_weight': {'min': 0.1, 'max': 5.0},
-            'min_edge_weight': {'min': 0.1, 'max': 2.0},
-            'node_spacing': {'min': 0.05, 'max': 1.0},
-            'node_size': {'min': 0.1, 'max': 2.0},
-            'node_size_multiplier': {'min': 0.1, 'max': 2.0},
-            'layout_iterations': {'min': 50, 'max': 1000},
-            'layout_scale': {'min': 0.5, 'max': 3.0}
+    # Initialize settings
+    if 'settings' not in st.session_state:
+        st.session_state.settings = {
+            'slider_settings': {
+                'response_window': {'min': 300, 'max': 3600},
+                'time_window': {'min': 1, 'max': 90},
+                'time_overlap': {'min': 0, 'max': 30},
+                'edge_weight': {'min': 0.1, 'max': 5.0},
+                'min_edge_weight': {'min': 0.1, 'max': 2.0},
+                'node_spacing': {'min': 0.05, 'max': 1.0},
+                'node_size': {'min': 0.1, 'max': 2.0},
+                'node_size_multiplier': {'min': 0.1, 'max': 2.0},
+                'layout_iterations': {'min': 50, 'max': 1000},
+                'layout_scale': {'min': 0.5, 'max': 3.0}
+            },
+            'current_values': {
+                'response_window': 1800,
+                'time_window': 60,
+                'time_overlap': 15,
+                'edge_weight': 1.0,
+                'min_edge_weight': 0.5,
+                'node_spacing': 0.15,
+                'node_size': 0.5,
+                'node_size_multiplier': 0.5,
+                'layout_iterations': 500,
+                'layout_scale': 1.5,
+                'selected_layout': 'Spring Layout',
+                'filter_single_connections': False,
+                'use_time_cutoff': False,
+                'time_cutoff_days': 60
+            }
         }
+    
+    # Reset button
+    if st.button("Reset All Settings"):
+        st.session_state.settings = {
+            'slider_settings': {
+                'response_window': {'min': 300, 'max': 3600},
+                'time_window': {'min': 1, 'max': 90},
+                'time_overlap': {'min': 0, 'max': 30},
+                'edge_weight': {'min': 0.1, 'max': 5.0},
+                'min_edge_weight': {'min': 0.1, 'max': 2.0},
+                'node_spacing': {'min': 0.05, 'max': 1.0},
+                'node_size': {'min': 0.1, 'max': 2.0},
+                'node_size_multiplier': {'min': 0.1, 'max': 2.0},
+                'layout_iterations': {'min': 50, 'max': 1000},
+                'layout_scale': {'min': 0.5, 'max': 3.0}
+            },
+            'current_values': {
+                'response_window': 1800,
+                'time_window': 60,
+                'time_overlap': 15,
+                'edge_weight': 1.0,
+                'min_edge_weight': 0.5,
+                'node_spacing': 0.15,
+                'node_size': 0.5,
+                'node_size_multiplier': 0.5,
+                'layout_iterations': 500,
+                'layout_scale': 1.5,
+                'selected_layout': 'Spring Layout',
+                'filter_single_connections': False,
+                'use_time_cutoff': False,
+                'time_cutoff_days': 60
+            }
+        }
+        st.rerun()
 
     def create_slider_with_controls(label, key, default_value, step, help_text):
         """Helper function to create sliders with min/max controls"""
@@ -66,41 +118,57 @@ with st.sidebar:
         with col1:
             new_min = st.number_input(
                 f"Min {label}",
-                value=st.session_state.slider_settings[key]['min'],
+                value=st.session_state.settings['slider_settings'][key]['min'],
                 step=step,
                 key=f"{key}_min"
             )
         with col2:
             new_max = st.number_input(
                 f"Max {label}",
-                value=st.session_state.slider_settings[key]['max'],
+                value=st.session_state.settings['slider_settings'][key]['max'],
                 step=step,
                 key=f"{key}_max"
             )
-        st.session_state.slider_settings[key]['min'] = new_min
-        st.session_state.slider_settings[key]['max'] = new_max
-        return st.slider(
+        st.session_state.settings['slider_settings'][key]['min'] = new_min
+        st.session_state.settings['slider_settings'][key]['max'] = new_max
+        
+        # Get current value from session state or use default
+        current_value = st.session_state.settings['current_values'].get(key, default_value)
+        
+        # Create slider and store value in session state
+        value = st.slider(
             label,
             min_value=new_min,
             max_value=new_max,
-            value=default_value,
+            value=current_value,
             step=step,
-            help=help_text
+            help=help_text,
+            key=f"{key}_slider"
         )
+        st.session_state.settings['current_values'][key] = value
+        return value
 
     # Data Selection & Time Settings
     with st.expander("📅 Data Selection & Time Settings", expanded=True):
         # Time cutoff settings
-        use_time_cutoff = st.checkbox("Use Time Cutoff", value=False)
+        use_time_cutoff = st.checkbox(
+            "Use Time Cutoff", 
+            value=st.session_state.settings['current_values'].get('use_time_cutoff', False),
+            key="use_time_cutoff"
+        )
+        st.session_state.settings['current_values']['use_time_cutoff'] = use_time_cutoff
+        
         if use_time_cutoff:
             time_cutoff_days = st.slider(
                 "Show only last X days",
                 min_value=1,
                 max_value=365,
-                value=60,
+                value=st.session_state.settings['current_values'].get('time_cutoff_days', 60),
                 step=1,
-                help="Only show data from the last X days"
+                help="Only show data from the last X days",
+                key="time_cutoff_days"
             )
+            st.session_state.settings['current_values']['time_cutoff_days'] = time_cutoff_days
         else:
             time_cutoff_days = None
 
@@ -162,9 +230,13 @@ with st.sidebar:
         selected_layout = st.selectbox(
             "Layout Algorithm",
             list(layout_algorithms.keys()),
-            index=0,
-            help="Choose the algorithm for node positioning"
+            index=list(layout_algorithms.keys()).index(
+                st.session_state.settings['current_values'].get('selected_layout', 'Spring Layout')
+            ),
+            help="Choose the algorithm for node positioning",
+            key="selected_layout"
         )
+        st.session_state.settings['current_values']['selected_layout'] = selected_layout
 
         default_node_spacing = create_slider_with_controls(
             "Node Spacing (k)",
@@ -194,9 +266,11 @@ with st.sidebar:
     with st.expander("🔘 Node Appearance", expanded=True):
             filter_single_connections = st.checkbox(
                 "Filter nodes with only one connection",
-                value=False,
-                help="Remove nodes that only have one connection to simplify the graph"
+                value=st.session_state.settings['current_values'].get('filter_single_connections', False),
+                help="Remove nodes that only have one connection to simplify the graph",
+                key="filter_single_connections"
             )
+            st.session_state.settings['current_values']['filter_single_connections'] = filter_single_connections
             default_node_size = create_slider_with_controls(
                 "Node Size",
                 'node_size',
