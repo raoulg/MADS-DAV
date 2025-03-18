@@ -21,3 +21,4 @@ config.toml
 .aider*
 data/processed/**
 dev/
+streamlit_settings.toml
