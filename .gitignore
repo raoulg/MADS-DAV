@@ -20,3 +20,4 @@ data/processed/*.parq
 config.toml
 .aider*
 data/processed/**
+dev/
