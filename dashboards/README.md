@@ -7,7 +7,7 @@ Welcome to the Dashboard Runner project! This tool allows you to easily run diff
 ## Installation 🛠️
 All dependencies are described by the `pyproject.toml` file. You can install everyting with
 ```bash
-rye sync
+uv sync
 ```
 or, if you insist on using the 10x slower pip, `pip install .`
 
