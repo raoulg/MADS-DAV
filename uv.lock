@@ -2412,6 +2412,7 @@ source = { editable = "." }
 dependencies = [
     { name = "click" },
     { name = "loguru" },
+    { name = "mads-datasets" },
     { name = "networkx" },
     { name = "numpy" },
     { name = "pandas" },
@@ -2450,6 +2451,7 @@ dev = [
 requires-dist = [
     { name = "click", specifier = ">=8.1.8" },
     { name = "loguru", specifier = ">=0.7.3" },
+    { name = "mads-datasets", specifier = ">=0.3.14" },
     { name = "mads-datasets", marker = "extra == 'plotting'", specifier = ">=0.3.14" },
     { name = "networkx", specifier = ">=3.4.2" },
     { name = "numpy", specifier = ">=2.2.1" },
