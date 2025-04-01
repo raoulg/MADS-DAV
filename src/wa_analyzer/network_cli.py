@@ -1,7 +1,7 @@
-import tomllib
-from pathlib import Path
 import subprocess
 import sys
+import tomllib
+from pathlib import Path
 
 import click
 from loguru import logger
@@ -64,7 +64,7 @@ from wa_analyzer.network_analysis import analyze_whatsapp_network
 )
 @click.option(
     "--streamlit/--no-streamlit",
-    default=False,
+    default=True,
     help="Launch Streamlit web interface (default: False)",
 )
 def main(
@@ -129,9 +129,10 @@ def main(
         # Launch Streamlit directly with the correct command
         streamlit_cmd = [
             sys.executable,  # Use the same Python interpreter
-            "-m", "streamlit", 
-            "run", 
-            str(Path(__file__).parent.parent.parent / "streamlit_app.py")
+            "-m",
+            "streamlit",
+            "run",
+            str(Path(__file__).parent.parent.parent / "streamlit_app.py"),
         ]
         logger.info(f"Running: {' '.join(streamlit_cmd)}")
         subprocess.run(streamlit_cmd)
@@ -148,13 +149,4 @@ def main(
 
 
 if __name__ == "__main__":
-    # Check if running via Streamlit
-    if __name__ == "__main__":
-        if "--streamlit" in __import__("sys").argv:
-            # Launch Streamlit app directly
-            import subprocess
-            import sys
-            subprocess.run(["streamlit", "run", "streamlit_app.py"])
-        else:
-            # Run as CLI
-            main()
+    main()
