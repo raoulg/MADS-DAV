@@ -1,10 +1,11 @@
 import datetime
+import json
 import math
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, TypeAlias
+from typing import Any, Dict, List, Optional, Tuple, TypeAlias
 
 import networkx as nx
 import numpy as np
@@ -27,8 +28,6 @@ class Config:
     time_col: str
     node_col: str
     seconds: int
-    node_scale: float
-    edge_scale: float
     datafile: Path
 
 
@@ -40,6 +39,13 @@ class GraphAnalyzer:
         self.node_col = config.node_col
 
     def edges(self, df: pd.DataFrame, seconds=30) -> dict[tuple[str, str], int]:
+        """from a dataframe, build the edges. The edges are tuples, we count the number of edges.
+        The data is stored as a dict with the tuple as key, and the count as value
+
+        df: pd.DataFrame
+        seconds: int : the amount of seconds that will interpret a reaction within that timeframe as an edge
+        """
+
         df = df.sort_values(self.time_col).reset_index(drop=True)
         timestamps = df[self.time_col]
         authors = df[self.node_col].values
@@ -48,7 +54,7 @@ class GraphAnalyzer:
         # Initialize a dictionary to store edge weights
         edges = defaultdict(int)
 
-        # Use sliding window approach
+        # Use sliding window approach for efficiency
         left_idx = 0
         for right_idx in range(len(timestamps)):
             current_ts = timestamps[right_idx]
@@ -68,11 +74,18 @@ class GraphAnalyzer:
         return edges
 
     def nodes(self, df: pd.DataFrame) -> list[str]:
+        """returns the unique nodes in the dataframe from a column"""
         return list(df[self.node_col].unique())
 
     def time_windows(
         self, df: pd.DataFrame, window: int, overlap: int
-    ) -> list[GraphWindows]:
+    ) -> list[tuple[Timestamp, Timestamp]]:
+        """
+        Create overlaping time windows for the given dataframe.
+        window: int : the size of the window in days
+        overlap: int : the size of the overlap in days
+        returns: a list of tuples with the start and end time of the windows
+        """
         if overlap >= window:
             raise ValueError("Time overlap must be smaller than time window")
         start_time = df[self.time_col].min()
@@ -121,8 +134,9 @@ class GraphBuilder:
 
     def build(self, df: pd.DataFrame, edge_seconds: int) -> nx.Graph:
         """
-        seconds (int) : the amount of seconds that will interpret a reaction
-        withing that timeframe as adding an edge
+        df: pd.DataFrame : the dataframe to build the graph from
+        edge_seconds (int) : the amount of seconds that will interpret a reaction
+                            withing that timeframe as adding an edge
         """
         G = nx.Graph()
         nodes = self.analyzer.nodes(df)
@@ -164,6 +178,7 @@ class GraphBuilder:
         )
 
         for window_start, window_end in time_windows:
+            # get the actual data from start and end timestamp
             window_data = df[
                 (df[self.time_col] >= window_start) & (df[self.time_col] <= window_end)
             ]
@@ -196,6 +211,7 @@ class GraphBuilder:
 
         pos = main_pos.copy()
         if other_components:
+            logger.info(f"Positioning {len(other_components)} other components")
             self._pos_others(G, pos, main_pos, other_components)
         return pos
 
@@ -355,6 +371,7 @@ class GraphVisualizer:
     @staticmethod
     def filter_connections(G: nx.Graph, threshold: int = 1):
         """remove nodes with degree <= 1"""
+        logger.info(f"Filtering nodes with degree <= {threshold}")
         filtered_nodes = [node for node in G.nodes() if G.degree[node] > threshold]
         return G.subgraph(filtered_nodes)
 
@@ -371,12 +388,12 @@ class GraphVisualizer:
 
     def create_windows(
         self,
+        mainG: nx.Graph,
         pos: dict,
         graph_windows: list[GraphWindows],
         node_colors,
         edge_scale: float,
         node_scale: float,
-        window_titles: Optional[List[str]] = None,
     ) -> go.Figure:
         num_windows = len(graph_windows)
         num_cols = 3
@@ -413,7 +430,7 @@ class GraphVisualizer:
             )
 
             fig = self.node_trace(
-                G=G,
+                G=mainG,
                 pos=pos,
                 scale=node_scale,
                 node_colors=node_colors,
@@ -421,10 +438,12 @@ class GraphVisualizer:
                 row=row,
                 col=col,
             )
+            # fig.update_traces(marker=dict(showscale=False))
             if not isinstance(fig, go.Figure):
                 raise TypeError(f"Got type {type(fig)}, but expected go.Figure")
         if not isinstance(fig, go.Figure):
             raise TypeError()
+        self.update_layout(fig, title="WhatsApp Network")
         return fig
 
     @staticmethod
@@ -436,7 +455,9 @@ class GraphVisualizer:
             margin=dict(b=20, l=5, r=5, t=40),
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            updatemenus=[],
         )
+        fig.update_traces(marker=dict(showscale=False))
         return fig
 
     def __call__(
@@ -465,8 +486,8 @@ class NetworkAnalysis:
         layout: str = "Spring Layout",
         cutoff_days: Optional[int] = None,
         seconds: Optional[int] = None,
-        node_scale: Optional[float] = None,
-        edge_scale: Optional[float] = None,
+        node_scale: float = 1.0,
+        edge_scale: float = 1.0,
         node_threshold: int = 0,
     ) -> go.Figure:
         G, _ = self.make_graph(edge_seconds=seconds, cutoff_days=cutoff_days)
@@ -480,40 +501,6 @@ class NetworkAnalysis:
         )
         return fig
 
-    def windows(
-        self,
-        cutoff_days: int,
-        edge_seconds: int,
-        window_days: int,
-        overlap_days: int,
-        layout: str = "Spring Layout",
-        node_scale: Optional[float] = None,
-        edge_scale: Optional[float] = None,
-        node_threshold: int = 0,
-    ) -> go.Figure:
-        G, df = self.make_graph(edge_seconds=edge_seconds, cutoff_days=cutoff_days)
-        G = self.visualizer.filter_connections(G, threshold=node_threshold)
-        if not node_scale:
-            node_scale = self.config.node_scale
-        if not edge_scale:
-            edge_scale = self.config.edge_scale
-        pos = self.graphbuilder.calculate_layout(G, name=layout)
-        node_colors = self.graphbuilder.node_colors(G)
-        graph_windows = self.graphbuilder.graph_windows(
-            df=df,
-            window_days=window_days,
-            overlap_days=overlap_days,
-            edge_seconds=edge_seconds,
-        )
-        fig = self.visualizer.create_windows(
-            pos=pos,
-            graph_windows=graph_windows,
-            node_colors=node_colors,
-            edge_scale=edge_scale,
-            node_scale=node_scale,
-        )
-        return fig
-
     def make_graph(
         self, edge_seconds: Optional[int] = None, cutoff_days: Optional[int] = None
     ) -> tuple[nx.Graph, pd.DataFrame]:
@@ -523,19 +510,48 @@ class NetworkAnalysis:
         G = self.graphbuilder.build(df, edge_seconds=edge_seconds)
         return G, df
 
+    def windows(
+        self,
+        cutoff_days: Optional[int],
+        edge_seconds: int,
+        window_days: int,
+        overlap_days: int,
+        layout: str = "Spring Layout",
+        node_scale: float = 1.0,
+        edge_scale: float = 1.0,
+        node_threshold: int = 0,
+    ) -> go.Figure:
+        G, df = self.make_graph(edge_seconds=edge_seconds, cutoff_days=cutoff_days)
+        G = self.visualizer.filter_connections(G, threshold=node_threshold)
+
+        pos = self.graphbuilder.calculate_layout(G, name=layout)
+        node_colors = self.graphbuilder.node_colors(G)
+
+        graph_windows = self.graphbuilder.graph_windows(
+            df=df,
+            window_days=window_days,
+            overlap_days=overlap_days,
+            edge_seconds=edge_seconds,
+        )
+        fig = self.visualizer.create_windows(
+            mainG=G,
+            pos=pos,
+            graph_windows=graph_windows,
+            node_colors=node_colors,
+            edge_scale=edge_scale,
+            node_scale=node_scale,
+        )
+        return fig
+
     def viz_graph(
         self,
         G: nx.Graph,
         layout: str = "Spring Layout",
         title: str = "Graph",
-        node_scale: Optional[float] = None,
-        edge_scale: Optional[float] = None,
+        node_scale: float = 1.0,
+        edge_scale: float = 1.0,
         node_threshold: int = 0,
     ) -> go.Figure:
-        if not node_scale:
-            node_scale = self.config.node_scale
-        if not edge_scale:
-            edge_scale = self.config.edge_scale
         pos = self.graphbuilder.calculate_layout(G, name=layout)
         node_colors = self.graphbuilder.node_colors(G)
         fig = self.visualizer(
@@ -567,6 +583,86 @@ class NetworkAnalysis:
         if not isinstance(result, pd.DataFrame):
             raise TypeError()
         return result
+
+
+class SettingsManager:
+    """Class to manage application settings with JSON configuration files."""
+
+    def __init__(
+        self,
+        default_config_path: str = ".default_config.json",
+        current_config_path: str = ".current_values.json",
+    ):
+        """Initialize the settings manager with paths to configuration files."""
+        self.default_config_path = Path(default_config_path)
+        self.current_config_path = Path(current_config_path)
+        self.settings = self.load_settings()
+
+    def load_settings(self) -> Dict[str, Any]:
+        """Load settings from current config file or default if it doesn't exist."""
+        # First try to load current settings
+        if self.current_config_path.exists():
+            try:
+                with open(self.current_config_path, "r") as f:
+                    logger.info(f"Loading settings from {self.current_config_path}")
+                    return json.load(f)
+            except Exception as e:
+                logger.error(f"Error loading current settings: {e}")
+
+        # Fall back to default settings
+        if self.default_config_path.exists():
+            try:
+                with open(self.default_config_path, "r") as f:
+                    logger.info(
+                        f"Loading default settings from {self.default_config_path}"
+                    )
+                    return json.load(f)
+            except Exception as e:
+                logger.error(f"Error loading default settings: {e}")
+                raise FileNotFoundError("Default config file is missing or corrupted")
+        else:
+            logger.error(f"Default config file not found at {self.default_config_path}")
+            raise FileNotFoundError(
+                f"Default config file not found at {self.default_config_path}"
+            )
+
+    def save_settings(self) -> bool:
+        """Save current settings to file."""
+        try:
+            with open(self.current_config_path, "w") as f:
+                json.dump(self.settings, f, indent=2)
+            return True
+        except Exception as e:
+            logger.error(f"Error saving settings: {e}")
+            return False
+
+    def update_settings(self, new_values: Dict[str, Any]) -> None:
+        """Update settings with new values."""
+
+        # For nested dictionaries, we need to update recursively
+        def update_dict_recursively(d, u):
+            for k, v in u.items():
+                if isinstance(v, dict) and k in d and isinstance(d[k], dict):
+                    update_dict_recursively(d[k], v)
+                else:
+                    d[k] = v
+
+        update_dict_recursively(self.settings, new_values)
+        self.save_settings()
+
+    def reset_to_defaults(self) -> None:
+        """Reset current settings to defaults."""
+        try:
+            with open(self.default_config_path, "r") as f:
+                self.settings = json.load(f)
+            self.save_settings()
+            logger.info("Settings reset to defaults")
+        except Exception as e:
+            logger.error(f"Error resetting to defaults: {e}")
+            raise
+
+    def get_settings(self) -> Dict[str, Any]:
+        return self.settings
 
 
 class WhatsAppNetworkAnalyzer:
