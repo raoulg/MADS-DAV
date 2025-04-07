@@ -316,7 +316,8 @@ class GraphVisualizer:
             ),
         )
         if is_subplot:
-            fig.add_trace(trace, row=row, col=col)
+            if fig is not None:
+                fig.add_trace(trace, row=row, col=col)
             return fig
         return trace
 
