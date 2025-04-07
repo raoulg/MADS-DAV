@@ -52,7 +52,7 @@ class GraphAnalyzer:
         window_size = timedelta(seconds=seconds)  # Adjust as needed
 
         # Initialize a dictionary to store edge weights
-        edges = defaultdict(int)
+        edges: defaultdict[tuple[str, str], int] = defaultdict(int)
 
         # Use sliding window approach for efficiency
         left_idx = 0
@@ -361,7 +361,9 @@ class GraphVisualizer:
                 showlegend=False,
             )
             if is_subplot:
-                fig.add_trace(trace, row=row, col=col)
+                if fig is not None:
+                    if fig is not None:
+                        fig.add_trace(trace, row=row, col=col)
             else:
                 edge_traces.append(trace)
         if not is_subplot:
@@ -699,7 +701,7 @@ class WhatsAppNetworkAnalyzer:
         # Convert timestamp to datetime and ensure proper timezone handling
         try:
             self.data["timestamp"] = pd.to_datetime(  # type: ignore
-                self.data["timestamp"],
+                self.data["timestamp"] if self.data is not None else pd.Series(dtype='datetime64[ns]'),
                 utc=True,  # type: ignore
             ).dt.tz_convert("UTC")
         except Exception as e:
