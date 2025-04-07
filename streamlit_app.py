@@ -4,8 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from wa_analyzer.network_analysis import (Config, NetworkAnalysis,
-                                          SettingsManager,
-                                          WhatsAppNetworkAnalyzer)
+                                          SettingsManager)
 from wa_analyzer.settings import NetworkAnalysisConfig
 
 # Page config
@@ -46,6 +45,7 @@ with st.sidebar:
         st.session_state.settingsmanager.update_settings(
             {"current_values": {"selected_file": selected_file}}
         )
+        st.session_state.settingsmanager.save_settings()  # Save immediately after update
 
     # Reset button
     if st.button("Reset All Settings"):
@@ -58,87 +58,127 @@ with st.sidebar:
         """Helper function to create sliders with min/max controls"""
         st.markdown(f"**{label} Range**")
         col1, col2 = st.columns(2)
+
+        # Get settings
+        current_min = st.session_state.settingsmanager.settings["slider_settings"][key][
+            "min"
+        ]
+        current_max = st.session_state.settingsmanager.settings["slider_settings"][key][
+            "max"
+        ]
+
         with col1:
             new_min = st.number_input(
                 f"Min {label}",
-                value=st.session_state.settingsmanager.settings["slider_settings"][key][
-                    "min"
-                ],
+                value=current_min,
                 step=step,
                 key=f"{key}_min",
             )
         with col2:
             new_max = st.number_input(
                 f"Max {label}",
-                value=st.session_state.settingsmanager.settings["slider_settings"][key][
-                    "max"
-                ],
+                value=current_max,
                 step=step,
                 key=f"{key}_max",
             )
-        st.session_state.settingsmanager.update_settings(
-            {"slider_settings": {key: {"min": new_min, "max": new_max}}}
-        )
+
+        # Only update if values have changed
+        if new_min != current_min or new_max != current_max:
+            st.session_state.settingsmanager.update_settings(
+                {"slider_settings": {key: {"min": new_min, "max": new_max}}}
+            )
+            st.session_state.settingsmanager.save_settings()
 
         # Get current value from session state or use default
         current_value = st.session_state.settingsmanager.settings["current_values"].get(
             key, default_value
         )
 
-        # Create slider and store value in session state
+        # Create a session state key for this slider if not exists
+        slider_state_key = f"{key}_value"
+        if slider_state_key not in st.session_state:
+            st.session_state[slider_state_key] = current_value
+
+        # Create slider with session state value
         slider_kwargs = {
             "label": label,
-            "min_value": new_min,
-            "max_value": new_max,
-            "value": current_value,
+            "min_value": max(min_value, new_min) if min_value is not None else new_min,
+            "max_value": min(max_value, new_max) if max_value is not None else new_max,
+            "value": st.session_state[slider_state_key],
             "step": step,
             "help": help_text,
             "key": f"{key}_slider",
+            "on_change": lambda: handle_slider_change(key, slider_state_key),
         }
 
-        # Apply min/max constraints if provided
-        if min_value is not None:
-            slider_kwargs["min_value"] = max(min_value, new_min)
-        if max_value is not None:
-            slider_kwargs["max_value"] = min(max_value, new_max)
-
         value = st.slider(**slider_kwargs)
+
+        # Update the session state with the new value
+        st.session_state[slider_state_key] = value
+
+        return value
+
+    def handle_slider_change(key, slider_state_key):
+        """Function to handle slider changes"""
+        new_value = st.session_state[f"{key}_slider"]
+        st.session_state[slider_state_key] = new_value
         st.session_state.settingsmanager.update_settings(
-            {"current_values": {key: value}}
+            {"current_values": {key: new_value}}
         )
         st.session_state.settingsmanager.save_settings()
-        return value
 
     # Data Selection & Time Settings
     with st.expander("📅 Data Selection & Time Settings", expanded=True):
         # Time cutoff settings
+        # Create a session state key for checkbox if not exists
+        if "use_time_cutoff_value" not in st.session_state:
+            st.session_state.use_time_cutoff_value = (
+                st.session_state.settingsmanager.settings["current_values"].get(
+                    "use_time_cutoff", False
+                )
+            )
+
         use_time_cutoff = st.checkbox(
             "Use Time Cutoff",
-            value=st.session_state.settingsmanager.settings["current_values"].get(
-                "use_time_cutoff", False
-            ),
+            value=st.session_state.use_time_cutoff_value,
             key="use_time_cutoff",
+            on_change=lambda: handle_checkbox_change("use_time_cutoff"),
         )
-        st.session_state.settingsmanager.update_settings(
-            {"current_values": {"use_time_cutoff": use_time_cutoff}}
-        )
+
+        def handle_checkbox_change(key):
+            """Function to handle checkbox changes"""
+            new_value = st.session_state[key]
+            st.session_state[f"{key}_value"] = new_value
+            st.session_state.settingsmanager.update_settings(
+                {"current_values": {key: new_value}}
+            )
+            st.session_state.settingsmanager.save_settings()
 
         time_cutoff_days = None
         if use_time_cutoff:
+            # Create a session state key for time cutoff slider if not exists
+            if "time_cutoff_days_value" not in st.session_state:
+                st.session_state.time_cutoff_days_value = (
+                    st.session_state.settingsmanager.settings["current_values"].get(
+                        "time_cutoff_days", 60
+                    )
+                )
+
             time_cutoff_days = st.slider(
                 "Show only last X days",
                 min_value=1,
                 max_value=365,
-                value=st.session_state.settingsmanager.settings["current_values"].get(
-                    "time_cutoff_days", 60
-                ),
+                value=st.session_state.time_cutoff_days_value,
                 step=1,
                 help="Only show data from the last X days",
-                key="time_cutoff_days",
+                key="time_cutoff_days_slider",
+                on_change=lambda: handle_slider_change(
+                    "time_cutoff_days", "time_cutoff_days_value"
+                ),
             )
-            st.session_state.settingsmanager.update_settings(
-                {"current_values": {"time_cutoff_days": time_cutoff_days}}
-            )
+
+            # Update the session state with the new value
+            st.session_state.time_cutoff_days_value = time_cutoff_days
         else:
             time_cutoff_days = None
 
@@ -199,25 +239,48 @@ with st.sidebar:
             "Circular Layout",
             "Spectral Layout",
         ]
-        selected_layout = st.selectbox(
-            "Layout Algorithm",
-            layout_algorithms,
-            index=layout_algorithms.index(
+
+        # Create a session state key for layout selection if not exists
+        if "selected_layout_value" not in st.session_state:
+            st.session_state.selected_layout_value = (
                 st.session_state.settingsmanager.settings["current_values"].get(
                     "selected_layout", "Spring Layout"
                 )
-            ),
+            )
+
+        selected_layout = st.selectbox(
+            "Layout Algorithm",
+            layout_algorithms,
+            index=layout_algorithms.index(st.session_state.selected_layout_value),
             help="Choose the algorithm for node positioning",
-            key="selected_layout",
+            key="selected_layout_select",
+            on_change=lambda: handle_select_change("selected_layout"),
         )
+
+        def handle_select_change(key):
+            """Function to handle selectbox changes"""
+            new_value = st.session_state[f"{key}_select"]
+            st.session_state[f"{key}_value"] = new_value
+            st.session_state.settingsmanager.update_settings(
+                {"current_values": {key: new_value}}
+            )
+            st.session_state.settingsmanager.save_settings()
+
     with st.expander("🔘 Node Appearance", expanded=True):
+        # Create a session state key for checkbox if not exists
+        if "filter_single_connections_value" not in st.session_state:
+            st.session_state.filter_single_connections_value = (
+                st.session_state.settingsmanager.settings["current_values"].get(
+                    "filter_single_connections", False
+                )
+            )
+
         filter_single_connections = st.checkbox(
             "Filter nodes with only one connection",
-            value=st.session_state.settingsmanager.settings["current_values"].get(
-                "filter_single_connections", False
-            ),
+            value=st.session_state.filter_single_connections_value,
             help="Remove nodes that only have one connection to simplify the graph",
             key="filter_single_connections",
+            on_change=lambda: handle_checkbox_change("filter_single_connections"),
         )
 
         node_size_multiplier = create_slider_with_controls(
@@ -265,9 +328,6 @@ if selected_file:
         min_edge_weight=min_edge_weight,
     )
 
-    # Initialize analyzer with layout settings
-    analyzer = WhatsAppNetworkAnalyzer(config)
-
     # Track layout changes
     if "prev_layout" not in st.session_state:
         st.session_state.prev_layout = selected_layout
@@ -281,7 +341,7 @@ if selected_file:
             "Network Analysis",
             layout=selected_layout,
             cutoff_days=time_cutoff_days,
-            node_threshold=1,
+            node_threshold=1 if not filter_single_connections else 2,
             node_scale=node_size_multiplier,
             edge_scale=edge_weight,
         )
@@ -298,7 +358,7 @@ if selected_file:
             edge_seconds=response_window,
             window_days=time_window,
             overlap_days=time_overlap,
-            node_threshold=1,
+            node_threshold=1 if not filter_single_connections else 2,
         )
         st.plotly_chart(
             fig,
