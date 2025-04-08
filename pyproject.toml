@@ -9,6 +9,8 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "click>=8.1.8",
     "loguru>=0.7.3",
+    "mads-datasets>=0.3.14",
+    "networkx>=3.4.2",
     "numpy>=2.2.1",
     "pandas>=2.2.3",
     "plotly>=5.24.1",
@@ -17,12 +19,14 @@ dependencies = [
     "scikit-learn>=1.6.0",
     "seaborn>=0.13.2",
     "statsmodels>=0.14.4",
+    "streamlit>=1.43.1",
 ]
 readme = "README.md"
 license = {text = "MIT"}
 
 [project.scripts]
 "analyzer" = "wa_analyzer.preprocess:main"
+"graphdashboard" = "wa_analyzer.network_cli:main"
 
 [project.urls]
 GitHub = "https://github.com/raoulg/MADS-DAV"
@@ -33,7 +37,6 @@ huggingface = [
     "torch>=2.5.1",
     "transformers>=4.47.1",
 ]
-
 plotting = [
     "mads-datasets>=0.3.14",
     "plotly>=5.24.1",

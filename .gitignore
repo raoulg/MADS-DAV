@@ -17,6 +17,7 @@ data/processed/*.parq
 .notebookcache
 **/personal.ipynb
 config.toml
-.aider.*
+.aider*
 data/processed/**
 dev/
+.current_values.json
