@@ -1,5 +1,5 @@
 # Dashboard Runner 🚀
-built with [![Rye](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/ischaojie/7e975b710fd2265b983c051349369881/raw/5cc749c1b94777dc04069668e0c19959bbbd5b46/rye-badge.json)](https://rye-up.com/)
+built with [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 
 
 Welcome to the Dashboard Runner project! This tool allows you to easily run different Streamlit dashboard scripts with a simple command. Perfect for quickly switching between various data visualizations or dashboards.

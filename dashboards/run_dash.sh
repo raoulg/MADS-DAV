@@ -35,4 +35,4 @@ echo "Note that if you are running this from the VM, you need to add port 8501"
 echo "After adding the port, you can open it on http://localhost:8501/ "
 
 # Execute the Python script
-rye run streamlit run $SCRIPT
+uv run streamlit run $SCRIPT
