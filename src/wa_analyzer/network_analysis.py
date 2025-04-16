@@ -136,7 +136,7 @@ class GraphBuilder:
         edge_seconds (int) : the amount of seconds that will interpret a reaction
                             withing that timeframe as adding an edge
         """
-        G = nx.Graph()
+        G = nx.Graph()  # noqa: N806
         nodes = self.analyzer.nodes(df)
         edges = self.analyzer.edges(df, seconds=edge_seconds)
         G = self.add_nodes(G, nodes)
@@ -305,13 +305,13 @@ class GraphVisualizer:
             textposition="top center",
             hovertext=node_text,
             hoverinfo="text",
-            marker=dict(
-                showscale=True,
-                colorscale="YlGnBu",
-                size=node_size,
-                color=node_color,
-                line_width=2,
-            ),
+            marker={
+                "showscale": True,
+                "colorscale": "YlGnBu",
+                "size": node_size,
+                "color": node_color,
+                "line_width": 2,
+            },
         )
         if is_subplot:
             if fig is not None:
@@ -352,9 +352,13 @@ class GraphVisualizer:
             trace = go.Scatter(
                 x=x_interp,
                 y=y_interp,
-                line=dict(width=width, color="#888"),
+                line={"width": width, "color": "#888"},
                 mode="lines",
-                marker=dict(size=0.1, color="#888", opacity=0),  # Invisible markers
+                marker={
+                    "size": 0.1,
+                    "color": "#888",
+                    "opacity": 0,
+                },  # Invisible markers
                 hoverinfo="text",
                 hovertext=hover_text,
                 showlegend=False,
@@ -450,15 +454,15 @@ class GraphVisualizer:
     @staticmethod
     def update_layout(fig: go.Figure, title: str) -> go.Figure:
         fig.update_layout(
-            title=dict(text=title, font=dict(size=16)),
+            title={"text": title, "font": {"size": 16}},
             showlegend=False,
             hovermode="closest",
-            margin=dict(b=20, l=5, r=5, t=40),
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            margin={"b": 20, "l": 5, "r": 5, "t": 40},
+            xaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
+            yaxis={"showgrid": False, "zeroline": False, "showticklabels": False},
             updatemenus=[],
         )
-        fig.update_traces(marker=dict(showscale=False))
+        fig.update_traces(marker={"showscale": False})
         return fig
 
     def __call__(
@@ -546,7 +550,7 @@ class NetworkAnalysis:
 
     def viz_graph(
         self,
-        G: nx.Graph,
+        G: nx.Graph,  # noqa: N803
         layout: str = "Spring Layout",
         title: str = "Graph",
         node_scale: float = 1.0,

@@ -24,7 +24,7 @@ def load_penguins_dataset() -> pd.DataFrame:
         "Sex",
         "Body Mass (g)",
     ]
-    return df[select].dropna()
+    return df[select].dropna()  # type: ignore
 
 
 def main() -> None:
@@ -33,7 +33,7 @@ def main() -> None:
 
     st.title("Penguins Dashboard")
 
-    species_filter = st.multiselect(
+    species_filter: list = st.multiselect(
         "Select Species", options=st.session_state.penguins["Species"].unique()
     )
     if species_filter:
@@ -44,32 +44,32 @@ def main() -> None:
     plot_type = st.radio("Choose a Plot Type", ["Scatterplot", "Histogram", "Boxplot"])
 
     if plot_type == "Scatterplot":
-        option1 = st.selectbox(
+        option1: str = st.selectbox(
             "Select the x-axis",
             st.session_state.penguins.columns,
-            index=2, # this will pick a default item
+            index=2,  # this will pick a default item
         )
-        option2 = st.selectbox(
+        option2: str = st.selectbox(
             "Select the y-axis",
             st.session_state.penguins.columns,
             index=3,
         )
-        color = st.selectbox(
+        color: str = st.selectbox(
             "Select the color", st.session_state.penguins.columns, index=0
         )
 
         fig, ax = plt.subplots()
-        sns.scatterplot(data=st.session_state.penguins, x=option1, y=option2, hue=color)
+        sns.scatterplot(data=st.session_state.penguins, x=option1, y=option2, hue=color)  # type: ignore
         st.pyplot(fig)
 
     elif plot_type == "Histogram":
-        option = st.selectbox(
+        option: str = st.selectbox(
             "Select variable for histogram",
             st.session_state.penguins.columns,
             index=4,
         )
         fig, ax = plt.subplots()
-        sns.histplot(st.session_state.penguins[option], kde=True)
+        sns.histplot(st.session_state.penguins[option], kde=True)  # type: ignore
         st.pyplot(fig)
 
     elif plot_type == "Boxplot":
@@ -79,7 +79,7 @@ def main() -> None:
             index=4,
         )
         fig, ax = plt.subplots()
-        sns.boxplot(x="Species", y=option, data=st.session_state.penguins)
+        sns.boxplot(x="Species", y=option, data=st.session_state.penguins)  # type: ignore
         st.pyplot(fig)
 
 

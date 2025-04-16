@@ -17,7 +17,7 @@ class TextClustering:
         if batch:
             text = self.batch_seq(text, k)
         distance = self.fit(text)
-        X = self.reduce_dims(distance, method)
+        X = self.reduce_dims(distance, method)  # noqa: N806
         self.plot(X, labels)
 
     def batch_seq(self, text: list[str], k: int) -> list[str]:
@@ -31,9 +31,9 @@ class TextClustering:
         return parts
 
     def fit(self, parts: list[str]) -> np.ndarray:
-        X = self.vectorizer.fit_transform(parts)
-        logger.info(f"Vectorized text into shape {X.shape}")
-        X = np.asarray(X.todense())
+        X = self.vectorizer.fit_transform(parts)  # noqa: N806
+        logger.info(f"Vectorized text into shape {X.shape}")  # type: ignore
+        X = np.asarray(X.todense())  # type: ignore # noqa: N806
         distance = manhattan_distances(X, X)
         return distance
 
@@ -44,8 +44,8 @@ class TextClustering:
         else:
             logger.info("Using t-SNE")
             model = TSNE(n_components=2)
-        X = model.fit_transform(distance)
+        X = model.fit_transform(distance)  # noqa: N806
         return X
 
-    def plot(self, X: np.ndarray, labels: list) -> None:
+    def plot(self, X: np.ndarray, labels: list) -> None:  # noqa: N803
         sns.scatterplot(x=X[:, 0], y=X[:, 1], hue=labels)

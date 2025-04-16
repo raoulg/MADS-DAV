@@ -538,7 +538,7 @@ class Hasher:
         if n == 3:
             self.wordlist = (words, words, animals)
         # Gets a list of byte values between 0-255.
-        bytes_ = map(
+        bytes_ = map(  # noqa: C417
             lambda x: int(x, 16), map("".join, zip(hexdigest[::2], hexdigest[1::2]))
         )
         # Compress an arbitrary number of bytes to n words.
@@ -602,7 +602,7 @@ class Hasher:
             'equal*monkey*lake*beryllium'
         """
 
-        sha1_hash = hashlib.sha1(text.encode("utf-8")).hexdigest()
+        sha1_hash = hashlib.sha1(text.encode("utf-8")).hexdigest()  # noqa: S324
         # Map the compressed byte values through the word list.
         return separator.join(self.humanize_list(sha1_hash, n))
 
