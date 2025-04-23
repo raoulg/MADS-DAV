@@ -30,13 +30,15 @@ class WhatsappPreprocessor:
         records, _ = self.process()
         self.save(records)
 
-    def save(self, records: list[tuple]) -> None:
+    def save(self, records: list[tuple]) -> Path:
         df = pd.DataFrame(records, columns=["timestamp", "author", "message"])
         now = datetime.now().strftime("%Y%m%d-%H%M%S")
         outfile = self.folders.processed / f"whatsapp-{now}.csv"
         logger.info(f"Writing to {outfile}")
         df.to_csv(outfile, index=False)
         logger.success("Done!")
+
+        return outfile
 
     def process(self) -> tuple:
         records = []
