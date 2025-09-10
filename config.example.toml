@@ -4,3 +4,4 @@ input = "_chat.txt"
 current = "your-path-here.parq"
 inputpath = "your-path-here.csv"
 datetime_format = "%d/%m/%Y, %H:%M:%S"
+drop_authors = []
