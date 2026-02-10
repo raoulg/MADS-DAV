@@ -4,14 +4,19 @@ The manual for setting up the VM can be found in the `references` folder, in add
 
 
 # Setup the virtual environment
-1. Make sure you have `uv` installed. You can check this by typing `which uv` in the terminal. If that doesnt return a location but `uv not found` you need to install it.On Unix systems, you can use `curl -LsSf https://astral.sh/uv/install.sh | sh`, for Windows read the [uv documentation](https://docs.astral.sh/uv/getting-started/installation/)
+
+## installation with pip
+If for some reason you are unable to install `uv`, you can still install your `.venv` with python and pip. Open a bash terminal in the folder where you cloned the repo, create a `.venv` with `python -m venv .venv`, activate the `.venv` and run `pip install -e .`. If you are new to `.venv`s and pyproject.toml files, read more in the [codestyle repo](https://github.com/raoulg/codestyle/blob/main/docs/dependencies_management.md)
+
+However, it is highly recommended you use `uv`:
+1. Make sure you have `uv` installed. You can check this by typing `which uv` in your bash terminal. If that doesnt return a location but `uv not found` you need to install it.On Unix systems, you can use `curl -LsSf https://astral.sh/uv/install.sh | sh`, for Windows read the [uv documentation](https://docs.astral.sh/uv/getting-started/installation/)
 2. if the `MADS-DAV` folder isnt already cloned with git, add it with the command `git clone https://github.com/raoulg/MADS-DAV.git`
 3. Navigate to the MADS-DAV folder where the `pyproject.toml` is located with `cd MADS-DAV` and run `uv sync --all-extras`. This should create a virtual environment (a .venv folder) and install all dependencies there.
 4. Read through the [uv docs](https://docs.astral.sh/uv/guides/projects/) "working on projects" intro into `uv`
 
 # Run the preprocessor
 Copy the `config.example.toml` file to a `config.toml` file. Update the contents after running the preprocessor.
-Download a chat from Whatsapp and put it in the `data/raw` folder. Rename the file to `_chat.txt` (or change the `config.toml` file). 
+Download a chat from Whatsapp and put it in the `data/raw` folder. Rename the file to `_chat.txt` (or change the `config.toml` file).
 
 # NOTE
 If you want to use my code in your own repo, do not copy paste everything. Instead, install it as a package; I published it on [pypi](https://pypi.org/project/wa-analyzer/) so simply do `uv add wa-analyzer`.
@@ -55,7 +60,7 @@ You can then run the `01-cleaning.ipynb` notebook. This will save a cleaned `.pa
 This `config.toml` file should make it easier to run the code with multiple input files; you can simply change the `current` value and run all notebooks for the file specified there.
 
 ## codestyle
-During the course, you will continue to improve your coding skills. 
+During the course, you will continue to improve your coding skills.
 Use the [codestyle](https://github.com/raoulg/codestyle) repo as a reference!
 
 
