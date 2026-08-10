@@ -571,8 +571,16 @@ reference_chat:
         stops_before: >
           parsing. The file holds raw channel-day documents on purpose; turning them into
           (timestamp, author, message) rows is lesson 1's exercise.
-      blocker:
-        what: ".gitignore line 8 is `*.parquet`, so the slice is silently excluded."
+      resolved:
+        decision: committed to git, per Raoul
+        how: >
+          .gitignore gains `!data/showcase/*.parquet` after the blanket `*.parquet` rule, so
+          working output stays ignored and course material does not. Showcase data is
+          material, not output — that distinction is the reason the exception is narrow.
+        cost: 24.9 MB in history, paid by every clone. Accepted deliberately.
+        commit: f1cd7c1
+      blocker_as_found:
+        what: ".gitignore line 8 is `*.parquet`, so the slice was silently excluded."
         why_it_matters: >
           The whole point of vendoring was that a classroom without internet still works. A
           file that looks committed and is not would be discovered by a student, in week one,
@@ -595,8 +603,11 @@ reference_chat:
             against: >
               Needs internet during class and an HF token to avoid IP rate limiting, which is
               exactly the failure mode vendoring was meant to remove.
-        recommendation: hub
-        needs_decision_from: Raoul
+        chosen: git
+        note_for_later: >
+          If the repo ever gets heavy, the hub option stays open — publishing the slice and
+          switching the notebooks to load_dataset is a small change, and it would align the
+          showcase corpus with how the flowers cache already arrives in lesson 6.
     - id: R3
       todo: >
         Write the regex-parsing step as the lesson-1 showcase, including the action-line
