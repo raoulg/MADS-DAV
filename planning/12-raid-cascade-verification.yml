@@ -1,0 +1,192 @@
+# Does the raid/spam cascade work? Mostly no. What the data actually supports.
+#
+# Raoul proposed: do not filter the abusive content out, make filtering it the exercise --
+# find a pattern in lesson 1, dig in lesson 2, see it in the timeseries in lesson 3, find
+# the bot-like timing distribution in lesson 4, build a classifier from simple models in
+# lesson 5. Good idea, and it would have rescued leerdoelen 5.7/5.8, which need a real
+# classification problem.
+#
+# Verified against the vendored slice before building anything. Three of the five links in
+# the chain do not hold.
+
+meta:
+  status: verified, 2026-08-10
+  data: data/showcase/ubuntu_irc_days.parquet — 615,683 messages, 4,740 authors
+  method: >
+    Structural features only — timing, repetition, length, caps, burstiness. No message text
+    was read or printed. That was the ethical choice and it turned out to be the
+    pedagogical one too: if raids are detectable without reading them, the lesson is
+    "structure carries the signal" and the abusive content never has to be displayed.
+
+# ---------------------------------------------------------------------------------------
+# The blocking finding: there are three of them
+# ---------------------------------------------------------------------------------------
+
+raids_are_too_rare:
+  status: BLOCKING for the lesson-5 classifier
+  counts:
+    authors_with_20plus_messages: 1249
+    strict_flood_signature: 3
+    high_duplication_over_50pct: 3
+    shouty_caps_over_30pct: 3
+    link_heavy_over_50pct_urls: 2
+    moderate_duplication_over_30pct: 8
+  what_this_means: >
+    Three positives against 1,246 negatives is 0.24%. That is not an imbalanced
+    classification problem, it is an anomaly with n=3 — you cannot train on it, cannot
+    validate on it, and cannot honestly report an accuracy for it. A lesson-5 classifier
+    built on this would be a demonstration of overfitting, and not deliberately.
+  why_so_few:
+    - >
+      The slice is two mid-sized channels, and #ubuntu-uk is a social club of regulars where
+      raids are rare and get opped quickly.
+    - The corpus was already partially cleaned upstream.
+  worth_noting: >
+    The three that exist are still perfectly good as a lesson-1 FIND-THE-ANOMALY exercise.
+    What they cannot support is a trained model.
+
+the_timeseries_link_is_false:
+  status: BLOCKING for the lesson-3 half of the cascade
+  claim_tested: raids show up as spikes in the daily message count
+  result: >
+    On both channels, every one of the top spike days has a flood-author share of 0.0%. The
+    spikes are ordinary busy days — a lively argument, a release, a long support session —
+    where the busiest single author holds 10-36% of the day.
+  so: >
+    "Anomalous day" and "raid" are unrelated in this corpus. Building lesson 3 on the
+    assumption that they coincide would have taught a relationship that is not there.
+  silver_lining: >
+    This is itself the lesson-3 point in a better form: a spike in a residual is not
+    self-explaining. The release spikes have a mechanism known in advance; these do not, and
+    chasing them is how you find out what a busy day is actually made of. That is
+    10-spurious-findings.yml#thread S5, arriving with real data.
+
+timestamps_are_minute_resolution:
+  status: BLOCKING for part of the existing lesson-4 spec
+  evidence:
+    all_positive_gaps_divisible_by_60: true
+    messages_sharing_a_timestamp_with_the_previous_one: 55.4%
+    messages_per_minute: {median: 2, p99: 8, max: 109}
+  cause: The IRC logs are timestamped `[HH:MM]`. There are no seconds, and never were.
+  what_it_invalidates:
+    where: 05-notebooks.yml#041-d
+    claim: "gaps -> exponential within bursts, heavy tailed overall"
+    problem: >
+      On IRC the gap distribution is discretised to multiples of 60s and 55% of consecutive
+      messages have a gap of exactly zero. You cannot show a clean exponential on it. The
+      showcase for that technique has to be something else.
+  what_it_does_not_invalidate: >
+    The students' own WhatsApp exports have second resolution, so the gap analysis works
+    fine on their own data — which is where 041-d actually lives. Only the IRC showcase half
+    is affected.
+  worth_teaching_directly: >
+    Measurement resolution is a property of the data that decides which questions are
+    askable, and it is invisible until you look. A student who tries to fit an exponential
+    to minute-rounded data and gets a strange answer has met a real and common problem. One
+    honest paragraph, not a whole section.
+
+# ---------------------------------------------------------------------------------------
+# What the data DOES support
+# ---------------------------------------------------------------------------------------
+
+participation_tiers:
+  status: strong, numerous, and unused so far
+  structure:
+    one-day: {authors: 3477, median_msgs: 3, share_of_messages: 5.1%}
+    occasional: {authors: 906, median_msgs: 20, share_of_messages: 5.8%}
+    recurring: {authors: 273, median_msgs: 135, share_of_messages: 11.0%}
+    regular: {authors: 84, median_msgs: 2210, share_of_messages: 78.0%}
+  reading: >
+    84 authors — under 2% — write 78% of everything. The community is not the 4,740 nicks
+    in the log; it is about eighty people, with a very long tail of visitors passing
+    through.
+  where_it_belongs:
+    - >
+      lesson 2 — this is the real shape of "who is in this chat", and it is the honest
+      version of the ranking illusion. It is also exactly a student's WhatsApp group.
+    - >
+      lesson 4 — author activity is a power law, not a bell curve. A better and more robust
+      long-tail example than the gap distribution that minute-resolution just killed.
+  caution: >
+    Do not turn it into a classification target. Predicting "tier" from activity features is
+    circular — the label IS the feature.
+
+author_attribution:
+  status: viable, and the strongest replacement candidate for the lesson-5 classifier
+  tested: 8 most active #ubuntu-uk authors, 218,670 messages
+  results:
+    majority_class_baseline: 0.220
+    tfidf_logistic_regression: 0.485
+  reading: >
+    More than double the baseline on 8 classes from plain tf-idf. Real, comfortable signal,
+    with plenty of data behind it.
+  why_it_fits_the_course:
+    - >
+      It uses something from every earlier lesson — message length (4), hour-of-day (3),
+      vocabulary (6), question and caps rates (1) — so it is a genuine capstone rather than
+      a new topic.
+    - >
+      It transfers to their own data with a hook that sells itself: "can you tell who wrote
+      this?" on their own group chat.
+    - >
+      It is the same shape as the lesson-6 comparison (CountVectorizer versus embeddings),
+      so the two lessons reinforce instead of competing.
+  the_ensemble_question:
+    status: NOT SETTLED — do not write the lesson until it is
+    what_i_tried: >
+      A structural model (hour, length, question rate, caps ratio, url flag) reached 0.238
+      against a 0.220 baseline, and combining it with the lexical model did not beat lexical
+      alone (0.469-0.483 versus 0.485). Errors were positively correlated: both models wrong
+      on 43.1% where independence predicts 39.3%.
+    why_that_is_not_conclusive: >
+      The structural model was badly built — raw unscaled features into logistic regression,
+      with numerical overflow warnings. That is a defect in my test, not a property of the
+      data. A per-author hour-profile likelihood plus a message-length distribution is the
+      right way to use the temporal signal and was not tried.
+    what_has_to_be_true_for_5.7_5.8: >
+      The diversity prediction theorem needs component models that are individually decent
+      AND make independent errors. Before designing the ensemble lesson, build a genuinely
+      competent structural model and re-measure both its accuracy and its error correlation
+      with the lexical one.
+    if_it_still_fails: >
+      That is a usable lesson rather than a dead end — leerdoel 5.8 is specifically about
+      the ASSUMPTIONS under which the theorem holds, and watching them fail on real data is
+      a direct hit on it. But it needs a contrasting case where ensembling does work, or the
+      takeaway collapses into "ensembles don't help".
+
+# ---------------------------------------------------------------------------------------
+# What survives of the original idea
+# ---------------------------------------------------------------------------------------
+
+what_to_keep:
+  - id: K1
+    lesson: 1
+    what: The anomaly hunt — find the accounts that should not be there.
+    supported_by: 3 flood accounts, lubotu3` the factoid bot, and the Guest#### nick pattern
+    framing: >
+      Structural detection only. Students find them by repetition rate, one-day activity and
+      caps ratio — never by reading. Showing that you can identify abuse without reading it
+      is the point, and it keeps the content off the screen.
+    content_note:
+      needed: true
+      what: >
+        A short, plain warning that this is unmoderated public IRC and contains slurs in a
+        handful of messages, with the note that the exercise is built so nobody has to read
+        them. Adults, real data, no surprise ambush.
+  - id: K2
+    lesson: 2
+    what: The Guest#### problem — one nick is not one person.
+    why: >
+      444 authors appear on exactly one day, and the Guest#### nicks are a rotating identity
+      rather than a person. Every per-author statistic in the course quietly assumes
+      otherwise. This is a categories lesson with real consequences.
+  - id: K3
+    lesson: 5
+    what: Author attribution as the classification problem, replacing raid detection.
+    status: proposed
+    blocked_on: the ensemble question above
+
+what_to_drop:
+  - the raid classifier in lesson 5 — three positives
+  - raids as timeseries anomalies in lesson 3 — the link is not there
+  - IRC as the showcase for fine-grained inter-message gaps — minute resolution
