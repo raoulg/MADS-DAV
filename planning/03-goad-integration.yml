@@ -1,0 +1,246 @@
+# Integrating goad_toolkit into the course
+#
+# goad_toolkit is Raoul's own package, so this file is in two halves: how the course uses
+# what already exists, and what goad has to grow before it can carry the course.
+
+meta:
+  status: doing
+  fixes: P2
+  repo: /Users/rgrouls/code/courses/goad_toolkit  (github.com/raoulg/goad_toolkit)
+  branch: feat/docs-and-mcp
+
+why_goad_belongs_here:
+  - claim: It already separates the plot from its makeup.
+    detail: >
+      BasePlot.build() draws; PlotSettings carries title/labels/grid/figsize; plot_on()
+      layers one plot onto another's axes. That is precisely the "start with grey, then add
+      the message" discipline the course grades on, expressed as code instead of advice.
+  - claim: It already has composable pipelines.
+    detail: >
+      Pipeline.add(TransformClass, name=..., **params) with lazy instantiation, and
+      TransformBase subclassing for your own steps. Lesson 1's feature enrichment and
+      lesson 3's timestamp features are pipeline steps, not loose cells.
+  - claim: It already does the distribution work lesson 4 needs.
+    detail: >
+      DistributionFitter fits every registered family, runs a KS test and a log-likelihood,
+      marks best-by-each-criterion, and PlotFits renders them ranked. Lesson 4 currently
+      hand-rolls a worse version of this.
+  - claim: Extensibility is the pedagogical point, not a feature.
+    detail: >
+      "Subclass TransformBase" and "subclass BasePlot" are concrete, small, gradeable
+      exercises that teach composition. This is where leerdoelen 1.10 and 6.16 stop being
+      abstract.
+
+use_per_lesson:
+  lesson_1_cleaning:
+    uses: [Pipeline, TransformBase, FileHandler]
+    how: >
+      Turn the ad-hoc cleaning cells into a Pipeline. The regex feature extraction
+      (leerdoel 1.7/1.11) becomes a RegexFeature transform the student writes themselves —
+      one class, one method, immediately reusable.
+    new_goad_needed: [RegexFeature, FileHandler generalisation]
+  lesson_2_categories:
+    uses: [BasePlot, PlotSettings, Pipeline]
+    how: Category counts via pipeline; bar/grouped-bar/heatmap via goad plot classes.
+    new_goad_needed: [BarPlot, GroupedBarPlot, HeatmapPlot, BarbellPlot, Annotate]
+  lesson_3_time:
+    uses: [Pipeline, RollingAvg, ShiftValues, SelectDataRange, LinePlot, ComparePlot, VerticalDate]
+    how: >
+      The covid regime-change example is already a goad demo. The own-chat half reuses the
+      same transforms. VerticalDate is exactly the "integrate text" guideline in code.
+    new_goad_needed: [TimeFeatures, Resample, DecomposePlot, ACFPlot]
+  lesson_4_distributions:
+    uses: [DistributionFitter, PlotFits, FitPlotSettings, HistogramPlot, DistPlot]
+    how: >
+      Showcase on covid residuals, your-turn on messages/day, gaps between messages, and
+      message length. The registry becomes an exercise: register a distribution goad does
+      not ship.
+    new_goad_needed: [QQPlot, ECDFPlot, registry additions, log-likelihood/AIC comparison table]
+  lesson_5_relations:
+    uses: [BasePlot composition, models.linear_model, models.train_model, models.mse, ResidualPlot]
+    how: >
+      The full GOAD loop: propose a model, fit it, look at the residual, fit a distribution
+      to the residual. Residual-is-not-noise is the lesson.
+    new_goad_needed: [ScatterPlot, RegPlot, CorrelationHeatmap, more model functions]
+  lesson_6_high_dimensional:
+    uses: [BasePlot, PlotSettings]
+    how: Projection plots (PCA/t-SNE) with consistent makeup, variance-explained annotated.
+    new_goad_needed: [ProjectionPlot, ScreePlot]
+  lesson_7_dashboard:
+    uses: [BasePlot subclasses]
+    how: >
+      The dashboard imports the same plot classes the notebooks used. This is the payoff of
+      the whole composition story: a plot written in week 2 renders inside streamlit in week
+      7 unchanged.
+
+# ---------------------------------------------------------------------------------------
+# Proposed additions to goad_toolkit. All `proposed` — none of it is work until approved.
+# Grouped by how much they cost.
+# ---------------------------------------------------------------------------------------
+
+goad_proposals:
+
+  tier_a_needed_for_the_course:
+
+    - id: G1
+      name: Categorical plot family
+      status: proposed
+      what: BarPlot, GroupedBarPlot, HeatmapPlot, BarbellPlot as BasePlot subclasses.
+      why: >
+        Lesson 2 has no goad equivalent today, so it would stay raw seaborn while every
+        other lesson moved. Barbell in particular is taught here and exists nowhere else.
+      effort: small — thin wrappers over seaborn, same shape as the existing LinePlot.
+
+    - id: G2
+      name: Relation plot family
+      status: proposed
+      what: ScatterPlot, RegPlot (fit_reg/lowess/order), CorrelationHeatmap.
+      why: Lesson 5, leerdoelen 5.9-5.16.
+      effort: small
+
+    - id: G3
+      name: Distribution diagnostics
+      status: proposed
+      what: QQPlot, ECDFPlot, and a FitTable that renders fit results as a ranked dataframe.
+      why: >
+        leerdoel 4.10 asks the student to read a qq-plot; goad fits distributions but cannot
+        show the diagnostic that makes a fit believable. A ranked table (distribution,
+        params, loglik, KS stat, KS p) is also what students should hand in, not a picture.
+      effort: small
+
+    - id: G4
+      name: TimeFeatures transform
+      status: proposed
+      what: >
+        One transform that derives date, hour, day_name, isoweek, year-week, is_weekend
+        from a timestamp column, with a `features=[...]` parameter.
+      why: >
+        Every lesson-3 notebook opens with the same six .dt lines. As a transform it becomes
+        one pipeline step, and the student still sees the .dt API in the source (leerdoel 3.8).
+      effort: small
+
+    - id: G5
+      name: RegexFeature transform
+      status: proposed
+      what: TransformBase subclass — apply a pattern to a text column, emit count / bool / extracted group.
+      why: Leerdoel 1.7 and 1.11, and the enrichment habit the ML course builds on.
+      effort: small
+      note: >
+        Deliberately mirrors vectormesh's RegexVectorizer in spirit, so the move from
+        "regex as a dataframe column" to "regex as a feature vector" is a recognised step.
+
+    - id: G6
+      name: FileHandler generalisation
+      status: proposed
+      what: >
+        FileHandler.load currently hardcodes parse_dates=["date"], index_col="date" and CSV.
+        Parameterise the reader (csv/parquet), the date column, and whether to index by it.
+      why: >
+        Blocks every non-covid dataset, including the students' own .parq exports. This is
+        the single biggest thing standing between goad and the course.
+      effort: small, but it is a breaking change to FileConfig — bump the minor version.
+      breaking: true
+
+    - id: G7
+      name: Registry additions
+      status: proposed
+      what: bernoulli, binomial, geometric, negative binomial, pareto/powerlaw, beta.
+      why: >
+        Bernoulli is leerdoel 4.4 and is not registered. Pareto/powerlaw is the family the
+        chat data actually produces (word frequency, burst lengths) and its absence forces
+        a lognormal answer to a power-law question. Beta is needed if the A/B testing
+        material from goad_exercises is reused (07).
+      effort: small; registry is one call per distribution.
+
+  tier_b_makes_the_course_better:
+
+    - id: G8
+      name: Annotation layer
+      status: proposed
+      what: >
+        Annotate / HighlightCategory / TrendLine as composable BasePlot subclasses, applied
+        with plot_on() — matching the progression already pictured in
+        goad_toolkit/img/example/{base_plot, plot_with_trendline_and_max,
+        plot_with_all_annotations}.png.
+      why: >
+        Those three images ARE the five-guidelines lesson. Making them a code progression
+        the student can run turns the course's central design advice into an API.
+      effort: medium
+
+    - id: G9
+      name: Grey-first palette helpers
+      status: proposed
+      what: >
+        PlotSettings gains a palette strategy — everything grey except a named subset. e.g.
+        `PlotSettings(highlight=["Chinstrap"], base_color="lightgrey")`.
+      why: >
+        "start with grey" is guideline #5 and currently lives only in the slides.
+      effort: medium
+
+    - id: G10
+      name: Consistent return contract on BasePlot
+      status: proposed
+      what: Every build() returns (fig, ax). Today BarWithDates and VerticalDate return None.
+      why: >
+        Students will chain these. An inconsistent return type is the kind of thing that
+        makes a beginner conclude the library is broken and go back to raw matplotlib.
+      effort: trivial
+      breaking: mildly
+
+    - id: G11
+      name: Pipeline introspection
+      status: proposed
+      what: >
+        Pipeline.apply(..., keep_intermediate=True) returning each step's output, plus a
+        __repr__ that already exists and is good.
+      why: >
+        Debugging a pipeline is otherwise all-or-nothing, and the first thing a student does
+        when a pipeline misbehaves is dismantle it back into loose cells — losing the point.
+      effort: medium
+
+    - id: G12
+      name: Drop the global singleton on DistributionRegistry
+      status: proposed
+      what: >
+        DistributionRegistry.__new__ returns a process-wide singleton. A student who
+        registers a distribution in one notebook cell silently affects every later fit, and
+        a re-run of the same cell is a no-op.
+      why: Surprising, and hard to explain to someone learning what a class even is.
+      effort: small
+      breaking: true
+
+  tier_c_speculative:
+
+    - id: G13
+      name: goad plots for high-dimensional projections
+      status: proposed
+      what: ProjectionPlot (2D embedding + hue + variance-explained in the title), ScreePlot.
+      why: Lesson 6 consistency; also stops students reporting a t-SNE without a variance figure.
+      effort: medium
+      caveat: >
+        Pulls sklearn into goad's dependency set if the fitting lives inside. Prefer taking
+        an already-fitted array so goad stays sklearn-free.
+
+    - id: G14
+      name: A `goad` CLI
+      status: proposed
+      what: pyproject already declares `goad = "goad:main"` but no such module exists.
+      why: Either implement it (fit distributions to a column of a csv) or delete the entry.
+      effort: small
+      note: Right now `uv add goad-toolkit` installs a broken console script.
+      verify: Confirm the entry point is actually broken before acting.
+
+sequencing:
+  - G6 and G10 first — they unblock everything and are nearly free.
+  - G1, G2, G3, G4, G5, G7 next; each one unblocks exactly one lesson.
+  - Docs + MCP (04-mcp-integration.yml) can be written against the API as it will be, in
+    parallel, since the docs are the source of truth for the MCP server.
+  - Tier B after the notebooks are rewritten and the friction is known first-hand.
+  - Tier C only if it earns its place.
+
+release_discipline:
+  what: Tag goad_toolkit and pin the tag in MADS-DAV's pyproject.toml.
+  why: >
+    A cohort mid-assignment must not get a breaking change. Same reasoning as vectormesh
+    pinning VECTORMESH_REF to a tag rather than main.
+  version_after_tier_a: 0.2.0  # breaking changes in G6, G12

@@ -1,0 +1,142 @@
+# Execution order
+#
+# Ordered so that nothing is rewritten twice. The rule: the API settles, then the docs, then
+# the notebooks, then the assessment.
+
+meta:
+  status: doing
+
+milestones:
+
+  - id: M0
+    name: Plan and decide
+    status: doing
+    contains:
+      - this planning/ folder
+    decided:
+      - id: reference-chat
+        answer: >
+          Use common-pile/ubuntu_irc, not a synthetic corpus. Telegram scraping rejected on
+          licence/GDPR grounds; fine as an optional student-side exercise.
+        see: 02-datasets.yml#reference_chat
+      - id: tanach
+        answer: Retire all three notebooks.
+        see: 05-notebooks.yml
+      - id: vectorcache
+        answer: >
+          pttrn-io/oxford-flowers-dinov2-small, with the ML course's 1-NN cosine-similarity
+          hook. Lesson 6.4 splits into 06.4 (what an organised vector space looks like) and
+          06.5 (what is one row, when a row is "haha").
+        see: 06-huggingface-migration.yml#the_vectorcache_bridge
+    still_open:
+      - id: simpson
+        question: Move Simpson's paradox from leerdoel 4.8 to 2.9?
+        see: 08-learning-goals.yml
+      - id: crowds
+        question: What happens to leerdoelen 5.7/5.8 (condorcet, diversity prediction)?
+        see: 08-learning-goals.yml#the_crowds_question
+      - id: assistant-policy
+        question: Ship a course-wide .claude/ + CLAUDE.md registering goad/codestyle/vectormesh?
+        see: 04-mcp-integration.yml#course_wide_assistant_policy
+    exit: those three answered
+    verifications_that_gate_M3:
+      - 02-datasets.yml#reference_chat.actions R1 and R4
+      - 05-notebooks.yml 06.5 sections B3 and B4
+
+  - id: M1
+    name: goad docs + MCP server
+    status: doing
+    contains:
+      - goad_toolkit/docs/ (chapters + README index table)
+      - goad_toolkit/goad_mcp.py
+      - goad_toolkit/MCP_SERVER.md
+    why_first: >
+      The docs are the specification for the API changes in M2 — writing them first is what
+      surfaces the gaps (it is how G1-G7 were found). They also do not block on anything.
+    exit: the server runs, tools return sensible text, MCP_SERVER.md installs cleanly
+
+  - id: M2
+    name: goad tier-A API work
+    depends_on: [M1]
+    contains: [G6, G10, G1, G2, G3, G4, G5, G7]
+    order: G6 and G10 first (nearly free, unblock everything), then one per lesson
+    exit: goad_toolkit 0.2.0 tagged, pinned in MADS-DAV pyproject.toml
+    note: docs from M1 get updated alongside; they are the source of truth for the MCP
+
+  - id: M3
+    name: Data foundations
+    depends_on: [M0]
+    parallel_with: [M1, M2]
+    contains:
+      - vendor tier-0 showcase datasets into data/showcase/ (D1, D2)
+      - remove mads_datasets from pyproject (H1)
+      - add datasets to pyproject (H2)
+      - reference-chat, if approved
+    exit: every showcase dataset loads offline
+
+  - id: M4
+    name: Notebook rewrite, in lesson order
+    depends_on: [M2, M3]
+    contains:
+      - 01-cleaning
+      - 02-comparing_categories
+      - 03-time, 03.2-statistics-of-time
+      - 04.1-distributions, 04.2-distribution_fitting
+      - 05.1-relationships, 05.2-correlation
+      - 06.1, 06.2, 06.4
+      - 07.1 dashboard
+    order: strictly by lesson number
+    why: >
+      Each lesson's "your turn" half depends on the previous lesson's output columns. Doing
+      them out of order means guessing at the dataframe.
+    blocking_first: >
+      resolve the uncommitted changes in 01-cleaning, 03-time and 06.2 before starting
+    exit: X3 — every notebook runs top-to-bottom on the reference chat with no config.toml
+
+  - id: M5
+    name: Assessment
+    depends_on: [M4]
+    contains:
+      - leerdoelen updates (08)
+      - checklist.md fourth section
+      - rubric reconciliation
+    why_last: >
+      Assessing what the notebooks actually became, rather than what they were planned to be.
+
+  - id: M6
+    name: Presentations
+    depends_on: [M4]
+    status: proposed
+    contains: presentations/DAV_*.pdf
+    note: A separate pass. Slides follow notebooks; doing them earlier means doing them twice.
+
+critical_path:
+  - M0 decisions
+  - M1 docs (surfaces the API gaps)
+  - M2 G6 + G10 (unblock every plot and every dataset)
+  - M3 showcase data
+  - M4 lesson by lesson
+  - M5 assessment
+
+risks:
+  - risk: goad API churn mid-cohort
+    mitigation: pin a tag in pyproject.toml; never point at main during a running course
+  - risk: The refactor stalls half-done, leaving a course that is neither old nor new
+    mitigation: >
+      M4 is ordered by lesson, so a stall leaves early lessons finished and late ones
+      untouched — which is survivable. Never refactor across lessons in parallel.
+  - risk: The showcase half doubles every notebook's length
+    mitigation: >
+      "Your turn" must be the same code with a different dataframe. If it is not, that is a
+      signal the goad abstraction is missing something — fix goad, not the notebook.
+  - risk: The MCP server is installed by nobody
+    mitigation: >
+      One command in the README's setup section, next to `uv sync`, and used live in a
+      lecture in week 1. A tool students first meet in week 5 is a tool they never meet.
+  - risk: Uncommitted work in three notebooks is lost or conflicts
+    mitigation: resolve before M4 starts; it is listed as blocking
+
+definition_of_done:
+  - Every criterion in 00-overview.yml#success_criteria holds.
+  - notebooktester passes on every notebook, against the reference chat.
+  - A new student can go from `git clone` to a finished lesson 1 without a chat export.

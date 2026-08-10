@@ -1,0 +1,193 @@
+# Changes to references/leerdoelen/ and the rubric
+#
+# The refactor only counts if what is assessed moves with it. This file lists the leerdoelen
+# that gain, lose, or move — nothing here changes the five-family spine.
+
+meta:
+  status: todo
+  files: references/leerdoelen/les{1..7}.md, references/leerdoelen/rubric.pdf, checklist.md
+
+additions:
+
+  - lesson: 1
+    id: 1.12
+    goal: >
+      kan een reeks bewerkingen op data uitdrukken als een pipeline van herbruikbare stappen,
+      en kan zelf een stap toevoegen door TransformBase te subclassen
+    why: goad Pipeline replaces the loose cleaning cells (03-goad-integration.yml)
+    assessable_as: the student's own RegexFeature transform, in their repo
+
+  - lesson: 2
+    id: 2.9
+    goal: >
+      begrijpt Simpson's paradox en kan aanwijzen wanneer een vergelijking tussen categorieen
+      een groepering mist
+    moved_from: 4.8
+    why: >
+      It is a categorical-comparison failure. Teaching it in the distributions lesson leaves
+      it without a picture to hang on.
+    status: proposed
+
+  - lesson: 4
+    ids: [4.13, 4.14, 4.15, 4.16]
+    goals:
+      - begrijpt wat outliers kunnen representeren en welke aannames eraan ten grondslag liggen
+      - kan onderscheiden tussen een meetfout en een gewone waarneming uit een zware staart
+      - kan outlier-detectie toepassen op niet-normaal verdeelde data
+      - kan missende data herkennen, interpreteren, en kan imputatiemethodes toepassen en hun problemen benoemen
+    source: goad_exercises/learning_goals/outliers.md
+    why: >
+      Chat data produces both constantly (one enormous message, one three-day silence) and
+      the course currently has no vocabulary for either.
+    see: 07-goad-exercises-reuse.yml
+
+  - lesson: 4
+    id: 4.17
+    goal: >
+      kan een simulatie gebruiken om te toetsen of een waargenomen patroon ook door toeval
+      had kunnen ontstaan
+    source: goad_exercises/notebooks/03_monte_carlo.ipynb
+    why: this is stage 6 (verification) of the MCP checklist, and it is currently untaught
+
+  - lesson: 5
+    id: 5.19
+    goal: >
+      begrijpt dat het residu van een model de eigenlijke bevinding is, en kan een verdeling
+      fitten op het residu om te beoordelen of het model iets heeft gemist
+    why: >
+      The loop demo/linear.py already performs. DAV teaches modelling and distribution
+      fitting separately and never connects them.
+
+  - lesson: 6
+    id: 6.19
+    goal: >
+      kan een dataset en voorberekende vectoren van de HuggingFace hub laden, en begrijpt
+      waarom het embedden losgekoppeld wordt van de analyse
+    why: bridge to the ML course (06-huggingface-migration.yml)
+
+  - lesson: cross-cutting
+    id: 0.1
+    goal: >
+      kan een analyse-assistent inzetten als gesprekspartner: kan de stappen van de eigen
+      analyse verantwoorden zonder de assistent, en herkent wanneer een antwoord is
+      overgenomen in plaats van begrepen
+    why: >
+      This is now an actual skill with an actual tool behind it (04-mcp-integration.yml),
+      not a warning in a syllabus.
+    status: proposed
+    assessment_note: >
+      Assessed by asking the student to defend a choice, not by policing tool use.
+
+removals_and_demotions:
+
+  - lesson: 6
+    id: 6.17
+    current: kan werken met transformers.pipeline en huggingface modellen
+    change: keep, but demote from "embed everything yourself" to "run the small fast one"
+    why: the expensive path moves behind a published cache
+
+  - lesson: 5
+    ids: [5.7, 5.8]
+    current: wisdom of the crowd / condorcet jury theorem / diversity prediction theorem
+    change: see the_crowds_question below
+    status: proposed
+    needs_decision_from: Raoul
+
+  - any_lesson: true
+    what: mads_datasets
+    change: remove every mention
+    why: P4
+
+# ---------------------------------------------------------------------------------------
+# The one open leerdoelen question, written out because "review 5.7/5.8" was too terse.
+# ---------------------------------------------------------------------------------------
+
+the_crowds_question:
+  what_they_say:
+    5.7: >
+      begrijpt "wisdom of the crowd" en hoe dit zich vertaalt in de "condorcet jury theorem"
+    5.8: >
+      begrijpt de diversity prediction theorem en wat de aannames zijn waaronder deze
+      theorem geldig is
+  the_problem:
+    - >
+      They are the only two goals in lesson 5 that no notebook touches. 05.1 is scatterplots
+      and the map/territory framing; 05.2 is correlation and regularisation. Neither mentions
+      a crowd. So they are currently taught in slides only, and assessed not at all.
+    - >
+      They also sit oddly next to their neighbours. Lesson 5's other goals are about the
+      relationship between two variables. These two are about aggregating many independent
+      estimates, which is a different subject.
+  what_they_actually_are: >
+    Both are statements that averaging independent estimates beats the average individual
+    estimate. Condorcet is the discrete/voting version; the diversity prediction theorem is
+    the continuous version and is an identity, not an approximation:
+    crowd error = average individual error - diversity. Their shared assumption —
+    independence — is also exactly what makes them fail in practice, and that failure is
+    worth more classroom time than the theorems.
+  options:
+    - id: O1
+      what: Move both to lesson 4, next to the central limit theorem.
+      argument: >
+        The CLT, Condorcet and the diversity prediction theorem are the same idea in three
+        costumes: independent errors cancel. Taught together they reinforce each other, and
+        lesson 4 already has the simulation machinery (and, with the Monte Carlo section
+        from goad_exercises, a way to demonstrate all three by resampling rather than by
+        assertion).
+      cost: lesson 4 is already the densest lesson in the course.
+    - id: O2
+      what: Keep them in lesson 5 and give them a notebook section.
+      argument: >
+        There is a real hook: the diversity prediction theorem is an ensemble statement, and
+        lesson 5 already teaches regularisation, overfitting and "the map is not the
+        territory". Averaging several deliberately-imperfect models and watching the error
+        drop below the best individual model is a ten-cell demo and lands the point harder
+        than any theorem statement.
+      cost: >
+        lesson 5 gains a third subject on top of relations and regularisation.
+    - id: O3
+      what: Drop them.
+      argument: >
+        Nothing else in the course depends on them and the ML course teaches ensembles
+        properly.
+      cost: >
+        They are genuinely good ideas and the "independence is the assumption that fails"
+        point is one students carry into working life.
+  recommendation: O2
+  reasoning: >
+    The demo is cheap, it is a visualisation (error versus number of models averaged, with
+    the diversity term shaded), and it gives lesson 5's "the map is not the territory" a
+    constructive counterpart: one map is wrong, several disagreeing maps are less wrong. O1
+    is the tidier taxonomy but overloads the lesson that is already carrying the most.
+  needs_decision_from: Raoul
+
+checklist_md:
+  current: preattentive processing / gestalt principles / five guidelines
+  change:
+    - what: Keep verbatim — it is good, short, and the MCP critique tool mirrors it.
+    - what: >
+        Add a fourth section, "Wat beweer je?" — what claim does this plot support, and what
+        would falsify it?
+      status: proposed
+  why: >
+    The three current sections judge the picture. None of them judge whether it answers a
+    question, which is the thing the rubric actually rewards.
+
+rubric:
+  status: verify
+  action: >
+    references/leerdoelen/rubric.pdf was updated in commit 1a12ed2 ("improve rubric"). Read
+    it before proposing changes; the additions above may already be partly covered.
+
+actions:
+  - id: L1
+    todo: Read the current rubric.pdf and reconcile with the additions above.
+    blocking: true
+  - id: L2
+    todo: Merge outliers.md into les4.md.
+  - id: L3
+    todo: Decide on moving Simpson's paradox 4.8 -> 2.9.
+  - id: L4
+    todo: Decide the fate of 5.7/5.8.
+  - id: L5
+    todo: Add the assistant leerdoel 0.1 and describe how it is assessed.

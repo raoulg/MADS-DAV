@@ -1,0 +1,471 @@
+# Per-notebook refactor spec
+#
+# For each notebook: what it is now, what it should become, and the concrete edits.
+# `showcase` / `your_turn` refer to the two halves defined in 01-showcase-principle.yml.
+
+meta:
+  status: todo
+  conventions:
+    naming:
+      problem: >
+        Numbering is inconsistent — 06.1, 06.2 but 6.3.1, 6.3.2, 6.4, 7.0. Sorting in a file
+        browser is already wrong.
+      decision: Zero-pad every leading number and use two levels max — 06.1 … 06.5, 07.1.
+      status: proposed
+    every_notebook_ends_with: a "what to write down" markdown cell
+    every_notebook_starts_with: a one-sentence question, not an import block
+
+notebooks:
+
+  - file: notebooks/01-cleaning.ipynb
+    lesson: 1
+    now: >
+      Loads the raw preprocessed csv, clips/cleans, hashes authors with humanhasher, adds
+      is_topk, writes a .parq. Entirely own-data, which is correct for this notebook.
+    target: >
+      Same job, restructured as a goad Pipeline. Regex enrichment becomes the student's own
+      TransformBase subclass rather than loose cells.
+    keep:
+      - the whole own-data premise — this notebook is the one place it belongs
+      - humanhasher anonymisation
+    change:
+      - id: 01-a
+        do: Rewrite the cleaning steps as goad Pipeline steps.
+        needs: [G6 FileHandler generalisation]
+      - id: 01-b
+        do: >
+          Introduce RegexFeature and have the student add two features of their own
+          (emoji count, question marks, URLs, mentions — their choice).
+        needs: [G5]
+      - id: 01-c
+        do: >
+          Add a showcase half: run the same pipeline on the reference chat, so a student
+          without an export still finishes the lesson and has something to compare to.
+        needs: [reference-chat, 02-datasets.yml]
+      - id: 01-d
+        do: Add the "your data is thin" escape hatch, explicitly and without shame.
+    leerdoelen: [1.7, 1.10, 1.11]
+
+  - file: notebooks/02-comparing_categories.ipynb
+    lesson: 2
+    now: >
+      Barplots, palettes, groupby/agg, pd.cut — all directly on the student's own chat.
+      Textbook case of P1: a two-person chat has no interesting categories.
+    target: >
+      Showcase on penguins (clean comparison) + Berkeley admissions (Simpson's paradox) +
+      titanic (the failure modes). Your-turn on own-chat author/weekday/category counts.
+    change:
+      - id: 02-a
+        do: Add the penguins showcase — barplot, grouped barplot, heatmap, palette choice.
+        needs: [G1]
+      - id: 02-b
+        do: >
+          Add the Simpson's paradox demonstration, moved here from lesson 4 where it is
+          currently taught without a categorical picture to hang it on.
+        status: proposed
+      - id: 02-c
+        do: >
+          Add the failure gallery: 40 unordered bars, proportions across unequal groups,
+          rainbow palette on an ordered variable.
+      - id: 02-d
+        do: Barbell plot showcase (paired before/after), which has no other home in the course.
+        needs: [G1]
+      - id: 02-e
+        do: Reduce the own-data half to the same code with a different dataframe.
+    leerdoelen: [2.5, 2.6, 2.7, 2.8, 4.8]
+
+  - file: notebooks/03-time.ipynb
+    lesson: 3
+    now: >
+      isoweek/day_name extraction, reindexing to fill gaps, rolling average, FacetGrid per
+      weekday, plotly area chart, and a two-author-only "who texts first" section that
+      silently breaks for group chats.
+    target: >
+      Showcase on flights (trend + seasonality, unmissable) and covid (regime change).
+      Your-turn keeps the best of the current content, with the two-author section gated
+      behind an explicit check rather than a comment saying it only works for two authors.
+    change:
+      - id: 03-a
+        do: Add the flights showcase — raw vs rolling vs over-smoothed, side by side.
+      - id: 03-b
+        do: >
+          Teach the reindex-to-fill-gaps step ON the showcase, where a deliberate hole is
+          punched into the index so the student sees the straight-line lie it causes.
+      - id: 03-c
+        do: Replace the .dt boilerplate with a TimeFeatures pipeline step.
+        needs: [G4]
+      - id: 03-d
+        do: >
+          Make the two-author section conditional, with a group-chat alternative (who
+          starts a thread / who ends it, over the top-k authors).
+      - id: 03-e
+        do: Keep the plotly area chart; it is the one interactive moment in the course.
+    leerdoelen: [3.3, 3.8, 3.9, 3.10, 3.11, 3.12]
+
+  - file: notebooks/03.2-statistics-of-time.ipynb
+    lesson: 3
+    now: >
+      Sunspots + Fourier + seasonal_decompose + Savitzky-Golay/Butterworth filters. Already
+      built on the showcase principle — this notebook is the model for the others.
+    target: Mostly unchanged. Bring the data access and the plots into goad.
+    change:
+      - id: 032-a
+        do: Fetch sunspots through goad's FileHandler instead of a raw requests call.
+        needs: [G6]
+      - id: 032-b
+        do: Wrap decompose/ACF output in goad plot classes for consistent makeup.
+        needs: [G4 DecomposePlot/ACFPlot]
+      - id: 032-c
+        do: >
+          Add a short your-turn: run the same decomposition on the student's own daily
+          message count, and expect a 7-day period.
+    note: This is the reference for what a refactored notebook looks like.
+    leerdoelen: [3.4, 3.5, 3.6, 3.7, 3.13, 3.14]
+
+  - file: notebooks/04.1-distributions.ipynb
+    lesson: 4
+    now: 7 cells, own-data only, effectively a stub.
+    target: >
+      The main distributions lesson. Generated showcase for each family (what does a
+      lognormal LOOK like), CLT demo, taxis for a real long tail, then your-turn on four
+      chat-derived variables with a stated expectation for each.
+    change:
+      - id: 041-a
+        do: Build the generated-families gallery — norm/lognorm/expon/poisson/weibull/pareto.
+      - id: 041-b
+        do: CLT demo (leerdoel 4.6) — sums of anything converge, which is why normal is common.
+      - id: 041-c
+        do: >
+          Long-tail showcase on taxis — mean vs median, log transform, and "outliers" that
+          turn out to be ordinary members of a lognormal.
+      - id: 041-d
+        do: >
+          Your-turn with a stated hypothesis per variable: messages/day → poisson-ish and
+          over-dispersed; gaps → exponential within bursts, heavy overall; length →
+          lognormal; word rank → power law.
+      - id: 041-e
+        do: Use goad HistogramPlot/DistPlot/ECDFPlot throughout.
+        needs: [G3]
+    leerdoelen: [4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.9]
+
+  - file: notebooks/04.2-distribution_fitting.ipynb
+    lesson: 4
+    now: >
+      Normality testing, qq-plots, scipy fitting, two-sample tests. Imports mads_datasets.
+    target: >
+      The goad DistributionFitter lesson. Showcase on covid residuals (where the answer is
+      known and interesting), your-turn on the student's own four variables from 04.1.
+    change:
+      - id: 042-a
+        do: Remove mads_datasets. (P4)
+        needs: [06-huggingface-migration.yml]
+      - id: 042-b
+        do: Replace the hand-rolled fitting loop with DistributionFitter + PlotFits.
+      - id: 042-c
+        do: >
+          Teach KS-vs-log-likelihood disagreement explicitly — goad already marks both, and
+          the case where they pick different winners is the most instructive thing here.
+      - id: 042-d
+        do: Add the qq-plot as a goad QQPlot, not a scipy.probplot one-liner.
+        needs: [G3]
+      - id: 042-e
+        do: >
+          Exercise: register a distribution goad does not ship (pareto for the word-frequency
+          data) and re-run the fit. This is the extensibility lesson, made concrete.
+        needs: [G7]
+    leerdoelen: [4.10, 4.11, 4.12]
+
+  - file: notebooks/05.1-relationships.ipynb
+    lesson: 5
+    now: Scatterplots and "the map is not the terrain", on mads_datasets + own data.
+    target: >
+      Showcase on Anscombe + Datasaurus (the argument), then mpg (real non-linearity, hue,
+      size, lowess), then the full GOAD loop: model → fit → residual → distribution of the
+      residual, on covid.
+    change:
+      - id: 051-a
+        do: Remove mads_datasets.
+      - id: 051-b
+        do: Lead with Anscombe/Datasaurus. Nothing else in the course argues this well.
+      - id: 051-c
+        do: >
+          Import the covid model/residual sequence from goad_exercises/notebooks/01 —
+          this is where the residual becomes a first-class object.
+        see: 07-goad-exercises-reuse.yml
+      - id: 051-d
+        do: Use goad ScatterPlot/RegPlot.
+        needs: [G2]
+    leerdoelen: [5.2, 5.3, 5.9, 5.10, 5.11, 5.12, 5.13, 5.14, 5.15]
+
+  - file: notebooks/05.2-correlation.ipynb
+    lesson: 5
+    now: Correlation heatmap, SGDRegressor with L1/L2/elasticnet, on mads_datasets.
+    target: Same content, off mads_datasets, with a correlation showcase that has a confounder in it.
+    change:
+      - id: 052-a
+        do: Remove mads_datasets.
+      - id: 052-b
+        do: >
+          Add a showcase where a strong correlation is entirely explained by a third
+          variable, so "correlation is not causation" is demonstrated rather than asserted.
+      - id: 052-c
+        do: Use goad CorrelationHeatmap.
+        needs: [G2]
+      - id: 052-d
+        do: >
+          Keep the regularisation-as-feature-selection material; it is the bridge to the ML
+          course and the only place L1/L2 is taught before it.
+    leerdoelen: [5.5, 5.6, 5.9, 5.16, 5.17, 5.18]
+
+  - file: notebooks/06.1-dimensionality_reduction.ipynb
+    lesson: 6
+    now: SVD/PCA theory, MNIST, swiss roll, t-SNE. Already showcase-shaped and good.
+    target: Mostly unchanged; add the t-SNE failure modes and a variance-explained discipline.
+    change:
+      - id: 061-a
+        do: >
+          Add the perplexity sweep — same data, four perplexities, four different "cluster
+          structures". Teaches that a t-SNE picture is a choice, not a measurement.
+      - id: 061-b
+        do: Add PCA-without-scaling as a staged failure.
+      - id: 061-c
+        do: Wrap projections in goad ProjectionPlot/ScreePlot.
+        needs: [G13]
+    leerdoelen: [6.3, 6.7, 6.8, 6.9, 6.10, 6.13, 6.14]
+
+  - file: notebooks/06.2-modelling.ipynb
+    lesson: 6
+    now: >
+      CountVectorizer + PCA + manhattan distance clustering of own chat messages, via
+      wa_analyzer.model.TextClustering. Has uncommitted work in progress.
+    target: >
+      The n-gram/count-vector half of lesson 6, kept — it is a genuinely good "what is a
+      vector, before embeddings" step and it works on any chat.
+    change:
+      - id: 062-a
+        do: Resolve the uncommitted changes before touching anything else.
+        status: todo
+        blocking: true
+      - id: 062-b
+        do: Add a showcase on a text dataset with known classes, so clustering can be checked.
+      - id: 062-c
+        do: >
+          Frame CountVectorizer explicitly as the cheap hand-designed alternative to an
+          embedding, and keep it as the baseline the embeddings in 06.4 must beat.
+    leerdoelen: [6.11, 6.12]
+
+  - files: [notebooks/6.3.1-tanach_ingest.ipynb, notebooks/6.3.2-tanach_preprocess.ipynb, notebooks/6.3.3-tanach_model.ipynb]
+    lesson: 6
+    now: A three-notebook ingest/preprocess/model chain on the Tanach.
+    target: retired
+    status: decided
+    decision: Remove all three. They do not add anything the rest of lesson 6 does not cover.
+    change:
+      - id: 063-a
+        do: Delete the three notebooks.
+      - id: 063-b
+        do: >
+          Check whether wa_analyzer.model.TextClustering is used anywhere else before
+          removing it — 06.2 and 6.3.3 both import it.
+        blocking: true
+      - id: 063-c
+        do: >
+          Salvage the ingest idea, not the notebook: "fetch a text corpus and regex it into
+          rows" is now lesson 1's job, done on ubuntu_irc where it has a purpose.
+    freed_up: >
+      Three notebooks of lesson-6 surface. Spend it on the vectorcache/cosine-similarity
+      material below, which needs the room.
+
+  - file: notebooks/6.4_huggingface.ipynb
+    lesson: 6
+    now: >
+      transformers.pipeline for sentiment, SentenceTransformer to embed own messages, then
+      PCA/t-SNE and a distance matrix. Every student downloads and runs a model before
+      seeing anything.
+    target: >
+      Rebuilt around two ideas that are currently missing: what a vector space actually
+      looks like when it is well organised, and what "one row" means when your rows are
+      three-word messages. Split into two notebooks — the material no longer fits in one,
+      and the tanach notebooks freed the room.
+    status: redesigned
+    note: >
+      This is a redesign, not a port. The lesson does not need to survive in its current
+      shape; the leerdoelen do.
+
+    new_structure:
+
+      - file: notebooks/06.4-vectorspaces.ipynb
+        title: What a vector space looks like when it is organised
+        sections:
+          - id: A1
+            what: Load pttrn-io/oxford-flowers-dinov2-small with VectorCache.from_hub.
+            why: >
+              One line, a few megabytes, no model download, no waiting. The whole
+              embed-once boundary arrives as a convenience before it ever arrives as a
+              doctrine.
+          - id: A2
+            what: PCA the test vectors to 2D for ~8 of the 102 classes and plot them.
+            why: >
+              Eight tight clusters out of a LINEAR projection of raw encoder output, with
+              nothing trained. This is the picture that makes "the representation is doing
+              the work" a visual fact rather than a claim. It is also the best possible
+              motivation for lesson 6's whole premise.
+            note: >
+              torch.pca_lowrank does this without adding a dependency; the ML course's
+              notebooks/1_pytorch_intro/01_the_cache.ipynb has the exact cell.
+          - id: A3
+            what: Cosine similarity, properly explained.
+            why: >
+              DAV is the right place for this and currently skips it. It is geometry, it is
+              a metric (leerdoel 6.6), and the one property that matters — it ignores
+              magnitude, only direction — is precisely why it survives comparing a
+              three-word message to a paragraph. Contrast against euclidean and manhattan
+              (leerdoel 6.11), which do not.
+          - id: A4
+            what: The 1-nearest-neighbour baseline — normalise, dot, argmax, compare labels.
+            why: >
+              Four lines, no loss, no optimizer, no parameters, 99.1% on 102 fine-grained
+              classes. Reproduces the ML course's lesson-1 hook, so students meet it once as
+              a visualisation result and again as a modelling result.
+            payoff_for_dav: >
+              It is also the honest answer to "is this cluster structure real, or is it my
+              projection?" — the 1-NN score is computed in the ORIGINAL 384-dimensional
+              space, so it verifies what the 2D picture only suggests. That is stage 6
+              (verification) of the analysis checklist, on a question students actually
+              have.
+          - id: A5
+            what: Stage the failure — the same projection with unscaled features, and t-SNE
+              at four perplexities.
+            why: 061-a and 061-b belong here now that there is a dataset worth doing them on.
+        source: >
+          MADS-MachineLearning-course/notebooks/1_pytorch_intro/01_the_cache.ipynb §1.1-§1.2
+          is the direct model for A1, A2 and A4. Reuse the cells; rewrite the framing for a
+          visualisation course.
+
+      - file: notebooks/06.5-your-own-vectors.ipynb
+        title: What is one row, when a row is "haha"?
+        premise: >
+          The flowers cache works because one row is one flower. Chat data has no such
+          luck: a large share of messages are under five words, and a three-word message
+          embeds to something almost content-free. Embedding messages one at a time and
+          projecting the result gives an undifferentiated blob — and the student cannot
+          tell whether that means "no structure" or "wrong unit of observation".
+        sections:
+          - id: B1
+            what: Stage the blob. Embed individual messages, project, look at nothing.
+            why: >
+              The failure has to be seen before the fix means anything. And the diagnosis —
+              "this is a stage 2 problem, not a stage 4 problem" — is the transferable part.
+          - id: B2
+            what: Merge messages into conversational units, three ways.
+            options:
+              - fixed window of N consecutive messages
+              - time-gap sessionization — start a new unit when the gap exceeds a threshold
+              - per author, per day
+            why: >
+              Three defensible choices with different consequences is a better exercise than
+              one right answer.
+          - id: B3
+            what: Get the gap threshold from lesson 4's fitted distribution.
+            why: >
+              THE callback of the course. In lesson 4 the student fitted the distribution of
+              time-between-messages and found it is not one distribution — it is a fast
+              within-burst regime and a slow between-burst regime. The crossover between
+              them IS the session boundary. A parameter that would otherwise be guessed is
+              read off a fit they already did, on their own data.
+            status: proposed
+            check: >
+              Confirm the two-regime structure is visible enough on a typical chat to give a
+              defensible threshold. If it is not, fall back to sweeping the threshold and
+              showing that the answer depends on it — which is the same lesson, less neatly.
+          - id: B4
+            what: Evaluate the merge, do not just admire it.
+            how: >
+              On the IRC corpus, jkkummerfeld/irc-disentanglement provides human-annotated
+              reply-to links for a subset of #ubuntu, so a sessionization can be scored
+              against ground truth rather than eyeballed.
+            status: verify
+            check: >
+              Confirm the annotated subset overlaps the channel/date slice chosen in
+              02-datasets.yml#reference_chat. If it does not, either move the slice or drop
+              this to an optional section.
+          - id: B5
+            what: Cosine similarity on the merged units.
+            uses:
+              - nearest-neighbour retrieval — "which conversation is most like this one",
+                which is checkable by reading both
+              - a session-by-session similarity matrix ordered by time; recurring topics
+                show up as off-diagonal blocks
+              - per-author centroids, and whether sessions can be attributed by cosine
+                similarity to them — the flowers 1-NN baseline, transposed onto their data
+          - id: B6
+            what: Keep the CountVectorizer baseline from 06.2 and race it against embeddings.
+            why: >
+              Same comparison as before, now on a fair unit of observation. The cheap
+              interpretable representation wins often enough on small data that the result is
+              worth the demonstration, and it is the hand-designed-versus-learned thread the
+              ML course continues.
+          - id: B7
+            what: Keep the sentiment pipeline as a short closing section.
+            why: Small, fast, and the students enjoy it.
+
+    the_bridge_worth_naming:
+      claim: >
+        DAV and the ML course meet at the same shape from opposite directions.
+      detail: >
+        ML lesson 5 (notebooks/4_language/03_long_documents.ipynb) has documents too LONG
+        for the context window: split into chunks, get (C, D), aggregate back. DAV lesson 6
+        has messages too SHORT to carry meaning: merge into units, get (C, D), aggregate
+        back. Same tensor, same padding problem, same aggregator — opposite cause. Say this
+        explicitly in one paragraph at the end of 06.5; it is the cheapest possible
+        preparation for tensordtype 2.
+
+    leerdoelen:
+      covered: [6.4, 6.6, 6.11, 6.17, 6.18]
+      new: [6.19]
+      note: >
+        6.17 (transformers.pipeline) survives but demoted — it is the closing section, not
+        the opening act.
+
+  - file: notebooks/7.0_social_graphs_dashboard.ipynb
+    lesson: 7
+    now: Network analysis demo feeding the streamlit dashboards.
+    target: Unchanged in content; imports goad plot classes so week-2 plots render in the dashboard.
+    change:
+      - id: 070-a
+        do: Renumber to 07.1.
+      - id: 070-b
+        do: >
+          Make the "a plot class written in lesson 2 works unchanged in streamlit" point
+          explicitly, with one of the student's own earlier plots.
+    leerdoelen: [7.1, 7.5, 7.6]
+
+  - files: [notebooks/101_classes.ipynb, notebooks/102_paths.ipynb]
+    lesson: 0
+    now: Python primers on classes/dataclasses and paths.
+    target: >
+      Keep, and point 101_classes at goad — the inheritance section should subclass
+      TransformBase and BasePlot rather than an invented example, so the primer pays off
+      immediately in lesson 1.
+    change:
+      - id: 101-a
+        do: Re-target the inheritance examples at goad's TransformBase / BasePlot.
+      - id: 101-b
+        do: Renumber to 00.1 / 00.2 so they sort first.
+        status: proposed
+
+cross_cutting_edits:
+  - id: X1
+    do: Delete every `import warnings; warnings.filterwarnings("ignore")`.
+    why: >
+      It hides the pandas/seaborn deprecation warnings that are the single most common
+      source of "it worked last year" breakage, and it teaches students to silence signal.
+  - id: X2
+    do: Replace the tomllib/config.toml preamble with a single helper import.
+    why: Four cells of boilerplate at the top of every notebook is four cells of noise.
+  - id: X3
+    do: Every notebook runs top-to-bottom on the reference chat with no config.toml present.
+    why: This is the acceptance test for the whole refactor.
+  - id: X4
+    do: Add the notebooktester run to CI/lefthook so X3 stays true.
+    note: notebooktester is already a dev dependency.

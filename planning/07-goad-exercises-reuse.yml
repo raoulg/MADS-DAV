@@ -1,0 +1,111 @@
+# What to lift from goad_exercises
+#
+# Repo: /Users/rgrouls/code/courses/goad_exercises
+# It contains a complete worked example of the loop DAV teaches piecemeal, plus material
+# that is good but belongs to a different course.
+
+meta:
+  status: todo
+  fixes: P5
+
+inventory:
+  - source: demo/linear.py
+    what: >
+      The full goad pipeline end to end: config -> processor -> pipeline -> z-score compare
+      plot -> linear model -> residual plot -> distribution fit of the residual.
+    verdict: reuse, prominently
+    where: >
+      Lesson 5, as the worked example the student's own analysis is modelled on. It is
+      already a script, which doubles as the "turn your notebook into a script" lesson that
+      leerdoel 1.8/1.10 asks for and that nothing currently demonstrates.
+    edits_needed:
+      - point it at the generalised FileHandler (G6)
+      - add a markdown walkthrough; as a bare script it is dense
+
+  - source: notebooks/01_corona_modelling.ipynb
+    what: Explore -> model -> train -> predict -> test the residual, in five numbered sections.
+    verdict: reuse, adapted
+    where: Lesson 5 (05.1), as the showcase half.
+    why: >
+      This is the single clearest statement in any of Raoul's repos of what "goal oriented"
+      means: the residual is the finding, not the leftover. DAV teaches modelling (5.2) and
+      residuals nowhere in that shape.
+    edits_needed:
+      - trim the covid domain detail; the loop is the content
+      - keep the vaccination regime change — it is what makes the residual interesting
+
+  - source: learning_goals/outliers.md
+    what: >
+      Learning goals on outliers: what they represent, traditional vs non-normal detection,
+      errors vs wrong-distribution, missing data, imputation.
+    verdict: reuse, wholesale
+    where: Lesson 4 (references/leerdoelen/les4.md).
+    why: >
+      DAV's lesson 4 teaches distribution fitting but never says what to DO about a point in
+      the tail. "Is this an outlier or did I assume the wrong distribution" is exactly the
+      question chat data forces (one 4000-character message, one 3-day silence), and DAV
+      currently has no vocabulary for it.
+    see: 08-learning-goals.yml
+
+  - source: notebooks/03_monte_carlo.ipynb
+    what: Monte Carlo simulation.
+    verdict: reuse, partially
+    where: Lesson 4, as one section — not a whole notebook.
+    why: >
+      Simulation is the cheapest way to answer "could this pattern have happened by chance",
+      which is stage 6 (verification) of the MCP analysis checklist. One resampling demo on
+      the student's own data ("is this author really more active, or is 40 messages enough
+      to look like anything") earns its place.
+    edits_needed: strip to a single "shuffle the labels and re-measure" demo
+
+  - source: notebooks/05_abtesting.ipynb + demo/abtesting.py
+    what: Beta distributions, multi-armed bandits, Thompson sampling, priors.
+    verdict: reference only
+    where: An optional pointer at the end of lesson 4.
+    why: >
+      The beta distribution as "a distribution over a probability" is a lovely capstone to
+      the distributions lesson and takes ten minutes. The bandit/Thompson machinery is a
+      different course and would swallow a week.
+    caveat: requires a running simulation server; do not make it assessable.
+
+  - source: notebooks/02_metropolis_hastings.ipynb
+    what: MCMC from scratch.
+    verdict: do not reuse
+    why: >
+      Excellent material, wrong course. DAV has no prior/posterior vocabulary and building
+      it costs more than the visualisation content it would displace. Leave it where it is
+      and link to it for students who want more.
+
+  - source: notebooks/04_probabilistic_modelling.ipynb
+    what: PyMC-style probabilistic modelling of linear and sine data.
+    verdict: do not reuse, but steal the framing
+    what_to_steal: >
+      The progression linear -> sine -> "improve the model" maps exactly onto DAV leerdoel
+      3.8/5.2 (the four basis functions: linear, sinus, exponential, logistic). Take the
+      progression as the structure for lesson 5's modelling section; leave the Bayesian
+      machinery out.
+
+  - source: presentations/goad.pdf
+    what: The GOAD method as slides.
+    verdict: check for overlap
+    action: >
+      Compare against presentations/DAV_5.pdf before rewriting either. If goad.pdf already
+      states the method well, DAV's slides should point at it rather than restate it.
+    status: verify
+
+net_effect_on_dav:
+  lesson_4: gains outlier learning goals and a Monte Carlo section
+  lesson_5: gains the full model->residual->distribution loop as its showcase
+  lesson_1: gains a real answer to "why would I ever write a script instead of a notebook"
+
+actions:
+  - id: E1
+    todo: Port 01_corona_modelling into 05.1 as the showcase half.
+  - id: E2
+    todo: Merge learning_goals/outliers.md into references/leerdoelen/les4.md.
+  - id: E3
+    todo: Extract one resampling demo from 03_monte_carlo for lesson 4.
+  - id: E4
+    todo: Add demo/linear.py to lesson 5 as the notebook-to-script example.
+  - id: E5
+    todo: Compare presentations/goad.pdf against DAV_5.pdf for overlap.

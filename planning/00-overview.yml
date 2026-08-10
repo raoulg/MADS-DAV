@@ -1,0 +1,106 @@
+# MADS-DAV refactor — overview
+#
+# The course teaches five families of visualisation on data the student brings themselves
+# (an exported WhatsApp/chat log). That premise is good and stays. What breaks is that the
+# *teaching material* also runs on that same unpredictable data, so a lesson only lands if
+# the student's chat happens to contain the pattern being taught.
+
+meta:
+  branch: refactor/goad-integration
+  written: 2026-08-10
+  status: doing
+
+premise_that_stays:
+  own_data:
+    what: Every student analyses their own chat export.
+    why: >
+      It is the single strongest motivator in the course, and it makes plagiarism between
+      cohorts structurally impossible. It also happens to be an excellent teaching dataset:
+      regex feature enrichment, timestamps with daily/weekly cycles, natural language, and
+      a pile of textbook distributions (messages/day, time-between-messages, message length,
+      word frequency) all fall out of one file.
+  five_families:
+    spine:
+      - categories
+      - time series
+      - distributions
+      - relations
+      - high-dimensional data
+    note: >
+      This spine is the course. Nothing in this refactor reorders or renames it.
+  assessment_shape:
+    what: Students hand in visualisations + a written argument, judged on the checklist.
+    why: The deliverable is a *claim supported by a picture*, not a gallery of plots.
+
+problems_to_fix:
+  - id: P1
+    title: Teaching material runs on unpredictable data
+    detail: >
+      Notebooks 02, 03, 05.x, 06.2 demonstrate a technique directly on the student's own
+      chat. When the pattern is not there (short chat, one author, no group dynamics), the
+      student sees a flat line and cannot tell whether they made a mistake or the data is
+      simply quiet. The technique is never actually taught.
+    fix: See 01-showcase-principle.yml
+
+  - id: P2
+    title: goad_toolkit is not used, despite being built for exactly this
+    detail: >
+      goad_toolkit already separates a plot from its makeup (BasePlot + PlotSettings +
+      plot_on), already has composable data pipelines, and already does distribution fitting
+      with KS + log-likelihood and a plotting companion. The course reimplements weaker
+      versions of all three inline in notebooks.
+    fix: See 03-goad-integration.yml
+
+  - id: P3
+    title: No structured way for students to work *with* an assistant
+    detail: >
+      Students use an LLM anyway. Right now the path of least resistance is "paste the
+      assignment, get plots back", which skips every learning goal. codestyle and vectormesh
+      already solved the shape of this problem with an MCP server that coaches rather than
+      answers.
+    fix: See 04-mcp-integration.yml
+
+  - id: P4
+    title: Dead-end tooling relative to the follow-up course
+    detail: >
+      DAV is mandatory before MADS-MachineLearning. That course has dropped mads_datasets
+      entirely in favour of HuggingFace datasets and vectormesh VectorCaches. DAV still
+      teaches mads_datasets (04.2, 05.1, 05.2) and hand-rolls its own embedding step (6.4),
+      so students arrive at the ML course with the wrong muscle memory.
+    fix: See 06-huggingface-migration.yml
+
+  - id: P5
+    title: Good material exists in goad_exercises but is invisible here
+    detail: >
+      goad_exercises has a genuinely strong worked example of the full loop — question,
+      model, residual, distribution of the residual — on covid data, plus Monte Carlo and
+      A/B testing notebooks.
+    fix: See 07-goad-exercises-reuse.yml
+
+out_of_scope:
+  - id: N1
+    what: Reordering or renaming the five families.
+    why: They are the course identity and match the presentations and the rubric.
+  - id: N2
+    what: Dropping the WhatsApp assignment in favour of a fixed dataset for everyone.
+    why: >
+      That would fix P1 the lazy way and destroy the thing that makes this course work.
+      The showcase/your-turn split (01) fixes P1 without paying that price.
+  - id: N3
+    what: Turning DAV into a statistics course.
+    why: >
+      Distributions and residuals are taught *because they make a visualisation honest*,
+      not for their own sake. Bayesian material from goad_exercises stays optional.
+  - id: N4
+    what: Rewriting the presentations (presentations/DAV_*.pdf).
+    why: >
+      Slides follow the notebooks. Do them after the notebooks settle, as a separate pass.
+    status: proposed
+
+success_criteria:
+  - Every taught technique is first demonstrated on a dataset where the pattern is certain.
+  - A student with a 200-message one-on-one chat can complete every lesson.
+  - No notebook imports mads_datasets.
+  - Lessons 2-6 each use goad_toolkit for at least the plot-settings/composition layer.
+  - The goad MCP server is installable in one command and is used in at least two lessons.
+  - A student can explain what their assistant did, because it asked them questions first.
