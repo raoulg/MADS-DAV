@@ -141,6 +141,38 @@ goad_proposals:
       effort: small, but it is a breaking change to FileConfig — bump the minor version.
       breaking: true
 
+    - id: G15
+      name: CaterpillarPlot
+      status: proposed
+      what: >
+        Sorted point estimates with intervals — one row per group, a dot and a horizontal
+        bar. Takes a dataframe of (label, estimate, low, high).
+      why: >
+        The ranking-illusion demo (10-spurious-findings.yml#thread S1) has no plot without
+        it, and there is no other way to show "these five authors are not actually ranked"
+        that a student reads in one glance. Also the right default whenever a bar chart is
+        about to imply a precision that is not there.
+      effort: small
+
+    - id: G16
+      name: NullDistribution
+      status: proposed
+      what: >
+        Take a dataframe, a statistic function, and a label column; shuffle the labels n
+        times, recompute the statistic each time, and return the shuffled values plus the
+        observed one. Pairs with a plot that histograms the null and marks the observation.
+      why: >
+        Lesson 4's permutation demo (thread S2) and the verification stage of the analysis
+        checklist both need exactly this, and hand-rolling it in a notebook is ten lines of
+        indexing that students get subtly wrong. As a goad object it is one call, reusable
+        against any statistic, and it makes "what would nothing look like" a thing you can
+        DO rather than a thing you are told about.
+      effort: small
+      note: >
+        Belongs in analytics.py next to DistributionFitter — it is the same idea (compare
+        what you saw against what a null generates) applied to a statistic instead of a
+        variable.
+
     - id: G7
       name: Registry additions
       status: proposed

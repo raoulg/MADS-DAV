@@ -62,7 +62,23 @@ notebooks:
         do: >
           Add the Simpson's paradox demonstration, moved here from lesson 4 where it is
           currently taught without a categorical picture to hang it on.
-        status: proposed
+        status: decided
+      - id: 02-f
+        do: >
+          Add the pseudoreplication demo: the same group comparison at two units of
+          analysis, side by side. Bar chart over all messages (n=4000, overwhelming) next to
+          one point per author (n=5, completely overlapping). Name the error.
+        see: 10-spurious-findings.yml#thread S1
+        why: >
+          This is the error that fails students. It belongs in lesson 2 because lesson 2 is
+          where they first compute a group difference — install the habit before they have
+          five weeks of practice doing it wrong.
+      - id: 02-g
+        do: >
+          Add the ranking-illusion demo: a caterpillar plot of per-author means with
+          bootstrap intervals, sorted. The intervals overlap almost entirely. Then bootstrap
+          the ranking itself and count how often the top author stays top.
+        needs: [G1 caterpillar plot as a BasePlot subclass]
       - id: 02-c
         do: >
           Add the failure gallery: 40 unordered bars, proportions across unequal groups,
@@ -100,6 +116,18 @@ notebooks:
           starts a thread / who ends it, over the top-k authors).
       - id: 03-e
         do: Keep the plotly area chart; it is the one interactive moment in the course.
+      - id: 03-f
+        do: >
+          Add the IRC half: messages per day and per hour for one channel, decomposed the
+          same way flights was. Weekly cycle with a weekend dip, a sharp daily cycle on a
+          regional channel, a multi-year decline, and release-day spikes.
+        why: >
+          flights teaches the technique on a textbook series; IRC teaches it on a
+          human-activity series, which is the shape their own data has and where the
+          technique actually gets tested. Twenty years of span also lets trend and cycle be
+          separated honestly — which their own six-month chat cannot do, and they should
+          know that before they try.
+        status: proposed
     leerdoelen: [3.3, 3.8, 3.9, 3.10, 3.11, 3.12]
 
   - file: notebooks/03.2-statistics-of-time.ipynb
@@ -146,7 +174,35 @@ notebooks:
       - id: 041-e
         do: Use goad HistogramPlot/DistPlot/ECDFPlot throughout.
         needs: [G3]
-    leerdoelen: [4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.9]
+      - id: 041-f
+        do: >
+          Add the null-distribution section: take a group difference, shuffle the labels a
+          thousand times, histogram the results, draw the observed value on it as a vertical
+          line. The finding sits inside the bulk.
+        why: >
+          A null distribution IS a distribution, so it belongs in this lesson, and it needs
+          no test, no assumption and no table of critical values — it produces a picture,
+          which is this course's register. A student who has seen their own finding sitting
+          comfortably in the middle of the null does not need a p-value explained to them.
+        see: 10-spurious-findings.yml#thread S2
+        leerdoel: 4.17
+        needs: [a NullDistribution helper in goad — see 03-goad-integration.yml]
+      - id: 041-g
+        do: >
+          Extend 041-f: run the same estimate at n = 10, 30, 100, 300 authors, for a real
+          effect (hour-of-day activity) and a fake one (permuted labels), on the same axes.
+          The real one narrows around a non-zero value; the fake one narrows around zero;
+          at n=10 they are indistinguishable.
+        why: >
+          Without this, lesson 4 teaches only that findings evaporate. This is the half that
+          says some things are knowable and shows what they cost — and it retroactively
+          explains lesson 2's n=3 case with a picture instead of an assertion. It also gives
+          students the sentence they never write: "with five authors, an effect would have to
+          be enormous before I could see it."
+        see: 10-spurious-findings.yml#thread S4
+        blocked_on: the IRC slice — verify the two curves actually separate before writing it
+        status: proposed
+    leerdoelen: [4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.9, 4.17, 4.18]
 
   - file: notebooks/04.2-distribution_fitting.ipynb
     lesson: 4
@@ -189,13 +245,52 @@ notebooks:
         do: Lead with Anscombe/Datasaurus. Nothing else in the course argues this well.
       - id: 051-c
         do: >
-          Import the covid model/residual sequence from goad_exercises/notebooks/01 —
-          this is where the residual becomes a first-class object.
-        see: 07-goad-exercises-reuse.yml
+          Model IRC daily activity from scratch — trend plus weekly seasonality — following
+          the structure of goad_exercises/notebooks/01 and demo/linear.py. The residual
+          contains the Ubuntu release-day spikes.
+        why: >
+          Same method as the covid worked example, second dataset, on the corpus they
+          already decomposed in lesson 3 and fitted distributions to in lesson 4. covid stays
+          as the script they READ; IRC is what they DO.
+        see: [07-goad-exercises-reuse.yml, 10-spurious-findings.yml#lesson_5_replacement]
+        status: proposed
       - id: 051-d
         do: Use goad ScatterPlot/RegPlot.
         needs: [G2]
-    leerdoelen: [5.2, 5.3, 5.9, 5.10, 5.11, 5.12, 5.13, 5.14, 5.15]
+      - id: 051-e
+        do: >
+          Add the forking-paths trap: hand out the IRC corpus with a randomly assigned
+          "cohort" label per author, ask for the most interesting difference between cohorts
+          from a list of fifteen candidate metrics, let everyone find something, then reveal
+          the labels were random. Put 1 - 0.95^15 = 0.54 on the board.
+        why: >
+          This is the failure that actually fails students, and being told about it changes
+          nobody's behaviour. They have to walk into it. It catches the whole room at once,
+          which makes it a shared discovery rather than a humiliation.
+        see: 10-spurious-findings.yml#thread S3
+        ordering: >
+          Must land AFTER Anscombe/Datasaurus (a statistic can hide the picture) and BEFORE
+          051-f and 051-c. Deflation followed by a genuine result is a lesson; deflation
+          alone is cynicism.
+        status: proposed
+      - id: 051-f
+        do: >
+          Add the credibility grid: mechanism against evidence as a 2x2, with the seven
+          worked claims run through it in order — from "fewer messages at 4am" (mechanism so
+          strong the test is a formality) through "longer messages on weekdays" (where the
+          test genuinely decides) to the alphabet claim and the 4th-floor claim (significant,
+          no mechanism, go find the confounder).
+        why: >
+          The constructive counterpart to 051-e, and the answer to "so is anything ever
+          real?". The right response differs for every one of the seven examples, which is
+          what makes "always be sceptical" visibly not the lesson. It also produces the two
+          outputs students never write: "plausible but unproven, here is what would settle
+          it", and "significant but no mechanism, so I went looking for the confounder".
+        see: 10-spurious-findings.yml#thread S5
+        ordering: immediately after 051-e, same session — the deflation must not stand alone
+        pairs_with: 041-g, which supplies the sample size that answers "what would settle it"
+        status: proposed
+    leerdoelen: [5.2, 5.3, 5.9, 5.10, 5.11, 5.12, 5.13, 5.14, 5.15, 5.20, 5.21]
 
   - file: notebooks/05.2-correlation.ipynb
     lesson: 5

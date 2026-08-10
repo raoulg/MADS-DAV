@@ -51,12 +51,21 @@ by_family:
       teaches: >
         Aggregate says the university discriminates; every department individually says the
         opposite. The single best 10-minute argument for why a categorical comparison must
-        name its grouping. Directly serves leerdoel 4.8.
+        name its grouping.
       note: >
-        Currently Simpson's paradox is taught in lesson 4 (distributions). Moving the
-        *demonstration* to lesson 2 where categories live, and keeping the distribution-side
-        consequence in lesson 4, matches where students meet the mistake.
-        status: proposed
+        Moved here from lesson 4. Simpson's paradox is a categorical-comparison failure and
+        needs a categorical picture to hang on; the distribution-side consequence stays in
+        lesson 4. Leerdoel 4.8 becomes 2.9.
+      status: decided
+    small_n_showcase:
+      dataset: ubuntu_irc, or the student's own chat
+      tier: 1
+      teaches: >
+        Pseudoreplication and the ranking illusion — the two errors that actually fail
+        students. Same data at two units of analysis giving opposite answers, and a
+        caterpillar plot whose intervals overlap so much the ranking means nothing.
+      see: 10-spurious-findings.yml#thread S1
+      status: proposed
     failure_showcase:
       dataset: seaborn `titanic`
       teaches: unordered high-cardinality bars, and proportions across unequal group sizes
@@ -76,16 +85,28 @@ by_family:
       teaches: >
         A cycle far longer than the sampling intuition suggests — the case where the Fourier
         view tells you something the eye does not. Already working in 03.2, keep it.
-    regime_change_showcase:
-      dataset: covid (RIVM by day, via goad FileHandler)
+    chat_shaped_showcase:
+      dataset: ubuntu_irc — messages per day, and per hour, for one channel
       tier: 1
       teaches: >
-        A structural break (vaccination start) that a rolling average smooths away if the
-        window is chosen carelessly. Pairs with the residual work in lesson 5.
+        The same decomposition on data shaped like the student's own: a weekly cycle with a
+        weekend dip, a daily cycle that is sharp on a regional channel, a multi-year decline
+        as IRC lost ground to Discord and Matrix, and release-day spikes as the regime
+        change. Twenty years of span is also enough to separate trend from cycle honestly,
+        which six months of a personal chat is not.
+      why_it_matters_here: >
+        flights teaches the technique; IRC teaches it on the shape they are about to meet.
+        The gap between a textbook series and a human-activity series is exactly where
+        student analyses fall over.
+      status: proposed
     failure_showcase:
       what: the same flights series plotted raw / over-smoothed / with a hole in the index
       tier: 3 (derived from the primary)
     your_turn: messages per week, per day-of-week, first/last message of the day
+    note: >
+      covid moves out of this lesson to lesson 5, where the model-and-residual work is. One
+      regime-change example per lesson is enough, and IRC is the one that rhymes with the
+      student's own data.
 
   distributions:
     lesson: 4
@@ -135,6 +156,27 @@ by_family:
       dataset: seaborn `diamonds` or `penguins` correlation matrix
       tier: 0
       teaches: heatmap of .corr(), cmap choice, and why a strong correlation can be a proxy
+    forking_paths_showcase:
+      dataset: ubuntu_irc with a randomly assigned "cohort" label per author
+      tier: 1 (derived from the reference corpus)
+      teaches: >
+        That fifteen candidate comparisons on data with no signal produce a striking result
+        more often than not. The trap that makes the whole room find something in noise.
+      see: 10-spurious-findings.yml#thread S3
+      status: proposed
+    model_and_residual_showcase:
+      dataset: ubuntu_irc daily activity — trend plus weekly seasonality, fitted from scratch
+      tier: 1
+      teaches: >
+        The full GOAD loop on the corpus the student already decomposed in lesson 3 and
+        fitted distributions to in lesson 4. The residual contains the Ubuntu release-day
+        spikes, which are invisible in the raw series and obvious once the boring part is
+        subtracted — and which have a known date, so the finding is checkable.
+      why_here_and_not_covid: >
+        covid stays as demo/linear.py, the worked example they READ. IRC is what they DO.
+        Same method, second dataset, and the second time is where it sticks. It also means
+        one showcase corpus is carried across lessons 3-6 exactly the way their own chat is.
+      status: proposed
     regularisation_showcase:
       dataset: keep the current SGDRegressor demo, re-pointed off mads_datasets
       teaches: L1/L2/elasticnet as feature selection (leerdoel 5.9)
@@ -264,17 +306,65 @@ reference_chat:
         selection script next to it so the choice is visible.
 
   actions:
+    note: >
+      R1 and R4 are NOT decisions for Raoul. They are verification work — somebody pulls a
+      slice of the dataset and checks four factual claims that three lessons now rest on.
+      Roughly an hour, and it either confirms the ubuntu_irc decision or kills it. Nothing
+      downstream should be written before it is done.
+    items:
     - id: R1
-      todo: Pick the channel + date range; verify volume and that the daily cycle is visible.
+      todo: Verify the corpus supports what the lessons assume.
+      is_a: task, not a question
+      the_four_checks:
+        - id: R1a
+          check: Does any single channel have enough volume?
+          how: >
+            Filter rows on metadata.channel, parse the lines, count messages per day over a
+            candidate window.
+          need: >
+            Enough that a daily count is not mostly noise, and enough distinct authors for
+            the n-at-the-author-level demos (S1, S4) to have something to subsample. A few
+            dozen active nicks is the rough floor.
+          if_it_fails: combine several regional channels, or widen the date range
+        - id: R1b
+          check: Is the daily cycle visible on a regional channel, and washed out on #ubuntu?
+          how: parse [HH:MM], histogram messages by hour, for one regional channel and #ubuntu
+          need: >
+            A clear two-peak or single-peak daily shape regionally. This is the claim lesson
+            3 is built on, and the reason for preferring a regional channel at all.
+          if_it_fails: >
+            lesson 3's IRC half loses its best feature. flights still carries the technique;
+            the chat-shaped daily cycle would have to come from the student's own data only.
+        - id: R1c
+          check: How well does the parse regex actually cover the corpus?
+          how: >
+            Run `^\[(\d{2}):(\d{2})\]\s+<(\S+)>\s+(.*)$` plus the action form
+            `^\[(\d{2}):(\d{2})\]\s+\*\s+(\S+)\s+(.*)$` over a full channel-year and count
+            what fails to match.
+          need: the residue, categorised — joins, parts, topic changes, mode changes, bots
+          why_it_is_not_a_risk: >
+            Whatever the failure rate turns out to be, it IS lesson 1. A regex that matches
+            94% of lines and a pile of leftovers the student has to look at and classify is
+            a better exercise than one that matches everything.
+        - id: R1d
+          check: Are the Ubuntu release-day spikes real and visible?
+          how: >
+            Take the known release dates (every April and October), plot message counts in a
+            window around each, and compare against the same weekday in surrounding weeks.
+          need: a spike large enough to survive the lesson-5 model and show up in the residual
+          if_it_fails: >
+            lesson 5 loses its checkable ground truth and the S5 gold-standard example.
+            Fallback is the post-2016 decline, which is a weaker but still real finding.
     - id: R2
       todo: Write the slice script (filter -> parse -> parquet) and vendor the output.
+      depends_on: R1
     - id: R3
       todo: >
         Write the regex-parsing step as the lesson-1 showcase, including the action-line
         form and the bot-filtering discovery.
+      depends_on: R1c
     - id: R4
-      todo: Confirm the Ubuntu-release traffic spike is actually visible before building an
-        exercise on it.
+      todo: merged into R1d
 
 rejected_alternatives:
   - id: A1

@@ -145,6 +145,60 @@ analysis_stages:
     of substance (a minimum length is enforced as a crude floor). Completion returns a recap
     of everything recorded, which is a usable first draft of the student's write-up.
 
+spurious_findings_audit:
+  status: done
+  when: 2026-08-10
+  question: >
+    Does the checklist actually catch the error that fails students — "males write shorter
+    messages", from a chat with three men?
+  finding: >
+    Partly, and too late. Stage 6 had the shuffle, the confounder and the held-out slice, so
+    a student who reached it was protected. But nothing before stage 6 asked about n or the
+    unit of analysis, and nothing anywhere asked how many comparisons had been considered —
+    which is invisible to every later check, because the surviving comparison looks fine.
+  added:
+    - stage: question
+      row: "Did you have this question BEFORE you looked at the data, or after?"
+      guards: post-hoc storytelling, at the only point where it is still cheap to fix
+    - stage: data
+      row: "What is the unit your CLAIM is about — and is it the same as one row?"
+      guards: pseudoreplication
+    - stage: shape
+      row: "How many INDEPENDENT units sit behind each group you intend to compare?"
+      guards: the n=3 comparison, and the ranking illusion
+    - stage: verification
+      row: "How many comparisons did you look at before settling on this one?"
+      guards: the garden of forking paths
+    - tool: goad_distribution_method
+      change: new step 1, "Count first" — independent n before anything else
+    - tool: goad_critique_visual
+      change: >
+        section 4 gains "Is the claim 'A differs from B' or 'A is the highest'?" — a ranking
+        claim needs a stable ranking, which a handful of units never has
+  also_added_to_docs:
+    - docs/09-analysis-method.md — matching rows, a pseudoreplication worked example in
+      §9.3, and a "garden of forking paths" subsection in §9.6
+  correction_after_review:
+    raised_by: Raoul
+    what: >
+      The first version of the stage-1 timing question treated any question that came from
+      the data as illegitimate, which would forbid exploratory analysis — i.e. this entire
+      course. Reworded to ask which KIND of question it is and what a data-suggested one
+      will be checked against. A separate mechanism question was added, because all the
+      other additions are statistical and none of them answers the case where the difference
+      is real, significant, and still meaningless.
+  still_proposed:
+    - id: completion-summary
+      what: >
+        The end-of-six-stages recap currently says little more than "now is a good time to
+        write code". It should deliver the three-legged credibility synthesis — evidence,
+        mechanism, replication — because it is the last thing the student reads and the one
+        place the whole checklist can be summarised into something they carry out of the
+        session.
+      see: 10-spurious-findings.yml#thread S5
+      status: proposed
+  see: 10-spurious-findings.yml#mcp_gaps
+
 course_wide_assistant_policy:
   status: proposed
   what: >

@@ -4,7 +4,18 @@
 # that gain, lose, or move — nothing here changes the five-family spine.
 
 meta:
-  status: todo
+  status: designed, parked
+  when: >
+    Executed in M5, AFTER the notebooks are rewritten (09-milestones.yml). Deliberate: the
+    leerdoelen should describe what was actually built, not what was planned, and rewriting
+    the rubric twice is the failure mode this ordering avoids.
+  what_is_already_settled: >
+    Everything in this file. No further design is needed — M5 is transcription into
+    references/leerdoelen/les*.md and the rubric, not decision-making.
+  one_exception: >
+    "A null result, honestly bounded, is a pass" must be said to students in week one, not
+    discovered in the rubric at the end. That sentence belongs in the lesson-1 notebook and
+    is therefore M4 work, not M5.
   files: references/leerdoelen/les{1..7}.md, references/leerdoelen/rubric.pdf, checklist.md
 
 additions:
@@ -26,7 +37,52 @@ additions:
     why: >
       It is a categorical-comparison failure. Teaching it in the distributions lesson leaves
       it without a picture to hang on.
-    status: proposed
+    status: decided
+
+  - lesson: 2
+    ids: [2.10, 2.11]
+    goals:
+      - >
+        begrijpt dat n het aantal onafhankelijke eenheden is waar de bewering over gaat, niet
+        het aantal rijen in de dataframe, en herkent pseudoreplicatie in een eigen analyse
+      - >
+        begrijpt dat elke verzameling getallen een maximum heeft, en kan beoordelen of een
+        rangorde stabiel genoeg is om iets over te beweren
+    source: 10-spurious-findings.yml#thread S1
+    why: >
+      These two cover the error that actually fails students — "males write shorter messages"
+      from a chat with three men. Nothing in the current leerdoelen names it.
+
+  - lesson: 5
+    id: 5.20
+    goal: >
+      begrijpt hoe het aantal bekeken vergelijkingen de betekenis van een gevonden verschil
+      verandert, en kan benoemen welke verdedigingen daartegen bestaan (vooraf vastleggen,
+      splitsen, of rapporteren hoeveel er is gekeken)
+    source: 10-spurious-findings.yml#thread S3
+    replaces: 5.7 and 5.8, if those are dropped
+
+  - lesson: 4
+    id: 4.18
+    goal: >
+      begrijpt hoe de onzekerheid rond een schatting afneemt met het aantal onafhankelijke
+      eenheden, en kan daaruit afleiden hoe groot een effect zou moeten zijn om bij de eigen
+      steekproefomvang zichtbaar te zijn
+    source: 10-spurious-findings.yml#thread S4
+    why: >
+      Turns a null result from a failed assignment into a statement with content. Also the
+      only leerdoel that explains WHY the n=3 comparison from lesson 2 was hopeless.
+
+  - lesson: 5
+    id: 5.21
+    goal: >
+      kan de geloofwaardigheid van een bewering beoordelen op drie punten — bewijs, mechanisme
+      en replicatie — en weet dat een significant resultaat zonder mechanisme aanleiding is om
+      naar een confounder te zoeken, niet om een conclusie te trekken
+    source: 10-spurious-findings.yml#thread S5
+    why: >
+      The leg no statistics supplies, and the one that answers the 4th-floor case. Without it
+      the lesson-5 material teaches only that findings evaporate.
 
   - lesson: 4
     ids: [4.13, 4.14, 4.15, 4.16]
@@ -89,9 +145,13 @@ removals_and_demotions:
   - lesson: 5
     ids: [5.7, 5.8]
     current: wisdom of the crowd / condorcet jury theorem / diversity prediction theorem
-    change: see the_crowds_question below
-    status: proposed
-    needs_decision_from: Raoul
+    change: deferred
+    status: deferred
+    note: >
+      Decision postponed by Raoul. Recorded here so it is not silently dropped: the lesson-5
+      slot these occupy is now claimed by the forking-paths demo and the IRC activity model,
+      so keeping them means finding room elsewhere rather than leaving the file alone.
+    see: 10-spurious-findings.yml#the_5758_decision
 
   - any_lesson: true
     what: mads_datasets
@@ -153,13 +213,19 @@ the_crowds_question:
       cost: >
         They are genuinely good ideas and the "independence is the assumption that fails"
         point is one students carry into working life.
-  recommendation: O2
-  reasoning: >
-    The demo is cheap, it is a visualisation (error versus number of models averaged, with
-    the diversity term shaded), and it gives lesson 5's "the map is not the territory" a
-    constructive counterpart: one map is wrong, several disagreeing maps are less wrong. O1
-    is the tidier taxonomy but overloads the lesson that is already carrying the most.
-  needs_decision_from: Raoul
+  recommendation: O3, drop
+  recommendation_changed: >
+    Was O2 (keep and demo it). Revised once the replacement material existed: Raoul's own
+    test — "how realistic is it that they will use this" — answers itself. Condorcet in a
+    visualisation course: rarely. "Do not report the largest of fifteen differences": every
+    project, every cohort. The honest version of O2 also needs a classification problem,
+    several model families and a metric, none of which this course has.
+  if_kept: >
+    The smallest defensible version needs no new dataset: average several deliberately
+    imperfect models of the regression lesson 5 already fits, and watch the error drop below
+    the best individual model. Ten cells.
+  full_reasoning: 10-spurious-findings.yml#the_5758_decision
+  status: deferred by Raoul
 
 checklist_md:
   current: preattentive processing / gestalt principles / five guidelines
@@ -172,6 +238,25 @@ checklist_md:
   why: >
     The three current sections judge the picture. None of them judge whether it answers a
     question, which is the thing the rubric actually rewards.
+
+rubric_and_the_credibility_grid:
+  status: proposed
+  what: >
+    The rubric should reward the grid from 10-spurious-findings.yml#thread S5. Specifically:
+    a submission reporting "plausible, unproven, and here is the sample size that would
+    settle it" should score ABOVE one reporting a significant difference with no mechanism
+    named.
+  why: >
+    Everything in the spurious-findings thread is advice the current incentive contradicts.
+    If the rubric rewards producing findings, students will produce findings, and no amount
+    of lesson-5 material will outweigh that.
+  concretely:
+    - Credit for naming the mechanism, or for stating explicitly that there is none.
+    - Credit for a replication attempt — another period, another group, a second measure.
+    - Credit for reporting how many comparisons were considered.
+    - >
+      A null result, honestly bounded, is a pass. It should be said out loud in week one,
+      because students otherwise reverse-engineer a finding rather than hand one in.
 
 rubric:
   status: verify

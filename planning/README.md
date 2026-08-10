@@ -17,6 +17,7 @@ stands on its own — `05-notebooks.yml` is the file you open when you actually 
 | `07-goad-exercises-reuse.yml` | What to lift from `goad_exercises` and where it lands |
 | `08-learning-goals.yml` | Changes to `references/leerdoelen/` and the rubric |
 | `09-milestones.yml` | Execution order, with what blocks what |
+| `10-spurious-findings.yml` | The three "aha" moments that stop students inventing findings |
 
 Status vocabulary used throughout: `todo`, `doing`, `done`, `proposed` (needs a yes from Raoul
 before it becomes work), `verify` (a factual claim to check before relying on it).
