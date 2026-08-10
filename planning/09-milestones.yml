@@ -84,10 +84,21 @@ milestones:
     depends_on: [M0]
     parallel_with: [M1, M2]
     contains:
-      - vendor tier-0 showcase datasets into data/showcase/ (D1, D2)
-      - remove mads_datasets from pyproject (H1)
-      - add datasets to pyproject (H2)
-      - reference-chat, if approved
+      - id: M3-a
+        what: The IRC reference corpus.
+        status: done, 2026-08-10
+        detail: >
+          All four verification checks pass — volume, daily and weekly cycle, 99.85% parse
+          coverage, and release-day spikes on 10 releases out of 10. #ubuntu-uk is the
+          primary, #ubuntu the flat control, #ubuntu-nl the deliberately thin counterexample.
+          scripts/build_irc_showcase.py regenerates any slice.
+        see: 02-datasets.yml#reference_chat.verification_results
+      - id: M3-b
+        what: Vendor tier-0 showcase datasets into data/showcase/ (D1, D2).
+        status: todo
+      - id: M3-c
+        what: Remove mads_datasets from pyproject (H1); add datasets + huggingface_hub (H2).
+        status: todo
     exit: every showcase dataset loads offline
 
   - id: M4

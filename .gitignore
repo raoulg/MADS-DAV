@@ -8,6 +8,9 @@ data/raw/
 *.parquet
 data/processed/*.csv
 data/processed/*.parq
+# Showcase data is course material, not working output: it ships with the repo so a
+# lesson runs without a download.
+!data/showcase/*.parquet
 *.log
 *.pptx
 .DS_Store

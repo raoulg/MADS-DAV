@@ -220,6 +220,207 @@ reference_chat:
     span: 2004 to March 2025
     verified: 2026-08-10, via the HF datasets-server first-rows endpoint
 
+  mechanics_discovered_while_verifying:
+    when: 2026-08-10
+    items:
+    - id: M1
+      what: The corpus is ordered by DATE, not by channel.
+      evidence: >
+        Consecutive rows at offset 5000 are 2015-06-02-#ubuntu-pl, 2015-06-02-#ubuntu-kernel,
+        2015-06-02-#ubuntu-tr.
+      consequence: >
+        A channel's rows are scattered through every parquet row group, so filtering on
+        channel prunes nothing and costs a full 3.47 GB read. Filtering on a DATE WINDOW does
+        prune, because row groups are contiguous in time. The slice script (R2) must select
+        a date window first and the channel second.
+    - id: M2
+      what: The parquet conversion is 13 shards, 3.47 GB, on refs/convert/parquet.
+      consequence: >
+        Column projection works — reading only `created` and `metadata` never touches the
+        text and is what makes the channel survey affordable.
+    - id: M3
+      what: The API endpoints rate-limit hard by IP.
+      consequence: >
+        Use huggingface_hub's own credential resolution (HfFileSystem) rather than the
+        public datasets-server endpoints for anything bulk.
+    - id: M4
+      what: Regional channels are in the local language.
+      evidence: "#ubuntu-pl is Polish, #ubuntu-tr is Turkish."
+      consequence: >
+        Good for this cohort if #ubuntu-nl has the volume — Dutch text the students can
+        actually read. But lesson 6's embeddings would need a multilingual encoder, which is
+        worth deciding deliberately rather than discovering. Flag for 06-huggingface.
+
+  verification_results:
+    run: 2026-08-10
+    R1a:
+      question: Does any single channel have enough volume?
+      answer: yes, with a caveat about which one
+      corpus: 308 channels, 329,115 channel-days, 2004-07-05 .. 2024-05-13
+      the_global_channel:
+        channel: "#ubuntu"
+        days: 7031
+        span: 2004-2024, the only channel covering the full twenty years
+        mean_authors_per_day: 390
+        role: the volume case, and the negative control for the daily-cycle check
+      regional_channels:
+        note: >
+          Every regional channel starts 2010-11-04 — that is when the log archive began
+          collecting them, not when the channels began. So regionals give 13.5 years, not 20.
+        by_volume:
+          - {channel: "#ubuntu-cn", days: 3536, authors_per_day: 30.6, language: Chinese}
+          - {channel: "#ubuntu-it", days: 4597, authors_per_day: 22.0, language: Italian}
+          - {channel: "#ubuntu-de", days: 4264, authors_per_day: 20.0, language: German}
+          - {channel: "#ubuntu-uk", days: 3591, authors_per_day: 18.5, language: English}
+          - {channel: "#ubuntu-br", days: 3331, authors_per_day: 18.2, language: Portuguese}
+          - {channel: "#ubuntu-es", days: 3600, authors_per_day: 16.2, language: Spanish}
+          - {channel: "#ubuntu-nl", days: 2652, authors_per_day: 8.5, language: Dutch}
+    method:
+      slice: 2013-01-01 .. 2017-12-31, five channels, 8794 channel-days
+      parsed: 7,009,715 messages
+      cost: >
+        185 of 722 parquet row groups (26%). Date-window pruning is what makes this cheap;
+        see mechanics_discovered_while_verifying M1.
+      script: scripts/build_irc_showcase.py
+
+    R1b:
+      question: Is the daily cycle sharp on a regional channel and washed out on #ubuntu?
+      answer: yes, and far more decisively than expected
+      evidence:
+        peak_to_trough_hour_ratio:
+          "#ubuntu": 1.7
+          "#ubuntu-uk": 15.3
+          "#ubuntu-de": 61.5
+          "#ubuntu-it": 104.8
+          "#ubuntu-nl": 141.5
+      reading: >
+        #ubuntu never drops below 3.2% of its daily traffic in any hour — it is flat, because
+        somebody is always awake somewhere. Every regional channel goes to near zero between
+        01:00 and 06:00 UTC and climbs steeply at 07:00. The contrast is visible without any
+        statistics, which is exactly what a lesson-3 opener needs.
+      caveat: >
+        The 100x+ ratios are inflated by tiny denominators — the trough hour on a quiet
+        channel has almost no messages. The ordering is trustworthy; the exact multiples are
+        not. Use #ubuntu-uk's 15x, which rests on real counts.
+      bonus_finding: >
+        The WEEKLY cycle separates the channels even more cleanly than the daily one.
+        #ubuntu-uk runs 16-17% of traffic on weekdays and 7.6% on Saturday — a halving.
+        #ubuntu is dead flat at 14.0-14.6% across all seven days. A weekend dip that large is
+        a better lesson-3 demonstration than the daily cycle, and it was not what the check
+        was looking for.
+
+    R1c:
+      question: How well does the parse regex cover the corpus?
+      answer: 99.85%
+      evidence:
+        matched: 6,999,107
+        unmatched: 10,608
+        patterns: >
+          `^\[(\d{2}):(\d{2})\]\s+<([^>]+)>\s?(.*)$` for speech and
+          `^\[(\d{2}):(\d{2})\]\s+\*\s+(\S+)\s?(.*)$` for actions
+      what_the_residue_is: >
+        Almost all of it is 10,203 lines beginning with the raw IRC control bytes \x01\x03 —
+        CTCP and mIRC colour codes whose timestamp prefix was lost upstream. Plus 404 server
+        notices and one join message.
+      revision_to_the_plan: >
+        The claim in C4/C2 that the leftovers make a rich classification exercise was too
+        optimistic — the corpus really is pre-cleaned, and 0.15% is a small pile. It is still
+        a genuine find (students discover that "cleaned" data contains control characters,
+        and that a 99.85% regex is not a 100% regex), but it is a five-minute observation,
+        not a section.
+
+    R1d:
+      question: Are the Ubuntu release-day spikes real and visible?
+      answer: yes, on every regional channel, for nearly every release
+      method: >
+        Peak of the 3 days from release day, divided by the median of the surrounding 6 weeks
+        excluding a 5-day core. 10 releases fall inside the window.
+      evidence:
+        median_spike_ratio:
+          "#ubuntu": 1.44
+          "#ubuntu-de": 2.21
+          "#ubuntu-it": 2.24
+          "#ubuntu-uk": 2.25
+        releases_above_1_3x:
+          "#ubuntu": 9/10
+          "#ubuntu-it": 9/10
+          "#ubuntu-de": 10/10
+          "#ubuntu-uk": 10/10
+      reading: >
+        Traffic on a regional channel more than doubles around a release, on ten releases out
+        of ten. The dates were known in advance rather than found in the data, which is what
+        makes it the gold-standard example in 10-spurious-findings.yml#thread S5.
+      the_thin_channel_result:
+        what: "#ubuntu-nl produced ratios of 0.7 and 168 on different releases."
+        why: >
+          At 23 messages a day the surrounding median is sometimes 1, so the ratio is
+          meaningless. This is not a problem with the data — it is the S1/S4 lesson appearing
+          unprompted in the verification run.
+        so: see the_thin_channel_is_a_feature below
+
+    the_channel_decision:
+      status: decided on evidence
+      primary:
+        channel: "#ubuntu-uk"
+        why: >
+          The only candidate that is strong on every axis at once. English, so students can
+          read the messages rather than only count them. 511k messages over 5 years, 204 a
+          day, 18 authors a day, 2071 distinct authors. A 15x daily cycle resting on real
+          counts. The sharpest weekly cycle of any channel measured. Release spikes on 10
+          releases out of 10. And a clear multi-year decline, which gives lesson 3 a trend
+          and lesson 5 something for a model to subtract.
+      control:
+        channel: "#ubuntu"
+        why: >
+          Flat daily (1.7x) and flat weekly. Used for one comparison in lesson 3, where the
+          contrast against #ubuntu-uk is the entire point.
+        vendoring: >
+          Its raw text is 395 MB, too large to commit. Only the hourly profile is vendored —
+          a few hundred bytes, and all the comparison needs.
+      the_thin_channel_is_a_feature:
+        channel: "#ubuntu-nl"
+        why: >
+          23 messages a day, 6 authors a day, and release ratios that swing between 0.7 and
+          168. It was rejected as the primary for exactly the reason that makes it worth
+          shipping: it is what a QUIET chat looks like, which is what many students' own
+          exports look like. Running the same analysis on #ubuntu-uk and #ubuntu-nl side by
+          side is the pseudoreplication and small-n lesson on real data, with no contrivance.
+        used_by: 10-spurious-findings.yml threads S1 and S4
+      rejected:
+        - channel: "#ubuntu-it"
+          why: highest regional volume (521/day) but Italian — students cannot read it
+        - channel: "#ubuntu-de"
+          why: same, in German
+      note_on_dutch: >
+        #ubuntu-nl was the sentimental favourite for a Dutch cohort and the data said no —
+        for the primary. It earns its place as the thin-data counterexample instead, which is
+        a better use than it would have had as the main corpus.
+
+      the_language_tradeoff:
+        status: resolved by the numbers above; kept for the record
+        what: >
+          #ubuntu-nl is the obvious pick for a Dutch cohort and it is the thinnest of the
+          serious candidates — 8.5 authors per day against 18-22 for the others. Thin matters
+          here specifically because S1 and S4 subsample at the AUTHOR level, so authors per
+          day is the binding constraint, not messages.
+        candidates:
+          - option: "#ubuntu-uk"
+            for: English, so every student can read it, AND timezone-localised so the daily
+              cycle should still be sharp. 18.5 authors/day.
+            against: fewer days than #ubuntu-it or #ubuntu-de
+          - option: "#ubuntu-nl"
+            for: Dutch — students read it fluently, and the vocabulary work in lesson 6 lands
+              in a language they can judge
+            against: half the author density; may be too quiet for the author-level demos
+          - option: "#ubuntu-de or #ubuntu-it"
+            for: the best volume among readable-ish regionals
+            against: most students cannot read the messages, which hurts every exercise that
+              involves looking at the text rather than counting it
+        recommendation: >
+          Decide after R1b. If #ubuntu-nl shows a sharp daily cycle despite the lower volume,
+          it wins on readability. If it is too noisy to see the cycle, #ubuntu-uk is the
+          fallback that keeps the text readable.
+
   schema:
     one_row: one channel, one day
     fields:
@@ -356,8 +557,46 @@ reference_chat:
             lesson 5 loses its checkable ground truth and the S5 gold-standard example.
             Fallback is the post-2016 decline, which is a weaker but still real finding.
     - id: R2
-      todo: Write the slice script (filter -> parse -> parquet) and vendor the output.
+      todo: Write the slice script and ship the output.
       depends_on: R1
+      status: script done, shipping blocked
+      script: scripts/build_irc_showcase.py
+      built:
+        file: data/showcase/ubuntu_irc_days.parquet
+        contents: "#ubuntu-uk (1826 days) + #ubuntu-nl (1545 days), 2013-01-01 .. 2017-12-31"
+        size: 24.9 MB
+        also: >
+          data/showcase/ubuntu_irc_control_hourly.csv — 244 bytes, the #ubuntu hourly profile,
+          which is all the flat-cycle control is used for.
+        stops_before: >
+          parsing. The file holds raw channel-day documents on purpose; turning them into
+          (timestamp, author, message) rows is lesson 1's exercise.
+      blocker:
+        what: ".gitignore line 8 is `*.parquet`, so the slice is silently excluded."
+        why_it_matters: >
+          The whole point of vendoring was that a classroom without internet still works. A
+          file that looks committed and is not would be discovered by a student, in week one,
+          in a lecture.
+        options:
+          - id: git
+            what: Negate the ignore rule and commit the 24.9 MB.
+            against: >
+              25 MB in git history forever, and every clone pays it. Hard to undo later.
+          - id: hub
+            what: Publish the slice as a dataset on the HuggingFace hub.
+            for: >
+              No git bloat; versioned; the dataset card carries the provenance and the Public
+              Domain licence; and students reach it with `load_dataset`, which is the API
+              06-huggingface-migration.yml wants them fluent in anyway. The showcase corpus
+              arriving the same way as the flowers cache is a bonus, not a coincidence.
+            against: creates a public artefact under Raoul's account — needs his say-so
+          - id: build
+            what: Ship only the script; students run it.
+            against: >
+              Needs internet during class and an HF token to avoid IP rate limiting, which is
+              exactly the failure mode vendoring was meant to remove.
+        recommendation: hub
+        needs_decision_from: Raoul
     - id: R3
       todo: >
         Write the regex-parsing step as the lesson-1 showcase, including the action-line
