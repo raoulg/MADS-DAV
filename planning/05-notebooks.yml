@@ -44,6 +44,19 @@ notebooks:
         needs: [reference-chat, 02-datasets.yml]
       - id: 01-d
         do: Add the "your data is thin" escape hatch, explicitly and without shame.
+      - id: 01-e
+        do: >
+          Add the bot hunt. The IRC dataset card says known bots were removed; `ubot-it`
+          writes 2.8% of #ubuntu-it anyway. Ask students to find the bots without being told
+          which they are.
+        why: >
+          "Cleaned" is a claim somebody else made about the data, and checking it is the
+          job. It also has a real answer, so it is gradeable.
+        the_trap: >
+          The top author on #ubuntu-it writes 13.9% of everything and is a human. "Writes a
+          lot" is not the test — near-uniform hour profile, repetitive text, and never
+          initiating are.
+        see: 11-beyond-the-obvious.yml#bots_survived_the_cleaning
     leerdoelen: [1.7, 1.10, 1.11]
 
   - file: notebooks/02-comparing_categories.ipynb
@@ -118,15 +131,43 @@ notebooks:
         do: Keep the plotly area chart; it is the one interactive moment in the course.
       - id: 03-f
         do: >
-          Add the IRC half: messages per day and per hour for one channel, decomposed the
-          same way flights was. Weekly cycle with a weekend dip, a sharp daily cycle on a
-          regional channel, a multi-year decline, and release-day spikes.
+          Add the IRC half — but establish the cycles quickly and then SUBTRACT them. The
+          daily cycle is not the finding; it is the model of what everyone already expects,
+          and its only job is to make the residual legible.
+        the_payoff: >
+          The release-window shape deviation. Normalise the level away, compare the hour
+          profile on release days against ordinary weeks, and two channels that normally peak
+          at 10:00 and 17:00 UTC both peak at 14:00. A global event overriding local time,
+          invisible in the raw series and invisible in the cycle.
+        also_refutes: >
+          The obvious hypothesis — that people stay up for a release — is wrong. Night-hour
+          share falls. Include the refutation; a prediction that fails is better teaching
+          than three that succeed.
         why: >
-          flights teaches the technique on a textbook series; IRC teaches it on a
-          human-activity series, which is the shape their own data has and where the
-          technique actually gets tested. Twenty years of span also lets trend and cycle be
-          separated honestly — which their own six-month chat cannot do, and they should
-          know that before they try.
+          flights teaches decomposition on a textbook series. IRC teaches what decomposition
+          is FOR: subtracting the part you could have guessed so the part you could not
+          becomes visible. Twenty years of span also lets trend and cycle be separated
+          honestly, which their own six-month chat cannot do — and they should know that
+          before they try.
+        see: 11-beyond-the-obvious.yml
+        status: proposed
+      - id: 03-g
+        do: >
+          Add the weekend decomposition as the worked example of "a difference is not a
+          finding until you know what it is made of". Three steps: the ratio (#ubuntu-uk
+          halves at weekends, nothing else does), the split into distinct authors versus
+          messages per author (0.57 and 0.71 — both, authors more), and the shape shift that
+          explains both (weekday peak at 09:00-10:00 UTC, weekend peak at 20:00).
+        the_story: >
+          People chatting from work. The weekday peak sits at the start of UK working hours;
+          at weekends the same community appears in the evening from home. It is the only
+          channel tied to a single country's working day, which is why it is the only one
+          with a dip.
+        why: >
+          Students stop at step one. This shows that the interesting question begins where
+          they currently stop, and that "why?" is answerable with the same data rather than
+          with speculation.
+        see: 11-beyond-the-obvious.yml#the_weekend_story
         status: proposed
     leerdoelen: [3.3, 3.8, 3.9, 3.10, 3.11, 3.12]
 

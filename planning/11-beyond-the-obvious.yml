@@ -1,0 +1,189 @@
+# Findings worth teaching, and the framing error that nearly buried them
+#
+# Written after Raoul pointed out that "there is a daily cycle" is exactly the kind of
+# result the course exists to push students past. He is right, and the correction runs
+# deeper than one lesson.
+
+meta:
+  status: proposed
+  raised_by: Raoul, 2026-08-10
+  evidence: run on 7.0M parsed messages, 2013-2017, five channels
+
+the_framing_error:
+  what_i_had_written: >
+    Lesson 3's IRC half was specified as "the daily cycle is sharp on a regional channel and
+    washed out on #ubuntu" — presented as the finding, with a 15x-versus-1.7x ratio as the
+    payoff.
+  why_that_is_wrong: >
+    The conclusion a student draws from it is "people sleep at night", which nobody needed a
+    dataset to learn. It is the superficial result the whole course is built to move past,
+    and putting it in lesson 3 as a success teaches that finding an obvious pattern counts
+    as an analysis.
+  the_correction: >
+    The daily cycle is not the finding. It is the BORING PART YOU SUBTRACT — the model of
+    what you already expect, whose entire purpose is to make the residual legible. That is
+    chapter 1 §1.4 of the goad docs, and the lesson had it backwards.
+  restated:
+    before: "Look — a daily cycle. And it is sharper here than there."
+    after: >
+      "Everyone knows there is a daily cycle. So model it, subtract it, and ask what is left.
+      The deviations are the analysis."
+  how_far_it_propagates: >
+    The same error is available in every lesson: messages per weekday (people work), message
+    length distribution (most messages are short), author ranking (someone is busiest). Every
+    lesson needs its own "and that is the part you subtract" turn.
+
+# ---------------------------------------------------------------------------------------
+# Finding 1 — a global event overrides local time
+# ---------------------------------------------------------------------------------------
+
+release_imposes_its_own_clock:
+  question: Does an Ubuntu release change the SHAPE of the day, or only its height?
+  first_hypothesis: people stay up late for a release, so the night hours fill in
+  answer: false, and the real answer is better
+  evidence:
+    night_share_01_06_utc:
+      "#ubuntu": {ordinary: 21.7%, release: 19.8%, lift: 0.91}
+      "#ubuntu-uk": {ordinary: 4.8%, release: 4.5%, lift: 0.94}
+      "#ubuntu-it": {ordinary: 1.5%, release: 1.6%, lift: 1.06}
+    peak_hour_utc:
+      "#ubuntu": {ordinary: 19, release: 19}
+      "#ubuntu-uk": {ordinary: 10, release: 14}
+      "#ubuntu-it": {ordinary: 17, release: 14}
+  the_finding: >
+    Nobody stays up. The night share goes slightly DOWN on #ubuntu — release traffic lands in
+    ordinary waking hours. What changes is WHICH waking hours. #ubuntu-uk normally peaks at
+    10:00 UTC and #ubuntu-it at 17:00; on release days both peak at 14:00. Two channels that
+    normally run on their own local rhythms converge on the same hour.
+  the_difference_curve: >
+    Subtracting the ordinary-week hour profile from the release-window one gives two bumps on
+    both regional channels — roughly +3.5pp at 08:00 and +2.6pp at 14:00 on #ubuntu-uk, with
+    #ubuntu-it echoing them. A global event stamps its own clock onto channels that otherwise
+    keep local time.
+  why_this_is_the_teachable_one:
+    - >
+      It is invisible in the raw series. The release spike shows up as "more messages"; the
+      clock override only appears once the level is normalised away and the shape compared.
+      That IS the subtract-the-boring-part move, performed on something students can see.
+    - >
+      It has a mechanism that can be named in advance and then checked, which is what
+      10-spurious-findings.yml#thread S5 asks for.
+    - >
+      It is falsifiable and was in fact falsified once: the obvious hypothesis (people stay up
+      for a release) is wrong, and the data says so plainly. A worked example of a prediction
+      being refuted is worth more than three of predictions confirmed.
+  open_question:
+    status: verify
+    what: >
+      Is 14:00 UTC actually when release announcements go out? If it is, the finding gets a
+      named mechanism instead of a shrug. Check the announcement timestamps on
+      lists.ubuntu.com before building a lesson on it.
+    if_it_is_not: >
+      The finding survives as "a global event overrides local rhythm" — still interesting,
+      just without the precise cause pinned down. Say that rather than invent a reason.
+
+# ---------------------------------------------------------------------------------------
+# Finding 2 — the weekend dip, and why only one channel has it
+# ---------------------------------------------------------------------------------------
+
+the_weekend_story:
+  question: Why does #ubuntu-uk halve at weekends when nothing else does?
+  first_observation: >
+    The dip is not general. It is one channel. Weekend/weekday message ratio: #ubuntu 1.01,
+    #ubuntu-it 1.12, #ubuntu-de 0.98, #ubuntu-nl 1.06 — and #ubuntu-uk 0.41.
+  decomposition:
+    method: split the ratio into distinct authors, and messages per author
+    result:
+      "#ubuntu-uk": {authors: 0.57, per_author: 0.71}
+      "#ubuntu": {authors: 0.91, per_author: 1.07}
+      "#ubuntu-it": {authors: 0.96, per_author: 1.18}
+    reading: >
+      Both fall on #ubuntu-uk — fewer people turn up AND the ones who do say less. Fewer
+      people is the larger term.
+  the_shape_shift_is_the_answer:
+    what: >
+      On weekdays #ubuntu-uk peaks at 09:00-10:00 UTC and declines all day. At weekends the
+      shape inverts: quiet all morning, rising to a peak at 20:00. #ubuntu's weekday and
+      weekend profiles are, by contrast, almost exactly superimposed.
+    the_story: >
+      People are chatting from work. UK working hours are 09:00-17:00 local, and the weekday
+      peak sits at the start of them; at weekends the same community appears in the evening
+      instead, from home. That is why the dip exists on this channel and nowhere else — it is
+      the only one whose activity is tied to a single country's working day.
+    what_makes_it_credible:
+      - the weekday peak lands in working hours for the channel's timezone, not a random hour
+      - the weekend traffic does not vanish, it MOVES — consistent with the same people
+      - the global channel, which has no single working day, shows no dip at all
+      - the mechanism was predictable before looking, and the direction of the shift was too
+  the_supporting_fact:
+    what: "#ubuntu-uk's busiest 1% of authors write 68% of its messages — 2,071 authors total."
+    so: >
+      It is not a support channel with a rotating cast. It is a small social club of about
+      twenty regulars, which is exactly the kind of group whose weekly rhythm follows one
+      country's working week.
+    comparison:
+      "#ubuntu-uk": 68% from the busiest 1%
+      "#ubuntu-it": 56%
+      "#ubuntu": 48% (of 162,115 authors)
+      "#ubuntu-nl": 45%
+
+# ---------------------------------------------------------------------------------------
+# Finding 3 — data quality, found by accident
+# ---------------------------------------------------------------------------------------
+
+bots_survived_the_cleaning:
+  what: >
+    The dataset card says known bots were removed. `ubot-it` writes 2.8% of #ubuntu-it —
+    29,332 messages — and `lubotu3` appeared in the very first sample row fetched.
+  why_it_matters: >
+    Any per-author analysis that does not exclude them is measuring a script. It is also the
+    honest version of the lesson-1 claim: "cleaned" is a claim somebody else made about the
+    data, and checking it is your job.
+  the_exercise: >
+    Ask students to find the bots without being told which they are. The signatures are
+    findable — near-uniform hour profile, repetitive message text, a name ending in `bot`,
+    and a reply pattern that never initiates.
+  caution: >
+    The top author on #ubuntu-it, `cristian_c` at 13.9%, is NOT a bot — a genuinely prolific
+    human. So "writes a lot" is not the test, which is what makes the exercise worth setting.
+
+cross_channel_authors:
+  what: "`daftykins` is the top author on #ubuntu-uk (9.5%) and second on #ubuntu (1.4%)."
+  potential: >
+    The same person on two channels, with two different rhythms and two different roles. A
+    natural bridge for lesson 6 (do their messages embed near each other?) and lesson 2 (does
+    one person behave differently in two groups?). Unexplored.
+  status: proposed
+
+# ---------------------------------------------------------------------------------------
+# What changes in the plan
+# ---------------------------------------------------------------------------------------
+
+consequences:
+  - id: C1
+    file: 05-notebooks.yml, lesson 3
+    change: >
+      Reframe 03-f. The daily and weekly cycles are established quickly and then SUBTRACTED.
+      The lesson's payoff is the release-window shape deviation, not the cycle.
+  - id: C2
+    file: 05-notebooks.yml, lesson 3
+    change: >
+      Add the weekend decomposition as the worked example of "a difference is not a finding
+      until you know what it is made of" — ratio, then authors versus per-author, then the
+      shape shift that explains both.
+  - id: C3
+    file: 10-spurious-findings.yml, thread S5
+    change: >
+      Replace the "fewer messages at 4am" example. It was listed as "mechanism so strong the
+      test is a formality", which is true and misses the point — the right verdict is that it
+      is not worth reporting at all. Its replacement is the pair: the obvious cycle (do not
+      report) and the release clock-override (report, with a mechanism).
+  - id: C4
+    file: 05-notebooks.yml, lesson 1
+    change: Add the bot-hunt as a cleaning exercise with a real answer.
+  - id: C5
+    file: 02-datasets.yml
+    change: >
+      Record that #ubuntu-uk is a concentrated social channel, not a support channel. It
+      affects every author-level demo: 68% of messages come from ~20 people, which is
+      realistic for a group chat and needs saying out loud before students subsample authors.

@@ -342,11 +342,37 @@ thread:
         - claim: Fewer messages get sent at 4am than at 9pm.
           mechanism: overwhelming — people sleep
           evidence: enormous effect, visible without any test
+          cell: mechanism yes / survives — and still worthless
+          teaches: >
+            The grid has a fifth verdict the 2x2 does not show: TRUE AND NOT WORTH REPORTING.
+            A claim can pass every check in this file and still tell the reader nothing they
+            did not know before opening the page. Students reach for these constantly,
+            because they are easy to support — and supporting them is the whole problem.
+          the_follow_up_question: >
+            "You have shown people sleep. What did you expect the cycle to look like, and
+            where does it differ from that?" The obvious pattern is the model. What it fails
+            to explain is the finding.
+          pairs_with: the next row, which is the same data done properly
+
+        - claim: >
+            An Ubuntu release does not make people stay up — it moves the peak. #ubuntu-uk
+            normally peaks at 10:00 UTC and #ubuntu-it at 17:00; on release days both peak at
+            14:00.
+          mechanism: >
+            a global event imposing its own clock on channels that otherwise keep local time
+          evidence: >
+            Night-hour share actually FALLS on release days (0.91x on #ubuntu), so the
+            obvious hypothesis is refuted. The finding only appears after the daily cycle is
+            normalised away and the shapes compared.
           cell: mechanism yes / survives
           teaches: >
-            When the mechanism is strong and the effect is huge, the test is a formality.
-            Worth showing once so students know this case exists — and worth saying how rare
-            it is.
+            The same dataset as the row above, with the boring part subtracted instead of
+            reported. This is the pair that makes the point: not "be sceptical", but "you
+            already had the answer to the wrong question — here is what to do with it".
+          bonus: >
+            A worked example of a prediction being REFUTED (nobody stays up) is worth more
+            than three of predictions confirmed, and this one costs nothing to include.
+          see: 11-beyond-the-obvious.yml#release_imposes_its_own_clock
         - claim: Messages are longer on weekdays than at weekends.
           mechanism: real but ambiguous — work talk is more formal, weekend talk is more
             relaxed and chattier. You cannot predict the sign.

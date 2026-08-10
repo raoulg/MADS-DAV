@@ -369,6 +369,23 @@ reference_chat:
           counts. The sharpest weekly cycle of any channel measured. Release spikes on 10
           releases out of 10. And a clear multi-year decline, which gives lesson 3 a trend
           and lesson 5 something for a model to subtract.
+      what_ubuntu_uk_actually_is:
+        status: found after the decision, and it holds up
+        what: >
+          Not a support channel with a rotating cast — a small social club. The busiest 1% of
+          its 2,071 authors write 68% of the messages, the highest concentration of any
+          channel measured (#ubuntu-it 56%, #ubuntu 48%, #ubuntu-nl 45%).
+        consequences:
+          - >
+            It explains the weekend dip: about twenty regulars whose rhythm follows one
+            country's working week. See 11-beyond-the-obvious.yml#the_weekend_story.
+          - >
+            Every author-level demo has to say this out loud before subsampling authors —
+            most of the 2,071 are near-silent, so a random draw of authors is mostly noise.
+          - >
+            It is realistic rather than a defect. A student's WhatsApp group has the same
+            shape: a few dominant voices and a long tail of lurkers. The concentration curve
+            is itself a lesson (author activity is a power law, not a bell curve).
       control:
         channel: "#ubuntu"
         why: >

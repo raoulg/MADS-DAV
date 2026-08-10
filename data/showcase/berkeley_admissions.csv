@@ -1,0 +1,13 @@
+department,gender,applied,admitted,rate
+A,men,825,512,0.6206
+A,women,108,89,0.8241
+B,men,560,353,0.6304
+B,women,25,17,0.68
+C,men,325,120,0.3692
+C,women,593,202,0.3406
+D,men,417,138,0.3309
+D,women,375,131,0.3493
+E,men,191,53,0.2775
+E,women,393,94,0.2392
+F,men,373,22,0.059
+F,women,341,24,0.0704

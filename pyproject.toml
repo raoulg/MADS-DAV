@@ -8,7 +8,12 @@ authors = [
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "click>=8.1.8",
+    "datasets>=3.0.0",
+    "goad-toolkit>=0.2.2",
+    "huggingface-hub>=0.26.0",
     "loguru>=0.7.3",
+    # Still imported by notebooks 04.2, 05.1 and 05.2. It goes when those are rewritten
+    # onto the vendored showcase data in data/showcase/.
     "mads-datasets>=0.3.14",
     "networkx>=3.4.2",
     "numpy>=2.2.1",
@@ -38,7 +43,6 @@ huggingface = [
     "transformers>=4.47.1",
 ]
 plotting = [
-    "mads-datasets>=0.3.14",
     "plotly>=5.24.1",
     "streamlit>=1.41.1",
 ]
