@@ -131,7 +131,12 @@ goad_proposals:
 
     - id: G6
       name: FileHandler generalisation
-      status: proposed
+      status: done in goad-toolkit 0.2.1, verified 2026-08-10
+      verification: >
+        FileConfig gained `date_column` and `date_index`; the reader now follows the file
+        suffix. Loaded this repo's own data/showcase/ubuntu_irc_days.parquet with
+        date_column="created", date_index=False, and got the right dtypes back. The widest
+        blocker in the plan is cleared.
       what: >
         FileHandler.load currently hardcodes parse_dates=["date"], index_col="date" and CSV.
         Parameterise the reader (csv/parquet), the date column, and whether to index by it.

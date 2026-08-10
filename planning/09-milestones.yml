@@ -94,11 +94,27 @@ milestones:
           scripts/build_irc_showcase.py regenerates any slice.
         see: 02-datasets.yml#reference_chat.verification_results
       - id: M3-b
-        what: Vendor tier-0 showcase datasets into data/showcase/ (D1, D2).
-        status: todo
+        what: Vendor tier-0 showcase datasets into data/showcase/ (D1, D2, D3).
+        status: done, 2026-08-10
+        detail: >
+          Nine sets, 3.6 MB, via scripts/build_showcase_data.py — penguins, titanic, flights,
+          taxis, mpg, anscombe, diamonds, datasaurus, and the Autodesk Simpson's-paradox
+          scatter. Berkeley 1973 admissions is generated from the published table rather than
+          downloaded. D3 resolved: seaborn 0.13.2 ships `taxis`.
       - id: M3-c
-        what: Remove mads_datasets from pyproject (H1); add datasets + huggingface_hub (H2).
-        status: todo
+        what: Dependency migration (H1, H2).
+        status: half done
+        done: >
+          Added datasets 5.0.1, huggingface-hub, and goad-toolkit 0.2.2. Removed
+          mads-datasets from the `plotting` extra.
+        remaining: >
+          mads-datasets stays in the core dependencies until notebooks 04.2, 05.1 and 05.2
+          stop importing it, which is M4 work. It carries a comment in pyproject.toml saying
+          exactly that, so it does not become permanent by forgetting.
+        note: >
+          06.1 and 06.2 reference the path ~/.cache/mads_datasets but do not import the
+          package. Rename that cache directory during M4 — it should not be named after a
+          dependency the course dropped.
     exit: every showcase dataset loads offline
 
   - id: M4
