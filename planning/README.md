@@ -1,5 +1,12 @@
 # planning/
 
+> **Status lives in Linear**, not here: [DAV refactor](https://linear.app/pttrn/project/dav-refactor-01967b8561ae)
+> — seven milestones (M0–M6), 42 issues. Work from the board.
+>
+> These files stay as the **design record**: the reasoning, the numbers, and what was tried
+> and rejected. Linear says *what is next*; this says *why it is shaped that way*. When the
+> two disagree about status, Linear wins.
+
 The refactor of MADS-DAV, written down before any notebook is touched.
 
 Each `.yml` file is one axis of the refactor. They are meant to be read in order, but each one
