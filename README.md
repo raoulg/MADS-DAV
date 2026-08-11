@@ -73,7 +73,7 @@ You should see some logs, like this:
 Inside the `log` folder you will find a logfile, which has some additional information that might be useful for debugging.
 
 After this, put the name of the .csv file that is save to `inputpath` in the `config.toml` file.
-You can then run the `01-cleaning.ipynb` notebook. This will save a cleaned `.parq` file. Put the name of that file after the `current` key in the `config.toml` file.
+You can then run the `notebooks/lesson1/01-cleaning.ipynb` notebook. This will save a cleaned `.parq` file. Put the name of that file after the `current` key in the `config.toml` file.
 
 This `config.toml` file should make it easier to run the code with multiple input files; you can simply change the `current` value and run all notebooks for the file specified there.
 
