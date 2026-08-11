@@ -15,6 +15,17 @@ You can check this by typing `which uv` in your bash terminal. If that doesnt re
 3. Navigate to the MADS-DAV folder where the `pyproject.toml` is located with `cd MADS-DAV` and run `uv sync --all-extras`. This should create a virtual environment (a `.venv` folder) and install all dependencies there.
 4. Read through the [uv docs](https://docs.astral.sh/uv/guides/projects/) "working on projects" intro into `uv`
 
+## use the course assistant
+
+This repo ships a `.mcp.json` (and `.cursor/mcp.json`). If you're on Claude Code or Cursor, opening the folder is enough — it will offer to connect two coaching servers, `goad` and `codestyle`, and you approve them once. See [CLAUDE.md](CLAUDE.md) for what they do and what's expected of you when you use them.
+
+On any other MCP client, install `goad` by hand:
+
+```bash
+claude mcp add goad -e GOAD_REF=v0.2.2 -- \
+  sh -c 'uv run --no-project https://raw.githubusercontent.com/raoulg/goad_toolkit/$GOAD_REF/goad_mcp.py'
+```
+
 ## installation with pip (not recommended)
 If for some reason you are unable to install `uv` (eg because you have a company laptop with restrictions on what to install) you can probably still install your `.venv` with base python and pip. Skip these steps if you already installed with `uv`
 1. Open a bash terminal in the folder where you cloned the repo
