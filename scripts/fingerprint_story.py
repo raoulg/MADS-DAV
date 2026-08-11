@@ -1,8 +1,7 @@
 """The lesson-5 story, as a picture: how people type is more identifying than what they say.
 
-Evidence for the design in planning/13-author-fingerprints.yml. The notebook will rebuild
-these four panels step by step; this script exists so the finding is reproducible rather
-than a screenshot.
+Evidence for the lesson-5 design (Linear PTT-45). The notebook rebuilds these four panels
+step by step; this script exists so the finding is reproducible rather than a screenshot.
 
     uv run scripts/fingerprint_story.py
 """
