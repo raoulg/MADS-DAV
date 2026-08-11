@@ -40,6 +40,9 @@ SHOWCASE_DATASETS = {
     "diamonds": "a correlation matrix, and a scatter that fans out",
     "ubuntu_irc": "five years of two Ubuntu IRC channels, one row per channel-day",
     "ubuntu_irc_control_hourly": "#ubuntu hourly totals, as a comparison for the above",
+    "ubuntu_irc_release_hourly": (
+        "#ubuntu and #ubuntu-it hourly totals, ordinary Thursday vs release day"
+    ),
 }
 
 
