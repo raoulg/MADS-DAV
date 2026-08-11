@@ -22,7 +22,7 @@ This repo ships a `.mcp.json` (and `.cursor/mcp.json`). If you're on Claude Code
 On any other MCP client, install `goad` by hand:
 
 ```bash
-claude mcp add goad -e GOAD_REF=v0.2.2 -- \
+claude mcp add goad -e GOAD_REF=v0.2.3 -- \
   sh -c 'uv run --no-project https://raw.githubusercontent.com/raoulg/goad_toolkit/$GOAD_REF/goad_mcp.py'
 ```
 
