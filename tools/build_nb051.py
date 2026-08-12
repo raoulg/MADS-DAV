@@ -42,6 +42,9 @@ Four moves, in order:
 3. **Rebuild.** A grid for deciding what a finding is worth, and seven claims run through it.
 4. **A finding that survives all of it** — how eight people type, which turns out to be more
    identifying than what they talk about.
+
+Then one model, because two of those seven claims turn out to be the trend and the residual
+of the same series.
 """)
 
 code("""
@@ -51,6 +54,7 @@ import seaborn as sns
 from goad_toolkit.visualizer import (
     BarbellPlot,
     CorrelationHeatmap,
+    DecomposePlot,
     HeatmapPlot,
     LinePlot,
     PlotSettings,
@@ -1366,6 +1370,303 @@ number instead of this one.
 > less active authors is untested."*
 
 Every clause in that sentence is doing work, and none of it is the word "significant".
+""")
+
+
+# ---------------------------------------------------------------- 5.6 a model of a day
+md("""
+## 5.6 A model of an ordinary day
+
+Two of §5.4's seven claims were about the same series. "The channel got quieter after 2016"
+is a statement about its **trend**. "Release days are busier" is a statement about its
+**residual**. Both were tested by picking a comparison by hand — a ratio to 2013, the
+Thursdays either side.
+
+Write the model down instead, and the comparisons stop being choices.
+
+    messages on a day = trend  x  what day of the week it is  x  whatever is left
+
+Three lines of arithmetic, and the third line is the one you keep.
+""")
+
+code("""
+daily = uk.groupby("date").size().rename("messages").to_frame()
+span = pd.date_range(daily.index.min(), daily.index.max(), freq="D")
+
+print(f"{len(daily):,} days with messages, {len(span):,} days in the span")
+print(f"quietest day {daily.messages.min()}, busiest {daily.messages.max():,}")
+""")
+
+md("""
+No gaps and no empty days, which is worth checking before modelling a series rather than
+after: a missing day and a zero day mean different things, and both would be silently wrong
+here.
+
+**Work in logs.** The three effects above multiply — a quiet Sunday in 2013 and a quiet
+Sunday in 2017 are both "about half a normal day", not both "about 200 messages fewer".
+Taking logs turns multiplication into addition, which is what lets the three lines be
+*subtracted* one at a time.
+""")
+
+code("""
+daily["day_number"] = np.arange(len(daily))
+daily["weekday"] = daily.index.dayofweek
+daily["log_messages"] = np.log(daily.messages)
+
+levels = PlotSettings(
+    figsize=(13, 3.4),
+    title="The same series, twice",
+    subplot_titles=["messages per day", "log(messages per day)"],
+    xlabel="",
+    ylabel="",
+)
+host = LinePlot(levels)
+fig, axes = host.create_figure(n_plots=2)
+for ax, column in zip(axes, ["messages", "log_messages"]):
+    host.plot_on_axes(LinePlot(levels), ax, data=daily.reset_index(),
+                      x="date", y=column, lw=0.6)
+    ax.set_xlabel("")
+    ax.set_ylabel("")
+fig.tight_layout()
+""")
+
+md("""
+On the raw scale the first year shouts and the last year is a flat line near zero — you
+cannot see whether 2017 has any structure at all. In logs, every year gets the same vertical
+space, and the decline turns into something a straight line can describe.
+
+**Step one: the trend.**
+""")
+
+code("""
+trend_fit = stats.linregress(daily.day_number, daily.log_messages)
+daily["trend"] = trend_fit.intercept + trend_fit.slope * daily.day_number
+
+print(f"slope {trend_fit.slope:+.5f} log-units per day   (r^2 = {trend_fit.rvalue ** 2:.2f})")
+print(f"per year        x{np.exp(trend_fit.slope * 365):.2f}  "
+      f"({(np.exp(trend_fit.slope * 365) - 1) * 100:+.0f}%)")
+print(f"over five years x{np.exp(trend_fit.slope * len(daily)):.2f}")
+""")
+
+md("""
+**Down 40% a year, every year.** That is §5.4's claim 6 again, and notice what changed by
+writing it as a model: "16% of its 2013 volume" was a ratio between two years somebody chose,
+and this is a rate that every day in the corpus contributed to. The second one survives
+somebody asking "why 2013?".
+
+**Step two: the week.** Subtract the trend, then ask what each weekday does to what is left.
+""")
+
+code("""
+detrended = daily.log_messages - daily.trend
+weekly = detrended.groupby(daily.weekday).mean()
+weekly = weekly - weekly.mean()
+daily["seasonal"] = daily.weekday.map(weekly)
+
+names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+for day, effect in weekly.items():
+    print(f"{names[day]}  x{np.exp(effect):.2f}")
+""")
+
+md("""
+Five weekdays within a hair of each other at about ×1.3, and then Saturday ×0.48, Sunday
+×0.55. **The weekend is not a dip, it is a different channel** — less than half the traffic,
+and lesson 3 found the shape behind it: `#ubuntu-uk` peaks at the start of UK working hours
+on weekdays and in the evening at weekends. People are chatting from work.
+
+**Step three: whatever is left.**
+""")
+
+code("""
+daily["residual"] = daily.log_messages - daily.trend - daily.seasonal
+
+variance = pd.Series({
+    "log messages": daily.log_messages.var(),
+    "minus trend": detrended.var(),
+    "minus trend and weekday": daily.residual.var(),
+})
+print(variance.round(3).to_string())
+print(f"\\ntrend accounts for  {1 - variance.iloc[1] / variance.iloc[0]:.0%}")
+print(f"weekday adds        {(variance.iloc[1] - variance.iloc[2]) / variance.iloc[0]:.0%}")
+print(f"residual sd {daily.residual.std():.2f} log-units "
+      f"— a typical day lands within x{np.exp(daily.residual.std()):.1f} of the model")
+""")
+
+code("""
+parts = PlotSettings(
+    figsize=(13, 6),
+    title="messages per day = trend x weekday x residual",
+    subplot_titles=["observed (log)", "trend + weekday", "residual"],
+    xlabel="",
+    ylabel="",
+    max_cols=1,
+)
+host = LinePlot(parts)
+fig, axes = host.create_figure(n_plots=3)
+
+frame = daily.assign(fitted=daily.trend + daily.seasonal).reset_index()
+for ax, column in zip(axes, ["log_messages", "fitted", "residual"]):
+    host.plot_on_axes(LinePlot(parts), ax, data=frame, x="date", y=column, lw=0.6)
+    ax.set_xlabel("")
+    ax.set_ylabel("log messages")
+axes[2].axhline(0, color="grey", lw=1)
+for release_date in RELEASES:
+    axes[2].axvline(release_date, color="crimson", lw=1, alpha=0.6)
+fig.tight_layout()
+""")
+
+md("""
+Trend and weekday together account for a bit over half the variance, so nearly half of it is
+still in that bottom panel: the model is not a good predictor of any particular day, and it
+was never meant to be. Its job was to remove the part you could have written down in advance.
+
+The red lines are the ten release dates. Ask the residual about them.
+""")
+
+code("""
+daily["is_release"] = daily.index.isin(RELEASES)
+percentile = daily.residual.rank(pct=True)
+
+for release_date in RELEASES:
+    print(f"{release_date.date()}  x{np.exp(daily.residual[release_date]):.2f}  "
+          f"({percentile[release_date]:.0%} of days are below it)")
+
+on, off = daily.residual[daily.is_release], daily.residual[~daily.is_release]
+print(f"\\nmean residual x{np.exp(on.mean() - off.mean()):.2f} on release days, "
+      f"p = {stats.ttest_ind(on, off, equal_var=False).pvalue:.3f}")
+""")
+
+md("""
+Nine of the ten sit above the median day, the average release day runs **1.7× the model**,
+and `p = 0.014`. Same answer as §5.4's local-baseline test, which is the point: the model
+replaces the hand-picked comparison, and gets there without anyone choosing which Thursdays
+count.
+
+Now the part that matters more than the result.
+""")
+
+code("""
+biggest = daily.residual.nlargest(15)
+for date, value in biggest.items():
+    marker = "  <- release" if date in RELEASES else ""
+    print(f"{date.date()} {names[date.dayofweek]}  x{np.exp(value):.1f}  "
+          f"({daily.messages[date]:>4} messages){marker}")
+
+weekend_days = sum(date.dayofweek >= 5 for date in biggest.index)
+print(f"\\n{weekend_days}/15 of the biggest residuals are weekend days, "
+      f"against {(daily.weekday >= 5).mean():.0%} of all days")
+""")
+
+md("""
+**Not one release is in the top fifteen.** The release effect is real — it just is not large
+compared with an ordinary weekend that happened to go well.
+
+And thirteen of those fifteen days are Saturdays and Sundays, which is not a discovery about
+weekends. It is the model admitting something. A single number per weekday says every Sunday
+is 0.55 of a normal day; if Sundays are instead *unpredictable* — sometimes dead, sometimes a
+marathon conversation — then a constant cannot fit them and the misfit lands in the residual.
+
+Checkable in one line.
+""")
+
+code("""
+print("residual sd by weekday")
+for day, spread in daily.groupby("weekday").residual.std().items():
+    print(f"  {names[day]}  {spread:.2f}")
+
+print("\\nresidual sd by year, against the median day that year")
+report = pd.DataFrame({
+    "residual sd": daily.groupby(daily.index.year).residual.std(),
+    "median messages": daily.groupby(daily.index.year).messages.median(),
+})
+print(report.round(2).to_string())
+""")
+
+md("""
+Sunday's residual is nearly twice as spread out as Monday's — 1.01 against 0.62. The weekend
+term is not wrong about the average, it is wrong about the *shape*: it moves the mean and
+leaves the variance alone, and the variance was the interesting half.
+
+The second table shows the same thing over time: as the channel emptied, the residual grew
+from 0.62 to 0.97. The reflex explanation is counting noise — smaller counts are relatively
+noisier — and it is worth checking rather than asserting, because it is the kind of
+explanation that sounds right.
+""")
+
+code("""
+quietest_year = report["median messages"].min()
+print(f"if days were pure counting noise at {quietest_year:.0f} messages,")
+print(f"  expected residual sd = 1/sqrt({quietest_year:.0f}) = {1 / np.sqrt(quietest_year):.2f}")
+print(f"  observed in 2017                              = {report['residual sd'].iloc[-1]:.2f}")
+""")
+
+md("""
+Counting noise would produce 0.13 of the 0.97 observed. The late years are genuinely more
+erratic —
+a handful of regulars, and whether they show up is the whole story of a 2017 day.
+
+> **What a residual is.** Everything your model does not explain, which is *both* the
+> discoveries and the mistakes, mixed together and impossible to tell apart by size. The ten
+> release days are a discovery. The thirteen weekend days are a mistake. A residual is a
+> to-do list, not a result.
+
+> **Your turn.** Take the biggest residual, `2014-11-16` at ten times the model, and go and
+> read that day's messages — the text is in the corpus. Then decide which of the three it is:
+> an event worth reporting, a property of weekends the model should have had, or one
+> conversation that ran long. Whichever you pick, the check is the same one this whole lesson
+> has been about: what would you expect to see if it were the other two?
+""")
+
+md("""
+### The packaged version
+
+Everything above is `statsmodels`' `seasonal_decompose`, done by hand. Now that you know what
+it does, use the short form — and notice it makes exactly the same choices you just made
+explicitly, including the one about additive-versus-multiplicative that becomes a `log` on
+the way in.
+""")
+
+code("""
+decomposition = PlotSettings(
+    figsize=(12, 8),
+    title="seasonal_decompose, period=7",
+    xlabel="",
+    ylabel="",
+    max_cols=1,
+)
+fig = DecomposePlot(decomposition).plot(data=daily[["log_messages"]], column="log_messages",
+                                        period=7)
+""")
+
+md("""
+Its trend is a 7-day rolling mean rather than a straight line, so it absorbs the slow wobbles
+this section left in the residual — a different, equally defensible choice, and one you can
+now argue about rather than accept.
+
+---
+
+## What this lesson was
+
+Four moves, and the order was the argument:
+
+1. **Look before you summarise.** Four datasets with identical statistics, and one of them is
+   a dinosaur.
+2. **Walk into the trap.** Fifteen metrics, random labels, a `p = 0.0026` finding about
+   nothing — and the arithmetic that says how often that has to happen.
+3. **Rebuild.** Mechanism × evidence, and seven claims that between them produce six different
+   verdicts. "Be sceptical" would have got one of them right.
+4. **Do it properly once.** Eight people, ten habits, a four-year gap — and an objection
+   about `n = 8` that the evidence cannot answer.
+
+One question runs through all four, and it is the one to ask your own work:
+
+> **What would I expect to see if there were nothing here?**
+
+Lesson 4 answered it by shuffling. §5.3 answered it with `1 − 0.95ⁿ`. §5.4 answered it by
+choosing a baseline, twice, and getting opposite verdicts. §5.6 answered it by writing the
+expectation down as a model and keeping what was left.
+
+They are the same question, and a finding is only worth as much as the answer to it.
 """)
 
 
