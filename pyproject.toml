@@ -12,8 +12,8 @@ dependencies = [
     "goad-toolkit>=0.2.9",
     "huggingface-hub>=0.26.0",
     "loguru>=0.7.3",
-    # Still imported by notebooks 04.2, 05.1 and 05.2. It goes when those are rewritten
-    # onto the vendored showcase data in data/showcase/.
+    # Still imported by notebooks 05.1 and 05.2, and by all four dashboards/dashboard_*.py.
+    # It goes when those are rewritten onto the vendored showcase data in data/showcase/.
     "mads-datasets>=0.3.14",
     "networkx>=3.4.2",
     "numpy>=2.2.1",
