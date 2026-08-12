@@ -12,9 +12,6 @@ dependencies = [
     "goad-toolkit>=0.2.11",
     "huggingface-hub>=0.26.0",
     "loguru>=0.7.3",
-    # Still imported by notebooks 05.1 and 05.2, and by all four dashboards/dashboard_*.py.
-    # It goes when those are rewritten onto the vendored showcase data in data/showcase/.
-    "mads-datasets>=0.3.14",
     "networkx>=3.4.2",
     # Floor: older numpy reports Accelerate's uninitialised output lanes as
     # divide-by-zero warnings on every dense sklearn fit, on every Mac.

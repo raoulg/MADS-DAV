@@ -29,6 +29,7 @@ CONFIG = ROOT / "config.toml"
 
 SHOWCASE_DATASETS = {
     "penguins": "three species, two sexes, three islands — a clean categorical comparison",
+    "penguins_raw": "the same birds as published, with the isotope columns and full species names",
     "titanic": "the categorical failure modes: many levels, very unequal group sizes",
     "berkeley_admissions": "Simpson's paradox, as the published 1973 table",
     "simpsons_paradox": "Simpson's paradox, as a scatter",

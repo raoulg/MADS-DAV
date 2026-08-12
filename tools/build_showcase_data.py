@@ -32,6 +32,14 @@ SEABORN = {
     "diamonds": "lesson 5 — correlation matrix, and heteroscedasticity in the scatter",
 }
 
+# The Palmer archive as published, which seaborn's `penguins` is a tidied subset of: it keeps
+# the isotope measurements and the full species names. Lesson 5.2 and the dashboards correlate
+# the isotopes against the body measurements, so they need this one rather than the tidy copy.
+PALMER_RAW = (
+    "https://raw.githubusercontent.com/allisonhorst/palmerpenguins/main/inst/extdata/"
+    "penguins_raw.csv"
+)
+
 DATASAURUS_BASE = (
     "https://raw.githubusercontent.com/jumpingrivers/datasauRus/main/inst/extdata"
 )
@@ -75,6 +83,14 @@ def main() -> None:
         path = args.out / f"{name}.csv"
         df.to_csv(path, index=False)
         print(f"{name:12s} {len(df):>6,} rows  {path.stat().st_size / 1024:>7.0f} KB   {why}")
+
+    resp = requests.get(PALMER_RAW, timeout=30)
+    resp.raise_for_status()
+    raw = pd.read_csv(io.StringIO(resp.text))
+    path = args.out / "penguins_raw.csv"
+    raw.to_csv(path, index=False)
+    print(f"{'penguins_raw':12s} {len(raw):>6,} rows  {path.stat().st_size / 1024:>7.0f} KB   "
+          "lesson 5 — the Palmer archive, isotopes included")
 
     for name, (remote, why) in FROM_DATASAURUS.items():
         resp = requests.get(f"{DATASAURUS_BASE}/{remote}", timeout=30)

@@ -4,15 +4,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import streamlit as st
-from mads_datasets import DatasetFactoryProvider, DatasetType
+from wa_analyzer.data import load_showcase
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 def load_penguins_dataset() -> pd.DataFrame:
-    penguinsdataset = DatasetFactoryProvider.create_factory(DatasetType.PENGUINS)
-    penguinsdataset.download_data()
-    df = pd.read_parquet(penguinsdataset.filepath)
+    df = load_showcase("penguins_raw")
     select = [
         "Species",
         "Island",

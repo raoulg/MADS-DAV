@@ -1,24 +1,22 @@
 import pandas as pd
 import streamlit as st
-from mads_datasets import DatasetFactoryProvider, DatasetType
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from loguru import logger
 
+from wa_analyzer.data import load_showcase
+
 
 def load_penguins_dataset() -> pd.DataFrame:
-    """_summary_
-    allow_output_mutation=True argument is used because the
-    penguinsdataset object is mutable, and we want to allow modifications to it.
+    """The nine columns this dashboard plots, for the birds that have all nine.
 
-    In addition to that, we want to cache the object, so that it is not reloaded
-    every time the user interacts with the dashboard.
+    Streamlit re-runs the whole script on every widget interaction, so this is
+    read from disk once per interaction. It is 344 rows; if it were not, this is
+    where `@st.cache_data` would go.
     """
     logger.info("Loading dataset")
-    penguinsdataset = DatasetFactoryProvider.create_factory(DatasetType.PENGUINS)
-    penguinsdataset.download_data()
-    df = pd.read_parquet(penguinsdataset.filepath)  # noqa: PD901
+    df = load_showcase("penguins_raw")  # noqa: PD901
     select = [
         "Species",
         "Island",
