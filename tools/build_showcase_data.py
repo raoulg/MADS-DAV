@@ -20,6 +20,7 @@ from pathlib import Path
 import pandas as pd
 import requests
 import seaborn as sns
+from loguru import logger
 
 # Each entry says what the dataset is FOR, because "why this one" is the part that gets lost.
 SEABORN = {
@@ -82,15 +83,15 @@ def main() -> None:
         df = sns.load_dataset(name)
         path = args.out / f"{name}.csv"
         df.to_csv(path, index=False)
-        print(f"{name:12s} {len(df):>6,} rows  {path.stat().st_size / 1024:>7.0f} KB   {why}")
+        logger.info(f"{name:12s} {len(df):>6,} | {path} rows  {path.stat().st_size / 1024:>7.0f} KB   {why}")
 
     resp = requests.get(PALMER_RAW, timeout=30)
     resp.raise_for_status()
     raw = pd.read_csv(io.StringIO(resp.text))
     path = args.out / "penguins_raw.csv"
     raw.to_csv(path, index=False)
-    print(f"{'penguins_raw':12s} {len(raw):>6,} rows  {path.stat().st_size / 1024:>7.0f} KB   "
-          "lesson 5 — the Palmer archive, isotopes included")
+    logger.info(f"{'penguins_raw':12s} {len(raw):>6,} | {path} rows  {path.stat().st_size / 1024:>7.0f} KB   "
+                "lesson 5 — the Palmer archive, isotopes included")
 
     for name, (remote, why) in FROM_DATASAURUS.items():
         resp = requests.get(f"{DATASAURUS_BASE}/{remote}", timeout=30)
@@ -98,22 +99,22 @@ def main() -> None:
         df = pd.read_csv(io.StringIO(resp.text), sep="\t")
         path = args.out / f"{name}.csv"
         df.to_csv(path, index=False)
-        print(f"{name:12s} {len(df):>6,} rows  {path.stat().st_size / 1024:>7.0f} KB   {why}")
+        logger.info(f"{name:12s} {len(df):>6,} | {path} rows  {path.stat().st_size / 1024:>7.0f} KB   {why}")
 
     b = berkeley()
     b.to_csv(args.out / "berkeley_admissions.csv", index=False)
     agg = b.groupby("gender")[["applied", "admitted"]].sum()
     agg["rate"] = agg["admitted"] / agg["applied"]
-    print(f"{'berkeley':12s} {len(b):>6,} rows           "
-          "lesson 2 — Simpson's paradox")
-    print(f"{'':14s}aggregate: men {agg.loc['men', 'rate']:.1%}, women {agg.loc['women', 'rate']:.1%}")
+    logger.info(f"{'berkeley':12s} {len(b):>6,} rows           "
+                "lesson 2 — Simpson's paradox")
+    logger.info(f"{'':14s}aggregate: men {agg.loc['men', 'rate']:.1%}, women {agg.loc['women', 'rate']:.1%}")
     better = (b.pivot(index="department", columns="gender", values="rate")
               .assign(women_higher=lambda d: d["women"] > d["men"])["women_higher"])
-    print(f"{'':14s}per department, women admitted at a higher rate in "
-          f"{better.sum()}/{len(better)}")
+    logger.info(f"{'':14s}per department, women admitted at a higher rate in "
+                f"{better.sum()}/{len(better)}")
 
     total = sum(p.stat().st_size for p in args.out.glob("*.csv"))
-    print(f"\n{len(list(args.out.glob('*.csv')))} csv files, {total / 1e6:.1f} MB total")
+    logger.info(f"\n{len(list(args.out.glob('*.csv')))} csv files, {total / 1e6:.1f} MB total")
 
 
 if __name__ == "__main__":
