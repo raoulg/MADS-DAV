@@ -592,7 +592,7 @@ wheels = [
 
 [[package]]
 name = "goad-toolkit"
-version = "0.2.9"
+version = "0.2.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "loguru" },
@@ -606,9 +606,9 @@ dependencies = [
     { name = "statsmodels" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/82/46/6172b488e87b2f59bc3d778185c2bfa19cc671083512f3b722c4bd310ad7/goad_toolkit-0.2.9.tar.gz", hash = "sha256:0ee06a369f29e9d963168e0c601653e5f061c814e3e1ed0f3df1207da236e408", size = 6412987, upload-time = "2026-08-12T10:06:59.574Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/eb/d8/0212ce3dbb527674530d4da6d0372feebec53c4a938d1d60c0fbf862add3/goad_toolkit-0.2.10.tar.gz", hash = "sha256:dea2daa65fa20082e0b5616a7a524daa18d950a28d01cd672c5b891891d37ab0", size = 6412995, upload-time = "2026-08-12T10:26:59.026Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0a/fe/d18dea3cd50432881b3826567a93097e7debd3c23b64a3d00886bb548d1b/goad_toolkit-0.2.9-py3-none-any.whl", hash = "sha256:db5ff6bee7356a12cad215214fc60f09ea1aca5052038935f277f6ca923fa57c", size = 35370, upload-time = "2026-08-12T10:07:00.777Z" },
+    { url = "https://files.pythonhosted.org/packages/aa/90/0b5768a26862e0c152f1c58c5f1d9e4147b29a8678b33e0305530c86e100/goad_toolkit-0.2.10-py3-none-any.whl", hash = "sha256:1f34f1ddf9e511c1f2d5f75ac864edbb24b23f2edb0a8694f6d89de3ba910b88", size = 35373, upload-time = "2026-08-12T10:26:56.608Z" },
 ]
 
 [[package]]
@@ -2667,7 +2667,7 @@ dev = [
 requires-dist = [
     { name = "click", specifier = ">=8.1.8" },
     { name = "datasets", specifier = ">=3.0.0" },
-    { name = "goad-toolkit", specifier = ">=0.2.9" },
+    { name = "goad-toolkit", specifier = ">=0.2.10" },
     { name = "huggingface-hub", specifier = ">=0.26.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "mads-datasets", specifier = ">=0.3.14" },
