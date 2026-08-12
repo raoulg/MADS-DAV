@@ -49,7 +49,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from goad_toolkit.visualizer import (
+    BarbellPlot,
     CorrelationHeatmap,
+    LinePlot,
     PlotSettings,
     RegPlot,
     ScatterPlot,
@@ -547,6 +549,476 @@ is a pattern you made.
 
 > **The rule to carry:** a finding and the search that produced it are one object. Report
 > them together or you have not reported the finding.
+""")
+
+
+# ---------------------------------------------------------------- 5.4 credibility grid
+md("""
+## 5.4 What would make you believe it
+
+The previous section is only half a lesson. Run it alone and the conclusion is "nothing is
+ever real", which is worse than the credulity it was meant to cure — a student who believes
+everything and a student who believes nothing both stop thinking.
+
+So: what *would* make a finding believable?
+
+A claim rests on three legs, and statistics supplies exactly one of them.
+
+1. **Evidence** — how many observations, *at the unit the claim is about*, how big is the
+   effect, and does it survive a null test.
+2. **Mechanism** — is there a reason it would be true, and would you have predicted the
+   direction before looking? **No amount of data supplies this leg.**
+3. **Replication** — does it appear where you did not look? Another period, another channel,
+   a second way of measuring the same thing. Three mediocre independent confirmations beat
+   one excellent p-value.
+
+Two of those are cheap to check. Cross them:
+
+|  | **survives testing** | **fails testing** |
+| -- | -- | -- |
+| **mechanism** | Report it — then go and check leg three. | **"Plausible, unproven."** Say exactly that, and say what would settle it. |
+| **no mechanism** | **Do not conclude. Go looking.** A fluke, or a confounder you have not named — and the confounder is usually the more interesting finding. | Nothing here. Drop it. |
+
+The diagonal is obvious. The off-diagonal cells are the lesson, and both are things students
+almost never write down: a null result stated as a null result, and a significant result
+treated as a question rather than an answer.
+
+Seven claims, run through the grid. **The right answer is different every time** — which is
+the point. If scepticism were the lesson, one example would do.
+""")
+
+md("""
+### Claim 1 · "There are far fewer messages at 4am"
+
+Mechanism: overwhelming. Evidence: enormous. Both legs, no argument.
+""")
+
+code("""
+hourly = uk.hh.value_counts(normalize=True).sort_index()
+peak_hour = hourly.idxmax()
+
+print(f"04:00      {hourly[4]:.1%} of all messages")
+print(f"{peak_hour}:00 (peak) {hourly[peak_hour]:.1%}")
+print(f"ratio      {hourly[peak_hour] / hourly[4]:.0f}x")
+""")
+
+md("""
+Fifteen to one, on half a million messages. Unarguable, and **worthless**.
+
+The grid has a fifth verdict it does not draw, because it sits outside the grid entirely:
+**true, well-evidenced, and not worth reporting.** You have shown that people sleep. No
+reader's beliefs move.
+
+The question that rescues it: *what did you expect, and where does the data differ from
+that?* "Fewest messages at 4am" is the expectation. "The 4am dip is 15× on `#ubuntu-uk` and
+1.7× on `#ubuntu`" is a finding, because now something varies and the variation needs
+explaining. This is lesson 3's move — the daily cycle is the boring part you subtract, not
+the result.
+""")
+
+md("""
+### Claim 2 · "People stay up late for an Ubuntu release"
+
+A prediction, written before looking, which is what makes it worth testing. Mechanism:
+plausible — a release is an event, people wait for it, downloads and problems arrive at once.
+
+Ubuntu releases on a Thursday, so ordinary **Thursdays** are the fair comparison. Anything
+else confounds the release with the weekly cycle.
+""")
+
+code("""
+RELEASES = pd.to_datetime([
+    "2013-04-25", "2013-10-17", "2014-04-17", "2014-10-23", "2015-04-23",
+    "2015-10-22", "2016-04-21", "2016-10-13", "2017-04-13", "2017-10-19",
+])
+
+thursdays = uk[uk.date.dt.dayofweek == 3].copy()
+thursdays["is_release"] = thursdays.date.isin(RELEASES)
+
+ordinary = thursdays[~thursdays.is_release]
+release = thursdays[thursdays.is_release]
+
+print(f"{ordinary.date.nunique()} ordinary Thursdays, {release.date.nunique()} release days")
+print(f"night share (00-05)  ordinary {ordinary.hh.between(0, 5).mean():.1%}"
+      f"   release {release.hh.between(0, 5).mean():.1%}")
+""")
+
+md("""
+Refuted, and firmly: the night share **falls** on release days, 6.8% to 1.0%. People do not
+stay up. A prediction that dies is worth more than three that survive, because it is the only
+kind that could have gone either way.
+
+But look at that comparison for a second longer, because it is doing something dishonest.
+Those are pooled means — every message from 251 Thursdays thrown into one bucket. Ask the
+same question per day.
+""")
+
+code("""
+per_day = thursdays.groupby(["date", "is_release"]).agg(
+    n=("hh", "size"),
+    night=("hh", lambda h: h.between(0, 5).mean()),
+    afternoon=("hh", lambda h: h.between(13, 16).mean()),
+).reset_index()
+
+typical = per_day[~per_day.is_release]
+print(f"ordinary Thursday, night share:      mean {typical.night.mean():.1%}"
+      f"   median {typical.night.median():.1%}")
+print(f"ordinary Thursday, afternoon share:  mean {typical.afternoon.mean():.1%}"
+      f"   median {typical.afternoon.median():.1%}")
+print()
+print(per_day[per_day.is_release][["date", "n", "night", "afternoon"]].round(3).to_string(index=False))
+""")
+
+md("""
+The typical ordinary Thursday has a night share of **1.2%**, not 6.8%. The pooled mean was
+inflated by a handful of unusual nights — Anscombe again, one section later and on a
+statistic nobody thinks of as fragile. Against the median, the release days are unremarkable.
+The prediction is still refuted, but the evidence for refuting it is much weaker than the
+first cell implied.
+
+What *does* survive is a different pattern, visible in the same table: the afternoon.
+""")
+
+code("""
+above = (per_day.loc[per_day.is_release, "afternoon"] > typical.afternoon.median()).sum()
+n_releases = per_day.is_release.sum()
+sign_p = stats.binomtest(int(above), int(n_releases), 0.5).pvalue
+
+print(f"{above}/{n_releases} release days are above the ordinary-Thursday median "
+      f"afternoon share ({typical.afternoon.median():.1%})")
+print(f"sign test p = {sign_p:.3f}")
+""")
+
+code("""
+profile = pd.concat([
+    ordinary.hh.value_counts(normalize=True).rename("share").reset_index().assign(day="ordinary Thursday"),
+    release.hh.value_counts(normalize=True).rename("share").reset_index().assign(day="release day"),
+])
+
+shape = PlotSettings(
+    figsize=(10, 4),
+    title="A release does not lengthen the day, it moves it",
+    xlabel="hour (UTC)",
+    ylabel="share of the day's messages",
+)
+fig, ax = LinePlot(shape).plot(data=profile.sort_values("hh"), x="hh", y="share",
+                               hue="day", marker="o")
+ax.legend(title="")
+""")
+
+md("""
+Nine of ten release days sit above the ordinary median, `p = 0.021` by a sign test — and a
+sign test is the right instrument here, because it asks only *which side of typical* each day
+falls on, which is a question ten noisy days can actually answer.
+
+**Verdict: report it, restated.** Not "people stay up for a release" but *"a release moves
+the channel's activity into the afternoon."* And do not go further than that: the pooled
+profile peaks at 15:00, but only two of the ten individual release days do. The aggregate
+shape is real; the sentence "the peak moves to 15:00" is about a day that does not exist.
+""")
+
+md("""
+### Claim 3 · "People write longer messages on weekdays"
+
+Mechanism: real, and **ambiguous in sign**. Weekday chat happens at work, in short bursts
+between other things — that predicts shorter. Weekday chat is also about work, technical and
+detailed — that predicts longer. You genuinely cannot call it in advance.
+
+This is the case where a test earns its keep. Without a claim like this, students conclude
+statistics is a formality, because every other example was decidable by thinking.
+""")
+
+code("""
+weekday = uk.loc[~uk.is_weekend, "length"]
+weekend = uk.loc[uk.is_weekend, "length"]
+
+print("one row per MESSAGE")
+print(f"  weekday {weekday.mean():.2f} chars (n={len(weekday):,})")
+print(f"  weekend {weekend.mean():.2f} chars (n={len(weekend):,})")
+print(f"  p = {stats.ttest_ind(weekday, weekend, equal_var=False).pvalue:.1e}")
+""")
+
+md("""
+`p = 8e-10`. A 1.05-character difference, on half a million messages, in the direction
+opposite to the claim.
+
+That p-value is meaningless, and lesson 2 said why: the claim is about **people**, and
+425,286 messages are not 425,286 independent observations of people. Ask it at the unit the
+claim is about.
+""")
+
+code("""
+by_author = uk.groupby(["author", "is_weekend"]).length.mean().unstack().dropna()
+by_author = by_author[uk.groupby("author").size().reindex(by_author.index) >= 30]
+by_author.columns = ["weekday", "weekend"]
+
+paired = stats.ttest_rel(by_author.weekday, by_author.weekend)
+longer_on_weekdays = (by_author.weekday > by_author.weekend).sum()
+
+print(f"one row per AUTHOR (n={len(by_author)} with >=30 messages, active on both)")
+print(f"  weekday {by_author.weekday.mean():.2f} chars   weekend {by_author.weekend.mean():.2f}")
+print(f"  mean within-author difference {(by_author.weekday - by_author.weekend).mean():+.2f} chars")
+print(f"  paired t-test p = {paired.pvalue:.3f}")
+print(f"  authors longer on weekdays: {longer_on_weekdays}/{len(by_author)} "
+      f"({longer_on_weekdays / len(by_author):.0%})")
+""")
+
+md("""
+259 people, `p = 0.06`, and **53% of them go one way while 47% go the other**. That last
+number is the one to look at: it is a coin flip. Whatever is happening is not something
+individual people do.
+
+**Verdict: plausible, unproven.** Write that sentence down, in a report, as the result:
+
+> *"Message length does not differ meaningfully between weekdays and weekends at the author
+> level (n = 259, p = 0.06, and the direction splits 53/47). The per-message difference is
+> significant but reflects message counts, not people. Distinguishing them would need a
+> dataset with more authors, or a within-person design across more weeks."*
+
+That is a finished piece of work. Students almost never produce it, because a null reads like
+a failed assignment — so they keep slicing until something turns up, which is exactly the
+hunt from §5.3. **A null result, honestly bounded, is a pass.**
+""")
+
+md("""
+### Claim 4 · "Nicknames starting A–M write longer messages"
+
+No mechanism. Nobody has a theory about the alphabet, which is precisely why this one is
+safe to use — nobody gets defensive defending it.
+
+Hunt it properly: two channels, five years, ten places to look.
+""")
+
+code("""
+def alphabet_split(frame: pd.DataFrame) -> pd.DataFrame:
+    \"\"\"Mean message length per author, tagged by whether the nick starts A-M.\"\"\"
+    frame = frame.assign(length=frame.message.str.len())
+    out = frame.groupby("author").agg(length=("length", "mean"), n=("length", "size"))
+    out = out[out.n >= 30]
+    out["early"] = pd.Series(out.index, index=out.index).str.upper().str[0].between("A", "M")
+    return out
+
+
+hunt = []
+for (channel, year), cell in msgs.groupby([msgs.channel, msgs.date.dt.year]):
+    table = alphabet_split(cell)
+    a, b = table.loc[table.early, "length"], table.loc[~table.early, "length"]
+    hunt.append({"channel": channel, "year": year, "n_AM": len(a), "n_NZ": len(b),
+                 "A-M": a.mean(), "N-Z": b.mean(),
+                 "p": stats.ttest_ind(a, b, equal_var=False).pvalue})
+
+hunt = pd.DataFrame(hunt)
+print(f"{len(hunt)} places looked, {(hunt.p < 0.05).sum()} significant at 0.05")
+print(f"N-Z longer in {(hunt['N-Z'] > hunt['A-M']).sum()}/{len(hunt)} of them")
+hunt.round(3)
+""")
+
+md("""
+Nothing clears the line — the closest is `p = 0.053` on `#ubuntu-uk` in 2016, where the gap
+looks big enough to write up: 52.1 against 61.2 characters, 17%. Ten tests should hand you a
+false positive about half the time; this time it did not, which is a useful thing to see once.
+
+The interesting part is the last line. **N–Z looks longer in eight of the ten cells.** Eight
+out of ten, in the same direction, on labels nobody assigned — that has the shape of
+replication, and a student who has just learned about leg three will reach for it.
+
+It is not replication, for the same reason the fifteen metrics were not fifteen chances.
+""")
+
+code("""
+per_year = {year: set(alphabet_split(cell).index)
+            for year, cell in msgs.groupby(msgs.date.dt.year)}
+
+print("share of each year's authors who were already there the year before:")
+for earlier, later in zip(sorted(per_year), sorted(per_year)[1:]):
+    overlap = len(per_year[earlier] & per_year[later]) / len(per_year[later])
+    print(f"  {earlier} -> {later}: {overlap:.0%}")
+""")
+
+md("""
+Half the authors in each year are the same people as the year before, and a person's typing
+habits do not reset in January. The ten cells are not ten independent looks; they are one
+look, re-photographed. If `daftykins` writes long messages and starts with a D, that fact is
+in every cell.
+
+**Verdict: drop it.** No mechanism, no evidence, and the thing that looked like confirmation
+was the same observation counted ten times.
+
+> **Independence is the assumption that fails quietly.** It failed in §5.3 (correlated
+> metrics), it failed in claim 3 (messages within a person), and it failed here (people
+> across years). Every time, the effect is the same: you think you have more information than
+> you have.
+""")
+
+md("""
+### Claim 5 · "People on the 4th floor have worse sentiment"
+
+Not from this corpus — a real submission from a previous cohort, and the most useful of the
+seven.
+
+**Evidence:** every set of numbers has a maximum, and a minimum. Attach a sentiment score to
+five floors and one of them comes last. That is arithmetic, not a finding.
+
+**Mechanism for *floor → mood*:** none. Nothing about being 12 metres up makes a person
+unhappy.
+
+Bottom-left cell, then: **do not conclude — go looking.** And here is why that cell is not a
+polite way of saying "drop it". There is no mechanism from the floor, but there is an obvious
+one from what the floor *stands for*: floors hold departments, departments have different
+work, deadlines, managers and hours. The floor number is a proxy for something real, and
+nobody wrote it down.
+
+**No mechanism does not mean no finding. It means you have not found it yet.** The confounder
+you are hunting is usually more interesting than the claim you started with — "sales is
+having a bad quarter" is a better result than "the 4th floor is grumpy", and it is the same
+data.
+
+The follow-up question is always the same shape: *what else is true of the 4th floor?*
+""")
+
+md("""
+### Claim 6 · "The channel got quieter after 2016"
+
+Mechanism: strong, and predictable in advance — Slack, Discord and Matrix happened to IRC
+everywhere, not just here. Direction callable before looking, which is what separates this
+from claim 4.
+""")
+
+code("""
+per_year_counts = msgs.groupby([msgs.date.dt.year.rename("year"), "channel"]).size().unstack()
+
+print("messages per year")
+print(per_year_counts.to_string())
+print()
+print("relative to 2013")
+print((per_year_counts / per_year_counts.loc[2013]).round(2).to_string())
+""")
+
+md("""
+`#ubuntu-uk` ends at **16%** of its 2013 volume, `#ubuntu-nl` at **8%**, and both fall in
+every single year after 2014. Two channels, different countries, different sizes, same
+direction, no exceptions.
+
+**All three legs.** Mechanism predicted before looking, effect enormous and monotone,
+replicated on an independent channel. Nothing here needs a p-value, and asking for one would
+be a category error — you are not distinguishing this from noise, you are looking at it.
+
+The honest caveat belongs in the same paragraph: this is *this corpus* getting quieter, which
+is not automatically *IRC* getting quieter, and definitely not *the Ubuntu community*
+shrinking. People moved. The claim is about a channel.
+""")
+
+md("""
+### Claim 7 · "Release days are busier"
+
+Mechanism: strong. Dates known **before** looking, from an external calendar this dataset had
+no say in. Ten instances, spread over five years.
+
+The obvious test is the release day against a typical Thursday.
+""")
+
+code("""
+thursday_counts = uk[uk.date.dt.dayofweek == 3].groupby("date").size().sort_index()
+global_median = thursday_counts[~thursday_counts.index.isin(RELEASES)].median()
+release_counts = thursday_counts[thursday_counts.index.isin(RELEASES)]
+
+print(f"median ordinary Thursday, whole corpus: {global_median:.0f} messages")
+print(f"release days above it: {(release_counts > global_median).sum()}/{len(release_counts)}")
+""")
+
+md("""
+Six out of ten. That is a coin flip, and on its own it kills the claim.
+
+It should not. Claim 6 is the reason: the channel lost 84% of its traffic across the window,
+so "a typical Thursday" in 2013 and in 2017 are different quantities, and the 2017 releases
+are being compared against a median that mostly comes from 2013. **The trend is a confounder
+for the event.**
+
+The fix is to compare each release with the Thursdays around it.
+""")
+
+code("""
+def local_baseline(frame: pd.DataFrame, weeks: int = 4) -> pd.DataFrame:
+    \"\"\"Each release against the median of the Thursdays within `weeks` either side.\"\"\"
+    counts = frame[frame.date.dt.dayofweek == 3].groupby("date").size().sort_index()
+    rows = []
+    for release_date in RELEASES:
+        if release_date not in counts.index:
+            continue
+        window = counts[(counts.index >= release_date - pd.Timedelta(weeks=weeks))
+                        & (counts.index <= release_date + pd.Timedelta(weeks=weeks))]
+        rows.append({"release": str(release_date.date()),
+                     "nearby Thursday": window.drop(release_date).median(),
+                     "on the day": counts[release_date]})
+    out = pd.DataFrame(rows)
+    out["lift"] = out["on the day"] / out["nearby Thursday"]
+    return out
+
+
+for channel in sorted(msgs.channel.unique()):
+    table = local_baseline(msgs[msgs.channel == channel])
+    above = int((table.lift > 1).sum())
+    p = stats.binomtest(above, len(table), 0.5).pvalue
+    print(f"{channel}: {above}/{len(table)} releases above their local baseline, "
+          f"median lift {table.lift.median():.2f}x, sign test p = {p:.3f}")
+
+local = local_baseline(uk)
+local.round(2)
+""")
+
+code("""
+gap = PlotSettings(
+    figsize=(9, 5),
+    title="Each release against the Thursdays around it",
+    xlabel="messages on the day",
+    ylabel="",
+)
+fig, ax = BarbellPlot(gap).plot(
+    data=local.sort_values("release", ascending=False), category="release",
+    start="nearby Thursday", end="on the day",
+    start_label="nearby Thursdays (median)", end_label="release day",
+)
+""")
+
+md("""
+**Nine of ten**, median lift 1.7×, `p = 0.02`. Same data, same claim, and the only thing that
+changed was what "typical" means.
+
+**Verdict: the gold standard, and the closest this notebook gets to a finding you could
+publish.** Mechanism strong, dates fixed in advance by someone else, ten near-independent
+instances.
+
+Leg three is partial, and say so: `#ubuntu-nl` moves the same way — 6 of 9, median lift
+1.5× — but on its own that is `p = 0.51`, which is no evidence at all. A tenth of the traffic
+buys a tenth of the resolution. "The direction agrees on a second channel, which is too small
+to test" is the accurate sentence, and it is worth more than either "replicated" or
+"not replicated".
+
+And the detour is the real lesson. The first version of this test said *six out of ten* and
+would have been reported as "no effect". A finding can be destroyed by a baseline as easily as
+it can be invented by one, which is why §5.3's rule needs its mirror image: **the comparison
+you chose is part of the claim.**
+""")
+
+md("""
+### The seven, side by side
+
+| claim | mechanism | evidence | verdict |
+| -- | -- | -- | -- |
+| 1 · fewer messages at 4am | overwhelming | 15× | **true, not worth reporting** — what did you expect? |
+| 2 · people stay up for a release | plausible | refuted | **restate it**: the day moves to the afternoon |
+| 3 · longer messages on weekdays | real, ambiguous | p = 0.06, 53/47 | **plausible, unproven** — and that is the report |
+| 4 · A–M nicks write longer | none | nothing, in ten places | **drop it** |
+| 5 · the 4th floor is grumpier | none *for the floor* | a minimum exists | **go looking** — the floor is a proxy |
+| 6 · quieter after 2016 | strong, predicted | 0.16× and 0.08×, monotone | **report it** — all three legs |
+| 7 · release days are busier | strong, dates external | 9/10, p = 0.02 | **report it** — after fixing the baseline |
+
+Seven claims, six different answers. "Be sceptical" would have got one of them right.
+
+> **What to carry out of this section.** Before you write a finding down, say out loud: what
+> is the mechanism, what would have surprised me, and where could I check this that I have
+> not already looked? If the answer to the first is "none", you are not finished — you are at
+> the beginning of a more interesting question.
 """)
 
 
