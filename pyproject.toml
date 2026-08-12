@@ -16,12 +16,17 @@ dependencies = [
     # It goes when those are rewritten onto the vendored showcase data in data/showcase/.
     "mads-datasets>=0.3.14",
     "networkx>=3.4.2",
-    "numpy>=2.2.1",
+    # Floor: older numpy reports Accelerate's uninitialised output lanes as
+    # divide-by-zero warnings on every dense sklearn fit, on every Mac.
+    # Ceiling: 2.5 deprecates the generic timedelta unit that pandas 2.x uses
+    # internally, so `Timestamp - Timedelta` warns. Lift it with pandas 3.
+    "numpy>=2.3,<2.5",
     "pandas>=2.2.3",
     "plotly>=5.24.1",
     "pyarrow>=18.1.0",
     "pydantic>=2.10.4",
-    "scikit-learn>=1.6.0",
+    # 1.7 stopped passing lbfgs an `iprint` option that scipy 1.18 no longer accepts.
+    "scikit-learn>=1.7",
     "seaborn>=0.13.2",
     "statsmodels>=0.14.4",
     "streamlit>=1.43.1",
