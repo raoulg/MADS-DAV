@@ -51,12 +51,17 @@ import seaborn as sns
 from goad_toolkit.visualizer import (
     BarbellPlot,
     CorrelationHeatmap,
+    HeatmapPlot,
     LinePlot,
     PlotSettings,
     RegPlot,
     ScatterPlot,
 )
 from scipy import stats
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 
 from scripts.pipelines import build_irc_pipeline
 from wa_analyzer.data import load_own_chat, load_showcase
@@ -1019,6 +1024,348 @@ Seven claims, six different answers. "Be sceptical" would have got one of them r
 > is the mechanism, what would have surprised me, and where could I check this that I have
 > not already looked? If the answer to the first is "none", you are not finished — you are at
 > the beginning of a more interesting question.
+""")
+
+
+# ---------------------------------------------------------------- 5.5 fingerprints
+md("""
+## 5.5 Eight people, and how they type
+
+One claim, taken all the way through the grid.
+
+> **People are more identifiable by *how* they write than by *what* they write about.**
+
+Mechanism: plausible, and it predicts something specific — habits should be stable while
+subject matter drifts. Evidence: this is what the rest of the section builds. Replication:
+there is a four-year gap in this corpus to check it on.
+
+The eight busiest people on `#ubuntu-uk`. Action lines (`/me`) are dropped: they have a
+different grammar and would be a free giveaway.
+""")
+
+code("""
+people = uk[~uk.is_action].copy()
+top8 = people.author.value_counts().head(8)
+people = people[people.author.isin(top8.index)]
+
+print(top8.to_string())
+print(f"\\n{len(people):,} messages, {people.author.nunique()} authors")
+print(f"guessing the most frequent author every time = {top8.iloc[0] / top8.sum():.1%}")
+print(f"guessing at random                           = {1 / len(top8):.1%}")
+""")
+
+md("""
+### The classifier is an instrument, not the result
+
+Fit a model that reads one message and names its author. **The accuracy is a gate, not a
+finding** — it tells you whether there is anything to look at. What the model *learned* is
+the finding, and that lives in the weights.
+""")
+
+code("""
+train_msgs, test_msgs = train_test_split(
+    people, test_size=0.25, random_state=42, stratify=people.author)
+
+words = TfidfVectorizer(min_df=5, sublinear_tf=True)
+one_liner = LogisticRegression(max_iter=1000, C=5)
+one_liner.fit(words.fit_transform(train_msgs.message), train_msgs.author)
+
+accuracy = one_liner.score(words.transform(test_msgs.message), test_msgs.author)
+print(f"{len(words.vocabulary_):,} features, one message at a time")
+print(f"accuracy {accuracy:.1%}  against a {top8.iloc[0] / top8.sum():.1%} baseline")
+""")
+
+md("""
+47% on eight-way classification from a single IRC line, against a 22% baseline. Twice the
+baseline is a gate comfortably passed and nowhere near a destination — half the messages are
+still attributed to the wrong person.
+
+Now the actual question: **what is it using?**
+""")
+
+code("""
+vocabulary = np.array(words.get_feature_names_out())
+for i, author in enumerate(one_liner.classes_):
+    strongest = vocabulary[np.argsort(one_liner.coef_[i])[::-1][:8]]
+    print(f"{author:12s} {', '.join(strongest)}")
+""")
+
+md("""
+Read those rows and they are not all the same kind of thing:
+
+- `ali1234` — `n900`, `qml`, `pidgin`, `mythtv`. **Subject matter.** The model knows what he
+  works on.
+- `MartijnVdS` — `mungbean`, `dimpy`, `neuro`, `paladine`. **Other people's nicknames.** Not
+  a writing habit at all; a social position.
+- `zmoylan-pi` — `ireland`, `dublin`. **Location.**
+- `daftykins` — `0o`, `xd`, `hrmm`, `8d`. **Typing.**
+- `popey` — `dont`, `didnt`, `thats`, `wont`. **Typing** — specifically, missing apostrophes.
+
+Only the last two are the claim. The others are a topic detector wearing a stylometry
+costume, and a topic detector fails the moment somebody changes subject — which is exactly
+the situation an authorship model exists for.
+
+> **The verification step, and it is the habit worth stealing from this section:** when a
+> model works, read its weights and ask *what each one actually is*. A model can be right for
+> a reason that does not generalise, and the accuracy will never tell you.
+
+So stop using the model to find the fingerprint. Measure the habits directly, and let the
+model come back later as a check.
+""")
+
+md("""
+### Four habits, measured
+
+Nothing here needs machine learning. Regular expressions and a `groupby` — the same tools as
+lesson 1.
+
+Start with smileys, where there are three ways to write the same thing.
+""")
+
+code("""
+text = people.message
+habits = people.assign(
+    nosed=text.str.count(r"[:;=]-[)DPp(\\]]"),
+    noseless=text.str.count(r"[:;=][)DPp(\\]]|\\bXD\\b"),
+    unicode_smiley=text.str.count(r"[☺☻☹㋛]"),
+    apos_drop=text.str.count(r"(?i)\\b(?:dont|doesnt|didnt|cant|wont|isnt|im|thats|its|ive|youre)\\b"),
+    apos_keep=text.str.count(r"(?i)\\b(?:don't|doesn't|didn't|can't|won't|isn't|i'm|that's|it's|i've|you're)\\b"),
+    starts_upper=text.str.match(r"^[A-Z]").astype(float),
+    addresses=text.str.match(r"^\\S+[:,]\\s").astype(float),
+    night=people.hh.between(0, 5).astype(float),
+    length=text.str.len(),
+)
+
+per_author = habits.groupby("author")
+smileys = per_author[["nosed", "noseless", "unicode_smiley"]].sum()
+dialect = smileys.div(smileys.sum(axis=1), axis=0) * 100
+
+print("share of that author's smileys, by dialect (%)")
+dialect.round(1)
+""")
+
+md("""
+Three dialects, and **nobody mixes them**. `zmoylan-pi` writes the nose 99.4% of the time,
+`diddledan` 97.4%, and the other six essentially never — the highest nosed share among them
+is 0.2%. There is nobody between 0.2% and 97.4%.
+
+That is not what a habit usually looks like. Most measurable differences between people are
+matters of degree — one person is somewhat more likely to do something. This is a **discrete
+choice**, made once and then held for five years, by people sitting in the same channel
+reading each other's messages every day.
+
+`popey` is the third dialect on his own: 57.6% of his smileys are ☺, a character the others
+never type once.
+""")
+
+code("""
+summary = pd.DataFrame({
+    "apostrophes dropped %": per_author.apos_drop.sum()
+    / (per_author.apos_drop.sum() + per_author.apos_keep.sum()) * 100,
+    "starts with a capital %": per_author.starts_upper.mean() * 100,
+    "addresses someone %": per_author.addresses.mean() * 100,
+    "messages at 00-05h %": per_author.night.mean() * 100,
+    "median length": per_author.message.apply(lambda s: s.str.len().median()),
+})
+summary.round(1)
+""")
+
+md("""
+Every column has the same shape as the smileys: a couple of people at one extreme and
+everybody else clustered at the other.
+
+- **Apostrophes.** `popey` drops 38% of his, `foobarry` 36%. Everyone else is between 0.6%
+  and 3.7%. Again nothing in the middle.
+- **Clocks.** `daftykins` does 15% of his talking between midnight and 05:00. `foobarry` has
+  posted in that window exactly zero times in five years. Not "rarely" — zero.
+- **Addressing.** `MartijnVdS` opens 49% of his messages with someone's nick, `zmoylan-pi`
+  2.9%. That is the thing the classifier found, seen properly: it is not that he *writes*
+  differently, it is that his role in the channel is answering people.
+
+The channel average hides all of this. There is no such thing as a typical `#ubuntu-uk`
+author.
+""")
+
+code("""
+fingerprint = pd.DataFrame({
+    "nosed :-)": dialect.nosed,
+    "unicode ☺": dialect.unicode_smiley,
+    "no apostrophe": summary["apostrophes dropped %"],
+    "starts capital": summary["starts with a capital %"],
+    "addresses": summary["addresses someone %"],
+    "00-05h": summary["messages at 00-05h %"],
+})
+
+marks = PlotSettings(
+    figsize=(10, 5),
+    title="Eight fingerprints (% of that author's messages)",
+    xlabel="",
+    ylabel="",
+)
+fig, ax = HeatmapPlot(marks).plot(data=fingerprint, annot=True, fmt=".0f", cmap="rocket_r")
+""")
+
+md("""
+### Why the classifier only reached 47%, when the habits look this decisive
+
+Both of those are true at once, and the reason is the same unit-of-analysis question that has
+run through the whole notebook.
+""")
+
+code("""
+has_smiley = habits[["nosed", "noseless", "unicode_smiley"]].sum(axis=1) > 0
+has_contraction = habits[["apos_drop", "apos_keep"]].sum(axis=1) > 0
+
+print(f"messages containing a smiley       {has_smiley.mean():.1%}")
+print(f"messages containing a contraction  {has_contraction.mean():.1%}")
+print(f"messages containing neither        {(~has_smiley & ~has_contraction).mean():.1%}")
+""")
+
+md("""
+**Three quarters of messages carry no fingerprint at all.** The habits are near-deterministic
+*when they appear*, and most single lines are `ok`, `thanks`, `brb`. A model reading one line
+usually has nothing to go on, so 47% is what a strong signal looks like when it is sparse.
+
+The fix is to stop asking about one message. Pool fifty of them per person and ask again.
+""")
+
+code("""
+FEATURES = ["nosed", "noseless", "unicode_smiley", "apos_drop", "apos_keep",
+            "starts_upper", "addresses", "night", "length", "n_question"]
+BLOCK = 50
+
+shuffled = habits.sample(frac=1, random_state=0)
+shuffled["block"] = shuffled.groupby("author").cumcount() // BLOCK
+grouped = shuffled.groupby(["author", "block"])
+
+blocks = grouped[FEATURES].mean()
+blocks["text"] = grouped.message.apply(" ".join)
+blocks = blocks[grouped.size() == BLOCK].reset_index()
+
+print(f"{len(blocks):,} blocks of {BLOCK} messages")
+print(blocks.author.value_counts().to_string())
+""")
+
+code("""
+train, test = train_test_split(blocks, test_size=0.25, random_state=42, stratify=blocks.author)
+
+vec = TfidfVectorizer(min_df=3, sublinear_tf=True)
+vocabulary_model = LogisticRegression(max_iter=1000, C=5)
+vocabulary_model.fit(vec.fit_transform(train.text), train.author)
+
+scaler = StandardScaler().fit(train[FEATURES])
+habit_model = LogisticRegression(max_iter=2000)
+habit_model.fit(scaler.transform(train[FEATURES]), train.author)
+
+print(f"every word they used : {len(vec.vocabulary_):>6,} features   "
+      f"accuracy {vocabulary_model.score(vec.transform(test.text), test.author):.3f}")
+print(f"ten habits           : {len(FEATURES):>6} features   "
+      f"accuracy {habit_model.score(scaler.transform(test[FEATURES]), test.author):.3f}")
+print(f"baseline             : {' ' * 6}            "
+      f"          {top8.iloc[0] / top8.sum():.3f}")
+""")
+
+md("""
+**Ten numbers do what seventeen thousand words do.** Both models are at or near ceiling on a
+block of fifty messages, and the one that knows nothing about vocabulary — no topics, no
+nicknames, no place names — is within half a point of the one that knows everything.
+
+That is the claim, demonstrated: identity is in the habits, not the subject matter. It took
+volume to see, which is the honest caveat that goes in the same sentence.
+
+And because there are ten features rather than seventeen thousand, the weights are readable.
+""")
+
+code("""
+weights = pd.DataFrame(habit_model.coef_, index=habit_model.classes_, columns=FEATURES)
+weights.round(1)
+""")
+
+md("""
+Each row is a person, in the model's own words:
+
+- `MartijnVdS` — **addresses** `+3.4`, everything else near zero. The role, again.
+- `daftykins` — **noseless** `+4.4`, **night** `+2.3`. Types `:)` and is awake at 3am.
+- `foobarry` — **night** `−4.0`. Identified largely by *never* being there.
+- `popey` — **unicode** `+1.9`, **apostrophes dropped** `+1.4`, **length** `−2.2`.
+- `bigcalm` — **starts with a capital** `+3.8`, alone among the eight.
+
+Compare that with the tf-idf model's rows. Same task, same data, and one of them can be read
+aloud.
+""")
+
+md("""
+### Leg three: does it hold when nobody is looking?
+
+The corpus spans five years. Fit nothing — just measure the same habits in 2013–2014 and
+again in 2016–2017, and see whether people are still themselves.
+""")
+
+code("""
+early = habits[habits.date.dt.year <= 2014]
+late = habits[habits.date.dt.year >= 2016]
+print(f"early {len(early):,} messages (2013-2014), late {len(late):,} (2016-2017)")
+
+
+def stability(column: str, how: str = "mean") -> float:
+    \"\"\"Spearman across the eight authors between their early and late value.\"\"\"
+    pair = pd.concat([early.groupby("author")[column].agg(how),
+                      late.groupby("author")[column].agg(how)], axis=1).dropna()
+    return pair.iloc[:, 0].corr(pair.iloc[:, 1], method="spearman")
+
+
+for label, column, how in [("addresses by nick", "addresses", "mean"),
+                           ("starts with a capital", "starts_upper", "mean"),
+                           ("median message length", "length", "median"),
+                           ("asks questions", "n_question", "mean")]:
+    print(f"{label:24s} spearman {stability(column, how):.2f}")
+""")
+
+md("""
+0.98, 0.95, 0.93 — and then **0.55**.
+
+The first three are as close to "the same people" as this kind of measurement gets: the
+ordering of eight people on a habit is unchanged after a four-year gap, on messages nobody
+was thinking about when the habit formed. Leg three, cleanly.
+
+The fourth is the useful one. **Question rate is not a trait.** Whether you ask questions
+depends on whether you currently have a problem, and that changes — so it moves people around
+the ranking while the typing habits hold them still.
+
+A finding that came with its own counter-example is more believable than one that did not,
+because it shows the measurement could have said no.
+""")
+
+md("""
+### And now the objection
+
+Run it through the grid honestly and it lands top-left: mechanism, evidence, replication. But
+there is a sentence you cannot write.
+
+**There are eight people here.**
+
+The evidence is 218,670 messages, and every one of the tests above is at the author level for
+exactly that reason. But `n = 8`, and the claim — *"people are identified by how they type"* —
+is about people in general. Eight is the sample size, and a spearman of 0.98 across eight
+points is eight points.
+
+This is the most seductive finding in the course and therefore the best place to say it:
+**large data does not fix a small n at the unit your claim is about.** It is lesson 2's
+pseudoreplication, arriving at the end of the section that spent its whole length being
+careful.
+
+What it would take to fix: more authors. The habits are cheap to measure — the cells above run
+on anybody with thirty messages — so the honest next step is to recompute the stability
+correlations across every author with enough history in both periods, and report *that*
+number instead of this one.
+
+> **What survives, stated the way it should be reported.** *"Among the eight most active
+> `#ubuntu-uk` authors, hand-picked typing habits classify blocks of 50 messages at 99.5%,
+> matching a 17,918-feature bag of words, and the habit rankings are preserved across a
+> four-year gap (spearman 0.93–0.98) while question rate is not (0.55). Whether this holds for
+> less active authors is untested."*
+
+Every clause in that sentence is doing work, and none of it is the word "significant".
 """)
 
 
