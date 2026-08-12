@@ -4,6 +4,20 @@ built with [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercont
 
 Welcome to the Dashboard Runner project! This tool allows you to easily run different Streamlit dashboard scripts with a simple command. Perfect for quickly switching between various data visualizations or dashboards.
 
+## What each one is for
+
+| script | dataset | what it shows |
+| --- | --- | --- |
+| `dashboard_1.py` | penguins | the smallest thing that works: two selectboxes and a scatter |
+| `dashboard_2.py` | penguins | one dashboard, three chart types, chosen with a radio |
+| `dashboard_3.py` | penguins | `st.columns`, and a filter that every chart obeys |
+| `dashboard_4.py` | penguins | a trained model behind the widgets, not just a plot |
+| `dashboard_5.py` | Ubuntu IRC | lesson 7's social graph, with the response window as a slider |
+
+`dashboard_5.py` is also where lesson 2 pays off: it imports `BarPlot` from `scripts/plots.py`
+— the class written in that lesson, unchanged, with no streamlit anywhere in it — and renders
+it with `st.pyplot(fig)`.
+
 ## Installation 🛠️
 All dependencies are described by the `pyproject.toml` file. You can install everyting with
 ```bash
