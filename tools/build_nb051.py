@@ -4,13 +4,14 @@
 Written as a builder so the notebook is reproducible and reviewable as source
 rather than as a diff of JSON. Run from the repo root:
 
-    uv run python build_nb051.py
+    uv run python tools/build_nb051.py
 """
 
 import json
 from pathlib import Path
 
-OUT = Path("/Users/rgrouls/code/courses/MADS-DAV/notebooks/lesson5/05.1-relationships.ipynb")
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "notebooks/lesson5/05.1-relationships.ipynb"
 
 cells: list[tuple[str, str]] = []
 
@@ -44,10 +45,6 @@ Four moves, in order:
 """)
 
 code("""
-import sys
-
-sys.path.append("../../")
-
 import numpy as np
 import pandas as pd
 import seaborn as sns

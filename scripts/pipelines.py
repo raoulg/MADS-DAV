@@ -5,7 +5,6 @@ it stays in the notebook. This module is where the same code lives afterwards, s
 lesson 2 onwards can reuse the parsed frame instead of re-deriving it with a copy
 of the regex that then drifts.
 
-    import sys; sys.path.append("../..")
     from scripts.pipelines import build_irc_pipeline
 
     enriched = build_irc_pipeline().apply(load_showcase("ubuntu_irc"))

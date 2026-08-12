@@ -1,12 +1,10 @@
-"""Lesson-specific derived code, importable from the notebooks.
+"""Code these lessons derived, kept where later lessons can import it.
 
-Not an installed package: add the repository root to `sys.path` first, the way
-`notebooks/lesson0/102_paths.ipynb` does for `src/`.
+Installed with the repo, so `from scripts.pipelines import build_irc_pipeline`
+works from any notebook without path juggling.
 
-    import sys; sys.path.append("../..")
-    from scripts.pipelines import build_irc_pipeline
-
-What belongs here is code a lesson derived and a later lesson needs — specific
-enough that `goad_toolkit` should not ship it, and not part of the `wa_analyzer`
-support package.
+What belongs here is an example worth keeping: specific enough that
+`goad_toolkit` should not ship it, reused often enough that copying it into the
+next notebook would leave two versions of one regex. One-off maintenance
+scripts live in `tools/` and are not installed.
 """
