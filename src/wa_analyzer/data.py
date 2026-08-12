@@ -46,6 +46,12 @@ SHOWCASE_DATASETS = {
 }
 
 
+# Datasets too large to keep in the repository, with the hub copy to fall back on.
+HUB_DATASETS = {
+    "ubuntu_irc": ("pttrn-io/ubuntu-irc-days", "ubuntu_irc_days.parquet"),
+}
+
+
 def list_showcase() -> pd.DataFrame:
     """Show which showcase datasets exist and what each one is for."""
     rows = [
@@ -61,6 +67,20 @@ def _showcase_path(name: str) -> Path:
     return parquet if parquet.exists() else SHOWCASE / f"{name}.csv"
 
 
+def _download_from_hub(name: str) -> Path:
+    """Fetch a showcase dataset that is published on the hub.
+
+    Only reached when the committed copy is absent, so a lecture never depends on
+    the room's wifi. The download is cached by `huggingface_hub`, so it happens
+    once per machine.
+    """
+    repo, filename = HUB_DATASETS[name]
+    from huggingface_hub import hf_hub_download
+
+    logger.info(f"{name} is not in data/showcase, fetching it from {repo}")
+    return Path(hf_hub_download(repo_id=repo, filename=filename, repo_type="dataset"))
+
+
 def load_showcase(name: str) -> pd.DataFrame:
     """Load one of the curated showcase datasets by name.
 
@@ -74,6 +94,8 @@ def load_showcase(name: str) -> pd.DataFrame:
         FileNotFoundError: if the file is missing, with the command that rebuilds it.
     """
     path = _showcase_path(name)
+    if not path.exists() and name in HUB_DATASETS:
+        path = _download_from_hub(name)
     if not path.exists():
         known = ", ".join(sorted(SHOWCASE_DATASETS))
         raise FileNotFoundError(
