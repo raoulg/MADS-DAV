@@ -11,6 +11,9 @@ data/processed/*.parq
 # Showcase data is course material, not working output: it ships with the repo so a
 # lesson runs without a download.
 !data/showcase/*.parquet
+# The IRC corpus is the exception at 24 MB. It lives on the hub as
+# pttrn-io/ubuntu-irc-days, and wa_analyzer.data fetches it on first use.
+data/showcase/ubuntu_irc_days.parquet
 *.log
 *.pptx
 .DS_Store
