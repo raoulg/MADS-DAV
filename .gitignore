@@ -15,6 +15,9 @@ data/processed/*.parq
 *.pptx
 .DS_Store
 *.egg-info
+# Build output. A committed sdist is how 32 MB got into this repository's history.
+dist/
+build/
 *reference.json
 .lycheecache
 .notebookcache
