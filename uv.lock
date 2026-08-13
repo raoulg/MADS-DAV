@@ -1813,7 +1813,7 @@ wheels = [
 
 [[package]]
 name = "notebooktester"
-version = "0.2.1"
+version = "0.3.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -1821,8 +1821,9 @@ dependencies = [
     { name = "loguru" },
     { name = "tqdm" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/97/76/499818936f464f30212e476e53cdb2cf7e07cfb02014af91e41ab90d6407/notebooktester-0.3.8.tar.gz", hash = "sha256:5469429a5dfad04fbf9928fdd992bac414ea6f52672913005e6591c6e1197cb7", size = 94618, upload-time = "2026-08-07T19:43:36.879Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/63/eb/128dae9ca12d9956f7ffe59691ceca09844618f7249c56b0b8d57009c537/notebooktester-0.2.1-py3-none-any.whl", hash = "sha256:89c6006c975f463bdc6fc16e217ab87301b70fbc8ec98d2358a6e628f3519477", size = 6882, upload-time = "2025-02-11T15:33:46.25Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/32/b72fe810896573220d61284aec192b7aecda321d4cea1e3f8b991ef76f26/notebooktester-0.3.8-py3-none-any.whl", hash = "sha256:cdb695e5b39eb96e1fa79c843e8d0f1c4134daa724fc8330c0ed1b3d7062f517", size = 11183, upload-time = "2026-08-07T19:43:39.769Z" },
 ]
 
 [[package]]
@@ -3367,7 +3368,7 @@ dev = [
     { name = "isort", specifier = ">=5.13.2" },
     { name = "jupyter", specifier = ">=1.1.1" },
     { name = "mypy", specifier = ">=1.14.1" },
-    { name = "notebooktester", specifier = ">=0.2.0" },
+    { name = "notebooktester", specifier = ">=0.3.8" },
     { name = "ruff", specifier = ">=0.8.6" },
 ]
 
