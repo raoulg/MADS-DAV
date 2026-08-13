@@ -27,3 +27,6 @@ pre-commit:
     notebooktester:
       glob: '*.ipynb'
       run: notebooktester notebooks -v -t 150
+    pipeline-drift:
+      glob: '{scripts/pipelines.py,notebooks/lesson1/01-cleaning.ipynb}'
+      run: python tools/check_pipeline_drift.py

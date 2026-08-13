@@ -81,5 +81,21 @@ This `config.toml` file should make it easier to run the code with multiple inpu
 During the course, you will continue to improve your coding skills.
 Use the [codestyle](https://github.com/raoulg/codestyle) repo as a reference!
 
+## running the checks locally
+
+Every notebook is expected to run top-to-bottom on the showcase data alone, with no
+`config.toml` present — that's what CI checks on every push. To run the same checks
+yourself:
+
+```bash
+uv run ruff check .                        # lint
+uv run python tools/check_pipeline_drift.py  # lesson 1's ParseIRCLines vs scripts/pipelines.py
+uv run notebooktester -f -t 900 notebooks/   # every notebook, top to bottom
+```
+
+`.lefthook.yml` already wires most of this into pre-commit hooks; `lefthook install`
+(global install, not a project dependency) activates them, so a broken notebook is
+caught before it reaches GitHub rather than after.
+
 
 

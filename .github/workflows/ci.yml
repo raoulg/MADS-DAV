@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Check ParseIRCLines hasn't drifted (lesson 1 vs scripts/pipelines.py)
+        run: uv run python tools/check_pipeline_drift.py
+
+      # The acceptance test for the whole M4 refactor: every notebook runs top-to-bottom
+      # on the showcase data alone. `config.toml` is gitignored, so a CI checkout never
+      # has one — this job is the "no own chat yet" path every notebook must survive.
+      - name: Run every notebook top-to-bottom
+        run: uv run notebooktester -f -t 900 notebooks/
