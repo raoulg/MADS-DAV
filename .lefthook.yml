@@ -3,30 +3,30 @@ pre-commit:
     isort:
       files: git ls-files
       glob: '*.{py}'
-      run: isort {staged_files}
+      run: uv run isort {staged_files}
       stage_fixed: true
     format:
       files: git ls-files
       glob: '*.{py, ipynb}'
-      run: ruff format {staged_files}
+      run: uv run ruff format {staged_files}
       stage_fixed: true
     clean-jupyter:
       files: git ls-files
       glob: '*.ipynb'
-      run: jupyter nbconvert --clear-output --inplace {staged_files}
+      run: uv run jupyter nbconvert --clear-output --inplace {staged_files}
       stage_fixed: true
     check:
       files: git ls-files
-      glob: '*.py'
-      run: ruff check {staged_files} --fix
+      glob: '*.{py, ipynb}'
+      run: uv run ruff check {staged_files} --fix
     mypy:
       glob: '*.py'
-      run: mypy --pretty {staged_files} --ignore-missing-imports
+      run: uv run ty check {staged_files}
     lychee:
-      run: lychee . --suggest --max-concurrency 32 --cache --format detailed --max-cache-age 7d
+      run: uv run lychee . --suggest --max-concurrency 32 --cache --format detailed --max-cache-age 7d
     notebooktester:
       glob: '*.ipynb'
-      run: notebooktester notebooks -v -t 150
+      run: uv run notebooktester notebooks -v -t 150
     pipeline-drift:
       glob: '{scripts/pipelines.py,notebooks/lesson1/01-cleaning.ipynb}'
-      run: python tools/check_pipeline_drift.py
+      run: uv run python tools/check_pipeline_drift.py
