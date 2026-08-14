@@ -5,8 +5,8 @@
 5.4 begrijpt wat overfitting is
 5.5 begrijpt hoe expliciete regurlisatie werkt
 5.6 begrijpt hoe implicitie regurlisatie werkt
-5.7 begrijpt "wisdom of the crowd" en hoe dit zich vertaalt in de "condorcet jury theorem"
-5.8 begrijpt de diversity prediction theorem en wat de aannames zijn waaronder deze theorem geldig is
+5.7 (uitgesteld — condorcet jury theorem, "wisdom of the crowd")
+5.8 (uitgesteld — diversity prediction theorem). Slot van 5.7/5.8 is dit cohort ingenomen door het spurious-findings materiaal; ze komen terug zodra daar elders ruimte voor is
 5.9 begrijpt wat L1, L2 en elasticnet regularisatie is, en hoe je regularisatie kunt gebruiken als alternatief voor feature selectie
 
 Python:
@@ -20,3 +20,6 @@ Python:
 5.16 kan met pandas .corr een sns.heatmap maken en kleuren aanpassen via cmap
 5.17 kan SGDRegressor gebruiken in combinatie met verschillende regularisatie methodes
 5.18 is in staat om de gewichten van een SGDRegressor te plotten en interpreteren
+5.19 begrijpt dat het residu de bevinding is, niet het restant, en kan een distributie fitten aan het residu
+5.20 begrijpt hoe het aantal overwogen vergelijkingen de betekenis van een gevonden verschil verandert
+5.21 begrijpt de drie pijlers van een geloofwaardige bevinding: evidence, mechanism, replication

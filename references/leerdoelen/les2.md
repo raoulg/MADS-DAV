@@ -6,3 +6,4 @@
 2.6 Barplots, Barbell plot, heatmaps
 2.7 Werken met palettes (en list comprehensions)
 2.8 Pandas: Pandas groupby & aggregate, Pandas cut
+2.9 begrijpt de simpsons paradox en waarom deze tot problemen kan leiden

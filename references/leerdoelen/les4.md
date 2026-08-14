@@ -5,11 +5,17 @@
 4.5 begrijpt de condities voor een pmf en pdf
 4.6 begrijpt de central limit theorem en waarom dit verklaart waarom veel distributies normaal zijn
 4.7 begrijpt wat het verschil is met een log-normaal verdeling, en waarom/wanneer deze verdeling gebruikt wordt
-4.8 begrijpt de simpsons paradox en waarom deze tot problemen kan leiden
+4.8 (verplaatst naar 2.9: simpsons paradox)
 4.9 begrijpt wat quantiles zijn
 4.10 begrijpt wat een qq-plot is en hoe je die kunt lezen
 4.11 begrijpt hoe een ks-test werkt en hoe je deze kunt gebruiken
 4.12 begrijpt wat je doet als je een theoretische distributie wilt fitten aan data
+4.13 begrijpt wat een outlier kan representeren: een meetfout, een zeldzame maar correcte waarneming, of een teken dat de aangenomen distributie niet klopt
+4.14 kan het verschil beargumenteren tussen een fout en een zware staart (heavy tail)
+4.15 kan alternatieve methodes toepassen om outliers te detecteren in niet-normale data
+4.16 begrijpt de aannames achter imputatiemethodes voor ontbrekende data, en kent de risico's daarvan
+4.17 kan een simulatie gebruiken om te testen of een patroon door toeval kan zijn ontstaan
+4.18 begrijpt dat onzekerheid afneemt met het aantal onafhankelijke waarnemingen, en kan inschatten hoe groot een effect zou moeten zijn om zichtbaar te zijn bij de eigen n
 
 
 Python:

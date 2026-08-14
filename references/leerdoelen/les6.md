@@ -16,5 +16,6 @@ Python:
 6.14 kan sklearn.manifold TSNE toepassen
 6.15 kan pandas .apply() toepassen icm pd.to_datetime() om een datetime object te maken
 6.16 kan werken met de @dataclass decorator
-6.17 kan werken met transformers.pipeline en huggingface modellen
+6.17 kan werken met transformers.pipeline en huggingface modellen (het sentiment pipeline is een korte afsluiter, geen openingsact)
 6.18 kan werken met sentence transformers en embeddings
+6.19 kan een dataset en voorberekende vectoren laden vanaf de hub; begrijpt waarom het embedden losstaat van de analyse

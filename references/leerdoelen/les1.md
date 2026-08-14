@@ -25,3 +25,4 @@ kan een eigen git-repo maken
 - shortcuts (\w, \s, \d)
 - lookbehind (?<=...)
 - lookahead (?=...)
+1.12 een reeks van bewerkingen uitdrukken als een pipeline van herbruikbare stappen, en zelf een stap toevoegen door TransformBase te subclassen

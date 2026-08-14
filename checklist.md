@@ -15,3 +15,8 @@ show the data / reduce clutter / integrate text / avoid spaghetti / start with g
 
 Welke principes worden goed gevolgd? Welke principes hebben meer aandacht nodig?
 Is het totaal van de visualisatie een overtuigende en duidelijke boodschap?
+
+## Wat beweer je?
+Welke claim ondersteunt deze plot precies — op hoeveel observaties, en hoe groot is het effect?
+Is er een mechanisme genoemd, of alleen een patroon? Zou je de richting van het effect vooraf hebben voorspeld?
+Wat zou deze claim onderuit halen, en heb je daar al naar gekeken?
