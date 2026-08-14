@@ -53,8 +53,6 @@ plotting = [
 
 [dependency-groups]
 dev = [
-    "black[jupyter]>=24.10.0",
-    "isort>=5.13.2",
     "jupyter>=1.1.1",
     "notebooktester>=0.3.8",
     "ruff>=0.8.6",

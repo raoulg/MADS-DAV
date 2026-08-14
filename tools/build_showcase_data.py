@@ -48,27 +48,39 @@ DATASAURUS_BASE = (
 # counterpart to the Berkeley table below: a scatter whose overall slope reverses once the
 # groups are separated.
 FROM_DATASAURUS = {
-    "datasaurus": ("DatasaurusDozen-Long.tsv",
-                   "lesson 5 — 13 datasets, same statistics, one of them a dinosaur"),
-    "simpsons_paradox": ("SimpsonsParadox-Long.tsv",
-                         "lesson 2 — Simpson's paradox as a scatter, not a table"),
+    "datasaurus": (
+        "DatasaurusDozen-Long.tsv",
+        "lesson 5 — 13 datasets, same statistics, one of them a dinosaur",
+    ),
+    "simpsons_paradox": (
+        "SimpsonsParadox-Long.tsv",
+        "lesson 2 — Simpson's paradox as a scatter, not a table",
+    ),
 }
 
 # Bickel, Hammel & O'Connell (1975), Science 187:398-404. The six largest departments of the
 # 1973 UC Berkeley graduate admissions round -- the standard Simpson's paradox table.
 BERKELEY = [
     # dept, gender, applied, admitted
-    ("A", "men", 825, 512), ("A", "women", 108, 89),
-    ("B", "men", 560, 353), ("B", "women", 25, 17),
-    ("C", "men", 325, 120), ("C", "women", 593, 202),
-    ("D", "men", 417, 138), ("D", "women", 375, 131),
-    ("E", "men", 191, 53), ("E", "women", 393, 94),
-    ("F", "men", 373, 22), ("F", "women", 341, 24),
+    ("A", "men", 825, 512),
+    ("A", "women", 108, 89),
+    ("B", "men", 560, 353),
+    ("B", "women", 25, 17),
+    ("C", "men", 325, 120),
+    ("C", "women", 593, 202),
+    ("D", "men", 417, 138),
+    ("D", "women", 375, 131),
+    ("E", "men", 191, 53),
+    ("E", "women", 393, 94),
+    ("F", "men", 373, 22),
+    ("F", "women", 341, 24),
 ]
 
 
 def berkeley() -> pd.DataFrame:
-    df = pd.DataFrame(BERKELEY, columns=["department", "gender", "applied", "admitted"])
+    df = pd.DataFrame(
+        BERKELEY, columns=pd.Index(["department", "gender", "applied", "admitted"])
+    )
     df["rate"] = (df["admitted"] / df["applied"]).round(4)
     return df
 
@@ -83,15 +95,19 @@ def main() -> None:
         df = sns.load_dataset(name)
         path = args.out / f"{name}.csv"
         df.to_csv(path, index=False)
-        logger.info(f"{name:12s} {len(df):>6,} | {path} rows  {path.stat().st_size / 1024:>7.0f} KB   {why}")
+        logger.info(
+            f"{name:12s} {len(df):>6,} | {path} rows  {path.stat().st_size / 1024:>7.0f} KB   {why}"
+        )
 
     resp = requests.get(PALMER_RAW, timeout=30)
     resp.raise_for_status()
     raw = pd.read_csv(io.StringIO(resp.text))
     path = args.out / "penguins_raw.csv"
     raw.to_csv(path, index=False)
-    logger.info(f"{'penguins_raw':12s} {len(raw):>6,} | {path} rows  {path.stat().st_size / 1024:>7.0f} KB   "
-                "lesson 5 — the Palmer archive, isotopes included")
+    logger.info(
+        f"{'penguins_raw':12s} {len(raw):>6,} | {path} rows  {path.stat().st_size / 1024:>7.0f} KB   "
+        "lesson 5 — the Palmer archive, isotopes included"
+    )
 
     for name, (remote, why) in FROM_DATASAURUS.items():
         resp = requests.get(f"{DATASAURUS_BASE}/{remote}", timeout=30)
@@ -99,22 +115,32 @@ def main() -> None:
         df = pd.read_csv(io.StringIO(resp.text), sep="\t")
         path = args.out / f"{name}.csv"
         df.to_csv(path, index=False)
-        logger.info(f"{name:12s} {len(df):>6,} | {path} rows  {path.stat().st_size / 1024:>7.0f} KB   {why}")
+        logger.info(
+            f"{name:12s} {len(df):>6,} | {path} rows  {path.stat().st_size / 1024:>7.0f} KB   {why}"
+        )
 
     b = berkeley()
     b.to_csv(args.out / "berkeley_admissions.csv", index=False)
     agg = b.groupby("gender")[["applied", "admitted"]].sum()
     agg["rate"] = agg["admitted"] / agg["applied"]
-    logger.info(f"{'berkeley':12s} {len(b):>6,} rows           "
-                "lesson 2 — Simpson's paradox")
-    logger.info(f"{'':14s}aggregate: men {agg.loc['men', 'rate']:.1%}, women {agg.loc['women', 'rate']:.1%}")
-    better = (b.pivot(index="department", columns="gender", values="rate")
-              .assign(women_higher=lambda d: d["women"] > d["men"])["women_higher"])
-    logger.info(f"{'':14s}per department, women admitted at a higher rate in "
-                f"{better.sum()}/{len(better)}")
+    logger.info(
+        f"{'berkeley':12s} {len(b):>6,} rows           lesson 2 — Simpson's paradox"
+    )
+    logger.info(
+        f"{'':14s}aggregate: men {agg.loc['men', 'rate']:.1%}, women {agg.loc['women', 'rate']:.1%}"
+    )
+    better = b.pivot(index="department", columns="gender", values="rate").assign(
+        women_higher=lambda d: d["women"] > d["men"]
+    )["women_higher"]
+    logger.info(
+        f"{'':14s}per department, women admitted at a higher rate in "
+        f"{better.sum()}/{len(better)}"
+    )
 
     total = sum(p.stat().st_size for p in args.out.glob("*.csv"))
-    logger.info(f"\n{len(list(args.out.glob('*.csv')))} csv files, {total / 1e6:.1f} MB total")
+    logger.info(
+        f"\n{len(list(args.out.glob('*.csv')))} csv files, {total / 1e6:.1f} MB total"
+    )
 
 
 if __name__ == "__main__":

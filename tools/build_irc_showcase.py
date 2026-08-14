@@ -41,18 +41,28 @@ CONTROL_CHANNEL = "#ubuntu"
 def fetch_days(start: str, end: str, channels: set[str]) -> pd.DataFrame:
     """Fetch raw channel-day documents, reading only row groups inside the date window."""
     start_ts, end_ts = pd.Timestamp(start), pd.Timestamp(end)
+    if not isinstance(start_ts, pd.Timestamp) or not isinstance(end_ts, pd.Timestamp):
+        raise ValueError(f"could not parse --start/--end as dates: {start!r}, {end!r}")
     fs = HfFileSystem()
     frames, read, total = [], 0, 0
 
-    for name in sorted(f["name"] for f in fs.ls(REPO, detail=True)):
+    # detail=True makes fs.ls return dicts, not the plain filenames the stub assumes.
+    listing = fs.ls(REPO, detail=True)
+    for name in sorted(f["name"] for f in listing):  # ty: ignore[invalid-argument-type]
         with fs.open(name, "rb") as fh:
             pf = pq.ParquetFile(fh)
             total += pf.num_row_groups
-            keep = [g for g in range(pf.num_row_groups) if _in_window(pf, g, start_ts, end_ts)]
+            keep = [
+                g
+                for g in range(pf.num_row_groups)
+                if _in_window(pf, g, start_ts, end_ts)
+            ]
             if not keep:
                 continue
             read += len(keep)
-            df = pf.read_row_groups(keep, columns=["created", "text", "metadata"]).to_pandas()
+            df = pf.read_row_groups(
+                keep, columns=["created", "text", "metadata"]
+            ).to_pandas()
             df["channel"] = df["metadata"].map(lambda m: m["channel"])
             frames.append(
                 df[
@@ -62,10 +72,16 @@ def fetch_days(start: str, end: str, channels: set[str]) -> pd.DataFrame:
             )
 
     print(f"read {read}/{total} row groups")
-    return pd.concat(frames, ignore_index=True).sort_values("created").reset_index(drop=True)
+    return (
+        pd.concat(frames, ignore_index=True)
+        .sort_values("created")
+        .reset_index(drop=True)
+    )
 
 
-def _in_window(pf: pq.ParquetFile, group: int, start: pd.Timestamp, end: pd.Timestamp) -> bool:
+def _in_window(
+    pf: pq.ParquetFile, group: int, start: pd.Timestamp, end: pd.Timestamp
+) -> bool:
     """Whether a row group's `created` statistics overlap the window."""
     rg = pf.metadata.row_group(group)
     for c in range(rg.num_columns):
@@ -95,8 +111,14 @@ def main() -> None:
     ap.add_argument("--end", default=DEFAULT_END)
     ap.add_argument("--channels", nargs="+", default=list(DEFAULT_CHANNELS))
     ap.add_argument("--out", type=Path, default=Path("data/showcase"))
-    ap.add_argument("--control", action="store_true", help=f"also build the {CONTROL_CHANNEL} hourly profile")
-    ap.add_argument("--check", action="store_true", help="report volume and cycle strength")
+    ap.add_argument(
+        "--control",
+        action="store_true",
+        help=f"also build the {CONTROL_CHANNEL} hourly profile",
+    )
+    ap.add_argument(
+        "--check", action="store_true", help="report volume and cycle strength"
+    )
     args = ap.parse_args()
 
     args.out.mkdir(parents=True, exist_ok=True)

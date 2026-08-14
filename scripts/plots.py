@@ -41,10 +41,21 @@ class BarPlotWithError(BasePlot):
     turns a layout change into a failure rather than a silently misplaced error bar.
     """
 
-    def build(self, data: pd.DataFrame, x: str, y: str, hue: str, error: str,
-              hue_order: list[str], **kwargs):
-        sns.barplot(data=data, x=x, y=y, hue=hue, hue_order=hue_order,
-                    ax=self.ax, **kwargs)
+    def build(
+        self,
+        data: pd.DataFrame,
+        x: str,
+        y: str,
+        hue: str,
+        error: str,
+        hue_order: list[str],
+        **kwargs,
+    ):
+        sns.barplot(
+            data=data, x=x, y=y, hue=hue, hue_order=hue_order, ax=self.ax, **kwargs
+        )
+        if self.ax is None:
+            raise ValueError("create_figure() must run before build()")
 
         intervals = data.set_index([x, hue])[error]
         categories = [label.get_text() for label in self.ax.get_xticklabels()]
@@ -60,7 +71,9 @@ class BarPlotWithError(BasePlot):
                     patch.get_x() + patch.get_width() / 2,
                     patch.get_height(),
                     yerr=intervals[(category, level)],
-                    fmt="none", ecolor="black", capsize=4,
+                    fmt="none",
+                    ecolor="black",
+                    capsize=4,
                 )
 
         # Left to itself matplotlib puts this over the bars, which is the exact

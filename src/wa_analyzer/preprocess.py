@@ -8,9 +8,15 @@ import click
 import pandas as pd
 from loguru import logger
 
-from wa_analyzer.settings import (BaseRegexes, Folders, PreprocessConfig,
-                                  androidRegexes, csvRegexes, iosRegexes,
-                                  oldRegexes)
+from wa_analyzer.settings import (
+    BaseRegexes,
+    Folders,
+    PreprocessConfig,
+    androidRegexes,
+    csvRegexes,
+    iosRegexes,
+    oldRegexes,
+)
 
 logger.remove()
 logger.add("logs/logfile.log", rotation="1 week", level="DEBUG")
@@ -31,7 +37,7 @@ class WhatsappPreprocessor:
         self.save(records)
 
     def save(self, records: list[tuple]) -> Path:
-        df = pd.DataFrame(records, columns=["timestamp", "author", "message"])
+        df = pd.DataFrame(records, columns=pd.Index(["timestamp", "author", "message"]))
         now = datetime.now().strftime("%Y%m%d-%H%M%S")
         outfile = self.folders.processed / f"whatsapp-{now}.csv"
         logger.info(f"Writing to {outfile}")
@@ -110,13 +116,13 @@ def main(device: str):
         regexes: BaseRegexes = iosRegexes
     elif device.lower() == "old":
         logger.info("Using old version regexes")
-        regexes: BaseRegexes = oldRegexes  # type: ignore
+        regexes: BaseRegexes = oldRegexes
     elif device.lower() == "csv":
         logger.info("Using CSV regexes")
-        regexes: BaseRegexes = csvRegexes  # type: ignore
+        regexes: BaseRegexes = csvRegexes
     else:
         logger.info("Using Android regexes")
-        regexes: BaseRegexes = androidRegexes  # type: ignore
+        regexes: BaseRegexes = androidRegexes
 
     if not (raw / datafile).exists():
         logger.error(f"File {raw / datafile} not found")

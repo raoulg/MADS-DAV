@@ -43,13 +43,26 @@ class ParseIRCLines(TransformBase):
                 m = self.LINE.match(line) or self.ACTION.match(line)
                 if m:
                     hh, mm, author, message = m.groups()
-                    rows.append((row.created, row.channel, int(hh), int(mm), author,
-                                 message, bool(self.ACTION.match(line))))
+                    # itertuples() rows carry every column dynamically, so no stub can
+                    # know `.created` and `.channel` exist ahead of time.
+                    rows.append(
+                        (
+                            row.created,  # ty: ignore[unresolved-attribute]
+                            row.channel,  # ty: ignore[unresolved-attribute]
+                            int(hh),
+                            int(mm),
+                            author,
+                            message,
+                            bool(self.ACTION.match(line)),
+                        )
+                    )
                 else:
                     missing += 1
 
-        parsed = pd.DataFrame(rows, columns=["date", "channel", "hh", "mm",
-                                             "author", "message", "is_action"])
+        columns = pd.Index(
+            ["date", "channel", "hh", "mm", "author", "message", "is_action"]
+        )
+        parsed = pd.DataFrame(rows, columns=columns)
         coverage = len(parsed) / (len(parsed) + missing)
         logger.info(
             f"{self.name}: parsed {len(parsed):,} messages, {coverage:.2%} of lines "
@@ -72,10 +85,28 @@ def build_irc_pipeline() -> Pipeline:
     pipeline = Pipeline()
     pipeline.add(ParseIRCLines)
     pipeline.add(TimeFeatures, column="date")
-    pipeline.add(RegexFeature, name="urls",
-                 column="message", pattern=r"https?://\S+", feature="has_url", mode="has")
-    pipeline.add(RegexFeature, name="questions",
-                 column="message", pattern=r"\?", feature="n_question", mode="count")
-    pipeline.add(RegexFeature, name="mentions",
-                 column="message", pattern=r"^(\S+)[:,]\s", feature="addressed_to", mode="extract")
+    pipeline.add(
+        RegexFeature,
+        name="urls",
+        column="message",
+        pattern=r"https?://\S+",
+        feature="has_url",
+        mode="has",
+    )
+    pipeline.add(
+        RegexFeature,
+        name="questions",
+        column="message",
+        pattern=r"\?",
+        feature="n_question",
+        mode="count",
+    )
+    pipeline.add(
+        RegexFeature,
+        name="mentions",
+        column="message",
+        pattern=r"^(\S+)[:,]\s",
+        feature="addressed_to",
+        mode="extract",
+    )
     return pipeline

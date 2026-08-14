@@ -21,12 +21,21 @@ df = pd.read_parquet(ROOT / "data/showcase/ubuntu_irc_days.parquet")
 PAT = re.compile(r"^\[(\d{2}):(\d{2})\]\s+<(\S+)>\s+(.*)$")
 rows = []
 for r in df.itertuples():
-    for ln in r.text.split("\n"):
+    for ln in r.text.split("\n"):  # ty: ignore[unresolved-attribute]
         m = PAT.match(ln)
         if m:
             hh, mm, a, msg = m.groups()
-            rows.append((r.created, r.channel, int(hh), a, msg))
-msgs = pd.DataFrame(rows, columns=["date", "channel", "hh", "author", "message"])
+            rows.append(
+                (
+                    r.created,  # ty: ignore[unresolved-attribute]
+                    r.channel,  # ty: ignore[unresolved-attribute]
+                    int(hh),
+                    a,
+                    msg,
+                )
+            )
+columns = pd.Index(["date", "channel", "hh", "author", "message"])
+msgs = pd.DataFrame(rows, columns=columns)
 uk = msgs[msgs.channel == "#ubuntu-uk"].copy()
 top = uk.author.value_counts().head(8).index.tolist()
 d = uk[uk.author.isin(top)].copy()
@@ -37,8 +46,12 @@ w = d.message
 d["nosed"] = w.str.count(r"[:;=]-[)DPp(\]]")
 d["noseless"] = w.str.count(r"[:;=][)DPp(\]]|\bXD\b|\bO_O\b|\bo0\b|\b0o\b")
 d["unicode_smiley"] = w.str.count(r"[☺☻☹㋛]")
-d["apos_drop"] = w.str.count(r"\b(?:dont|doesnt|didnt|cant|wont|isnt|im|thats|its|ive|youre)\b", re.I)
-d["apos_keep"] = w.str.count(r"\b(?:don't|doesn't|didn't|can't|won't|isn't|i'm|that's|it's|i've|you're)\b")
+d["apos_drop"] = w.str.count(
+    r"\b(?:dont|doesnt|didnt|cant|wont|isnt|im|thats|its|ive|youre)\b", re.I
+)
+d["apos_keep"] = w.str.count(
+    r"\b(?:don't|doesn't|didn't|can't|won't|isn't|i'm|that's|it's|i've|you're)\b"
+)
 d["starts_upper"] = w.str.match(r"^[A-Z]").astype(float)
 d["addresses"] = w.str.match(r"^\S+[:,]\s").astype(float)
 
@@ -52,9 +65,11 @@ fig, axes = plt.subplots(2, 2, figsize=(17, 10))
 # --- 1. emoticon dialect
 ax = axes[0][0]
 bottom = np.zeros(len(order))
-for col, colour, lab in [("nosed", "#4c72b0", "nosed   :-)"),
-                         ("noseless", "#dd8452", "noseless  :)"),
-                         ("unicode_smiley", "#55a868", "unicode  ☺")]:
+for col, colour, lab in [
+    ("nosed", "#4c72b0", "nosed   :-)"),
+    ("noseless", "#dd8452", "noseless  :)"),
+    ("unicode_smiley", "#55a868", "unicode  ☺"),
+]:
     vals = emo_share.loc[order, col].values * 100
     ax.barh(order, vals, left=bottom, color=colour, label=lab)
     bottom += vals
@@ -81,9 +96,23 @@ hp = hp.div(hp.sum(axis=1), axis=0) * 100
 for a in top:
     night = hp.loc[a, 0:5].sum()
     if a == "daftykins":
-        ax.plot(hp.columns, hp.loc[a], lw=2.5, color="#c44e52", label=f"{a} ({night:.0f}% at 00-05h)", zorder=3)
+        ax.plot(
+            hp.columns,
+            hp.loc[a],
+            lw=2.5,
+            color="#c44e52",
+            label=f"{a} ({night:.0f}% at 00-05h)",
+            zorder=3,
+        )
     elif a == "foobarry":
-        ax.plot(hp.columns, hp.loc[a], lw=2.5, color="#4c72b0", label=f"{a} ({night:.0f}% at 00-05h)", zorder=3)
+        ax.plot(
+            hp.columns,
+            hp.loc[a],
+            lw=2.5,
+            color="#4c72b0",
+            label=f"{a} ({night:.0f}% at 00-05h)",
+            zorder=3,
+        )
     else:
         ax.plot(hp.columns, hp.loc[a], lw=1, color="#cccccc", zorder=1)
 ax.axvspan(0, 5, color="#f0f0f0", zorder=0)
@@ -106,8 +135,13 @@ for lab, col in metrics.items():
     b = late.groupby("author")[col].mean()
     both = pd.concat([a.rename("e"), b.rename("l")], axis=1).dropna()
     r = both.e.corr(both.l, method="spearman")
-    ax.scatter(both.e * 100, both.l * 100, s=90, marker=markers[lab],
-               label=f"{lab}  (spearman {r:.2f})")
+    ax.scatter(
+        both.e * 100,
+        both.l * 100,
+        s=90,
+        marker=markers[lab],
+        label=f"{lab}  (spearman {r:.2f})",
+    )
 lim = [0, 80]
 ax.plot(lim, lim, ls="--", color="grey", lw=1)
 ax.set_xlim(lim)
@@ -119,8 +153,11 @@ ax.legend(fontsize=9, loc="upper left")
 
 for ax in axes.flat:
     ax.grid(alpha=0.25)
-plt.suptitle("What separates people is not what they talk about — it is how they type",
-             fontsize=15, weight="bold")
+plt.suptitle(
+    "What separates people is not what they talk about — it is how they type",
+    fontsize=15,
+    weight="bold",
+)
 plt.tight_layout(rect=(0, 0, 1, 0.96))
 out = ROOT / "img/fingerprint_story.png"
 out.parent.mkdir(exist_ok=True)

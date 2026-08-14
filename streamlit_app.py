@@ -3,8 +3,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from wa_analyzer.network_analysis import (Config, NetworkAnalysis,
-                                          SettingsManager)
+from wa_analyzer.network_analysis import Config, NetworkAnalysis, SettingsManager
 from wa_analyzer.settings import NetworkAnalysisConfig
 
 # Page config
@@ -111,7 +110,8 @@ with st.sidebar:
             "on_change": lambda: handle_slider_change(key, slider_state_key),
         }
 
-        value = st.slider(**slider_kwargs)
+        # A dynamically-built kwargs dict can't be matched against `slider`'s overloads statically.
+        value = st.slider(**slider_kwargs)  # ty: ignore[no-matching-overload]
 
         # Update the session state with the new value
         st.session_state[slider_state_key] = value

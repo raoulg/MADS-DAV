@@ -1,10 +1,5 @@
 pre-commit:
   commands:
-    isort:
-      files: git ls-files
-      glob: '*.{py}'
-      run: uv run isort {staged_files}
-      stage_fixed: true
     format:
       files: git ls-files
       glob: '*.{py, ipynb}'

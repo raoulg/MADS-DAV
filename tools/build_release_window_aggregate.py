@@ -30,16 +30,23 @@ OUT = Path("data/showcase/ubuntu_irc_release_hourly.csv")
 
 RELEASE_DATES = pd.to_datetime(
     [
-        "2013-04-25", "2013-10-17",  # 13.04, 13.10
-        "2014-04-17", "2014-10-23",  # 14.04, 14.10
-        "2015-04-23", "2015-10-22",  # 15.04, 15.10
-        "2016-04-21", "2016-10-13",  # 16.04, 16.10
-        "2017-04-13", "2017-10-19",  # 17.04, 17.10
+        "2013-04-25",
+        "2013-10-17",  # 13.04, 13.10
+        "2014-04-17",
+        "2014-10-23",  # 14.04, 14.10
+        "2015-04-23",
+        "2015-10-22",  # 15.04, 15.10
+        "2016-04-21",
+        "2016-10-13",  # 16.04, 16.10
+        "2017-04-13",
+        "2017-10-19",  # 17.04, 17.10
     ]
 )
 
 
-def _in_window(pf: pq.ParquetFile, group: int, start: pd.Timestamp, end: pd.Timestamp) -> bool:
+def _in_window(
+    pf: pq.ParquetFile, group: int, start: pd.Timestamp, end: pd.Timestamp
+) -> bool:
     rg = pf.metadata.row_group(group)
     for c in range(rg.num_columns):
         col = rg.column(c)
@@ -53,22 +60,37 @@ def _in_window(pf: pq.ParquetFile, group: int, start: pd.Timestamp, end: pd.Time
 
 def fetch_days(start: str, end: str, channels: set[str]) -> pd.DataFrame:
     start_ts, end_ts = pd.Timestamp(start), pd.Timestamp(end)
+    if not isinstance(start_ts, pd.Timestamp) or not isinstance(end_ts, pd.Timestamp):
+        raise ValueError(f"could not parse start/end as dates: {start!r}, {end!r}")
     fs = HfFileSystem()
     frames = []
-    for name in sorted(f["name"] for f in fs.ls(REPO, detail=True)):
+    # detail=True makes fs.ls return dicts, not the plain filenames the stub assumes.
+    listing = fs.ls(REPO, detail=True)
+    for name in sorted(f["name"] for f in listing):  # ty: ignore[invalid-argument-type]
         with fs.open(name, "rb") as fh:
             pf = pq.ParquetFile(fh)
-            keep = [g for g in range(pf.num_row_groups) if _in_window(pf, g, start_ts, end_ts)]
+            keep = [
+                g
+                for g in range(pf.num_row_groups)
+                if _in_window(pf, g, start_ts, end_ts)
+            ]
             if not keep:
                 continue
-            df = pf.read_row_groups(keep, columns=["created", "text", "metadata"]).to_pandas()
+            df = pf.read_row_groups(
+                keep, columns=["created", "text", "metadata"]
+            ).to_pandas()
             df["channel"] = df["metadata"].map(lambda m: m["channel"])
             frames.append(
-                df[df["channel"].isin(channels) & df["created"].between(start_ts, end_ts)][
-                    ["created", "channel", "text"]
-                ]
+                df[
+                    df["channel"].isin(channels)
+                    & df["created"].between(start_ts, end_ts)
+                ][["created", "channel", "text"]]
             )
-    return pd.concat(frames, ignore_index=True).sort_values("created").reset_index(drop=True)
+    return (
+        pd.concat(frames, ignore_index=True)
+        .sort_values("created")
+        .reset_index(drop=True)
+    )
 
 
 def hourly_lines(days: pd.DataFrame) -> pd.DataFrame:
@@ -77,7 +99,7 @@ def hourly_lines(days: pd.DataFrame) -> pd.DataFrame:
     for created, text in zip(days["created"], days["text"]):
         for m in re.finditer(r"^\[(\d{2}):\d{2}\]", text, flags=re.MULTILINE):
             rows.append((created, int(m.group(1))))
-    return pd.DataFrame(rows, columns=["date", "hour"])
+    return pd.DataFrame(rows, columns=pd.Index(["date", "hour"]))
 
 
 def main() -> None:

@@ -26,7 +26,9 @@ class Config:
     time_col: str
     node_col: str
     seconds: int
-    datafile: Path
+    # Only `NetworkAnalysis` reads this, to load its own data from disk; `GraphBuilder`
+    # and `GraphAnalyzer` take a DataFrame directly and never touch it.
+    datafile: Optional[Path] = None
 
 
 class GraphAnalyzer:
@@ -282,7 +284,7 @@ class GraphVisualizer:
         for node in G.nodes():
             if node not in pos:
                 continue
-            x, y = pos[node]  # type: ignore
+            x, y = pos[node]
             node_x.append(x)
             node_y.append(y)
             node_text.append(f"{node}<br>Degree: {G.degree(node)}")
@@ -479,6 +481,10 @@ class GraphVisualizer:
 
 class NetworkAnalysis:
     def __init__(self, config: Config):
+        if config.datafile is None:
+            raise ValueError(
+                "NetworkAnalysis needs config.datafile to load its own data"
+            )
         self.config = config
         self.filehandler = FileHandler(config)
         self.graphbuilder = GraphBuilder(config)

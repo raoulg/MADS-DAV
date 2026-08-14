@@ -22,7 +22,7 @@ def load_penguins_dataset() -> pd.DataFrame:
         "Sex",
         "Body Mass (g)",
     ]
-    return df[select].dropna()  # type: ignore
+    return df[select].dropna()
 
 
 def main() -> None:
@@ -57,7 +57,7 @@ def main() -> None:
         )
 
         fig, ax = plt.subplots()
-        sns.scatterplot(data=st.session_state.penguins, x=option1, y=option2, hue=color)  # type: ignore
+        sns.scatterplot(data=st.session_state.penguins, x=option1, y=option2, hue=color)
         st.pyplot(fig)
 
     elif plot_type == "Histogram":
@@ -67,7 +67,7 @@ def main() -> None:
             index=4,
         )
         fig, ax = plt.subplots()
-        sns.histplot(st.session_state.penguins[option], kde=True)  # type: ignore
+        sns.histplot(st.session_state.penguins[option], kde=True)
         st.pyplot(fig)
 
     elif plot_type == "Boxplot":
@@ -77,7 +77,7 @@ def main() -> None:
             index=4,
         )
         fig, ax = plt.subplots()
-        sns.boxplot(x="Species", y=option, data=st.session_state.penguins)  # type: ignore
+        sns.boxplot(x="Species", y=option, data=st.session_state.penguins)
         st.pyplot(fig)
 
 
