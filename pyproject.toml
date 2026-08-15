@@ -33,7 +33,6 @@ license = {text = "MIT"}
 
 [project.scripts]
 "analyzer" = "wa_analyzer.preprocess:main"
-"graphdashboard" = "wa_analyzer.network_cli:main"
 
 [project.urls]
 GitHub = "https://github.com/raoulg/MADS-DAV"

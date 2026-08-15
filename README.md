@@ -77,6 +77,13 @@ You can then run the `notebooks/lesson1/01.6-your-own-chat.ipynb` notebook. This
 
 This `config.toml` file should make it easier to run the code with multiple input files; you can simply change the `current` value and run all notebooks for the file specified there.
 
+# Run the graph dashboard
+Once you have a processed file, explore the contact network interactively with:
+
+```bash
+uv run streamlit run streamlit_app.py
+```
+
 ## codestyle
 During the course, you will continue to improve your coding skills.
 Use the [codestyle](https://github.com/raoulg/codestyle) repo as a reference!
