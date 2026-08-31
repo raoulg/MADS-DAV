@@ -15,17 +15,18 @@ dependencies = [
     "networkx>=3.4.2",
     # Floor: older numpy reports Accelerate's uninitialised output lanes as
     # divide-by-zero warnings on every dense sklearn fit, on every Mac.
-    # Ceiling: 2.5 deprecates the generic timedelta unit that pandas 2.x uses
-    # internally, so `Timestamp - Timedelta` warns. Lift it with pandas 3.
-    "numpy>=2.3,<2.5",
-    "pandas>=2.2.3",
+    "numpy>=2.3",
+    # Floor: pandas 3 stopped relying on numpy's generic timedelta unit
+    # internally, so `Timestamp - Timedelta` no longer warns under numpy 2.5+.
+    "pandas>=3.0",
     "plotly>=5.24.1",
     "pyarrow>=18.1.0",
     "pydantic>=2.10.4",
-    # 1.7 stopped passing lbfgs an `iprint` option that scipy 1.18 no longer accepts.
     "scikit-learn>=1.7",
     "seaborn>=0.13.2",
-    "statsmodels>=0.14.4",
+    # Floor: 0.14.x calls pandas's deprecate_kwarg() with the pre-3.0 signature;
+    # 0.15 updated the call site for pandas 3's new required `klass` argument.
+    "statsmodels>=0.15.0",
     "streamlit>=1.43.1",
 ]
 readme = "README.md"
