@@ -19,11 +19,14 @@ You can check this by typing `which uv` in your bash terminal. If that doesnt re
 
 This repo ships a `.mcp.json` (and `.cursor/mcp.json`). If you're on Claude Code or Cursor, opening the folder is enough — it will offer to connect two coaching servers, `goad` and `codestyle`, and you approve them once. See [CLAUDE.md](CLAUDE.md) for what they do and what's expected of you when you use them.
 
-On any other MCP client, install `goad` by hand:
+On any other MCP client, install both by hand:
 
 ```bash
-claude mcp add goad -e GOAD_REF=v0.2.3 -- \
+claude mcp add goad -e GOAD_REF=v0.2.12 -- \
   sh -c 'uv run --no-project https://raw.githubusercontent.com/raoulg/goad_toolkit/$GOAD_REF/goad_mcp.py'
+
+claude mcp add codestyle -e CODESTYLE_REF=v0.2.0 -- \
+  sh -c 'uv run --no-project https://raw.githubusercontent.com/raoulg/codestyle/$CODESTYLE_REF/codestyle_mcp.py'
 ```
 
 ## installation with pip (not recommended)
@@ -73,7 +76,7 @@ You should see some logs, like this:
 Inside the `log` folder you will find a logfile, which has some additional information that might be useful for debugging.
 
 After this, put the name of the .csv file that is save to `inputpath` in the `config.toml` file.
-You can then run the `notebooks/lesson1/01.6-your-own-chat.ipynb` notebook. This will save a cleaned `.parq` file. Put the name of that file after the `current` key in the `config.toml` file.
+You can then run the `notebooks/lesson1/01.3-your-own-chat.ipynb` notebook. This will save a cleaned `.parq` file. Put the name of that file after the `current` key in the `config.toml` file.
 
 This `config.toml` file should make it easier to run the code with multiple input files; you can simply change the `current` value and run all notebooks for the file specified there.
 

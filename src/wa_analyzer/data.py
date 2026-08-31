@@ -56,7 +56,11 @@ HUB_DATASETS = {
 def list_showcase() -> pd.DataFrame:
     """Show which showcase datasets exist and what each one is for."""
     rows = [
-        {"dataset": name, "what it shows": why, "on disk": _showcase_path(name).exists()}
+        {
+            "dataset": name,
+            "what it shows": why,
+            "on disk": _showcase_path(name).exists(),
+        }
         for name, why in SHOWCASE_DATASETS.items()
     ]
     return pd.DataFrame(rows)
@@ -64,7 +68,11 @@ def list_showcase() -> pd.DataFrame:
 
 def _showcase_path(name: str) -> Path:
     """Resolve a showcase name to a file, preferring parquet where both exist."""
-    parquet = SHOWCASE / f"{name}_days.parquet" if name == "ubuntu_irc" else SHOWCASE / f"{name}.parquet"
+    parquet = (
+        SHOWCASE / f"{name}_days.parquet"
+        if name == "ubuntu_irc"
+        else SHOWCASE / f"{name}.parquet"
+    )
     return parquet if parquet.exists() else SHOWCASE / f"{name}.csv"
 
 
@@ -110,44 +118,64 @@ def load_showcase(name: str) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-def load_own_chat(verbose: bool = True) -> Optional[pd.DataFrame]:
+def load_own_chat(
+    filename: Optional[str] = None, verbose: bool = True
+) -> Optional[pd.DataFrame]:
     """Load your own preprocessed chat, or return None if there is not one yet.
 
-    Reads `config.toml` for the `current` key — the parquet file written by notebook 01.
+    Reads `config.toml` for the `current` key — the parquet file written by notebook 01.6 —
+    unless `filename` is given, which loads that file from `data/processed/` directly and
+    skips `config.toml` entirely.
 
     Args:
+        filename: load this file from `data/processed/` instead of consulting
+            `config.toml`'s `current` key. Use it to point at a specific export without
+            editing the config, e.g. to compare two of your own chats side by side.
         verbose: log an explanation when there is nothing to load.
 
     Returns:
-        Your chat as a DataFrame, or None if `config.toml` or the file it names is missing.
+        Your chat as a DataFrame, or None if there is nothing to load yet.
         Returning None rather than raising is deliberate: the showcase half of every
         notebook must run whether or not you have an export.
     """
-    if not CONFIG.exists():
-        if verbose:
-            logger.info(
-                "No config.toml yet, so there is no chat of your own to load. "
-                "The showcase half of this notebook runs without it. "
-                "To use your own data: copy config.example.toml to config.toml, "
-                "export a chat, and run `analyzer --device ios` (or android)."
-            )
-        return None
+    if filename is not None:
+        datafile = PROCESSED / filename
+        if not datafile.exists():
+            if verbose:
+                logger.warning(f"{datafile} does not exist.")
+            return None
+    else:
+        if not CONFIG.exists():
+            if verbose:
+                logger.info(
+                    "No config.toml yet, so there is no chat of your own to load. "
+                    "The showcase half of this notebook runs without it. "
+                    "To use your own data: copy config.example.toml to config.toml, "
+                    "export a chat, and run `analyzer --device ios` (or android)."
+                )
+            return None
 
-    with CONFIG.open("rb") as f:
-        config = tomllib.load(f)
+        with CONFIG.open("rb") as f:
+            config = tomllib.load(f)
 
-    current = config.get("current", "")
-    datafile = PROCESSED / current
-    if not current or not datafile.exists():
-        if verbose:
-            logger.warning(
-                f"config.toml points `current` at '{current}', which is not in "
-                f"{PROCESSED}. Run notebook 01 to produce it, then set `current` to the "
-                f"filename it writes."
-            )
-        return None
+        current = config.get("current", "")
+        datafile = PROCESSED / current
+        if not current or not datafile.exists():
+            if verbose:
+                logger.warning(
+                    f"config.toml points `current` at '{current}', which is not in "
+                    f"{PROCESSED}. Run notebook 01.6 to produce it, then set `current` to the "
+                    f"filename it writes."
+                )
+            return None
 
-    data = pd.read_parquet(datafile) if datafile.suffix in {".parq", ".parquet"} else pd.read_csv(datafile)
+    data = (
+        pd.read_parquet(datafile)
+        if datafile.suffix in {".parq", ".parquet"}
+        else pd.read_csv(datafile)
+    )
     if verbose:
-        logger.success(f"Loaded {len(data):,} of your own messages from {datafile.name}")
+        logger.success(
+            f"Loaded {len(data):,} of your own messages from {datafile.name}"
+        )
     return data

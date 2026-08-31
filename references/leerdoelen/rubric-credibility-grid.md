@@ -47,4 +47,4 @@ material and the self-check tool. This document only touches the graded rubric, 
 is the piece PTT-54 flags as the actual incentive.
 
 The lesson-1 sentence this issue couldn't wait for M5 — "a null result, honestly bounded, is
-a pass" — is already in `notebooks/lesson1/01-cleaning.ipynb`'s closing cell.
+a pass" — is already in `notebooks/lesson1/01.2-irc-chat.ipynb`'s closing cell.

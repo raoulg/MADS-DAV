@@ -27,8 +27,8 @@ from loguru import logger
 class ParseIRCLines(TransformBase):
     """Turn one-row-per-day IRC logs into one row per message.
 
-    Combines the `<nick>` pattern from 1.2 with the `/me` action-line fallback from 1.3, and
-    replaces 1.3's manual coverage `print`s with a `loguru` log line.
+    Combines the `<nick>` line pattern with the `/me` action-line fallback, and reports
+    coverage through `loguru` instead of a manual print.
     """
 
     LINE = re.compile(r"^\[(\d{2}):(\d{2})\]\s+<(\S+)>\s+(.*)$")

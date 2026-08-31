@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-NOTEBOOK = ROOT / "notebooks" / "lesson1" / "01-cleaning.ipynb"
+NOTEBOOK = ROOT / "notebooks" / "lesson1" / "01.2-irc-chat.ipynb"
 CLASS_NAME = "ParseIRCLines"
 
 
