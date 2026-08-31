@@ -13,19 +13,13 @@ dependencies = [
     "huggingface-hub>=0.26.0",
     "loguru>=0.7.3",
     "networkx>=3.4.2",
-    # Floor: older numpy reports Accelerate's uninitialised output lanes as
-    # divide-by-zero warnings on every dense sklearn fit, on every Mac.
     "numpy>=2.3",
-    # Floor: pandas 3 stopped relying on numpy's generic timedelta unit
-    # internally, so `Timestamp - Timedelta` no longer warns under numpy 2.5+.
     "pandas>=3.0",
     "plotly>=5.24.1",
     "pyarrow>=18.1.0",
     "pydantic>=2.10.4",
     "scikit-learn>=1.7",
     "seaborn>=0.13.2",
-    # Floor: 0.14.x calls pandas's deprecate_kwarg() with the pre-3.0 signature;
-    # 0.15 updated the call site for pandas 3's new required `klass` argument.
     "statsmodels>=0.15.0",
     "streamlit>=1.43.1",
 ]
