@@ -123,7 +123,7 @@ def load_own_chat(
 ) -> Optional[pd.DataFrame]:
     """Load your own preprocessed chat, or return None if there is not one yet.
 
-    Reads `config.toml` for the `current` key — the parquet file written by notebook 01.6 —
+    Reads `config.toml` for the `current` key — the parquet file written by notebook 01.3 —
     unless `filename` is given, which loads that file from `data/processed/` directly and
     skips `config.toml` entirely.
 
@@ -164,7 +164,7 @@ def load_own_chat(
             if verbose:
                 logger.warning(
                     f"config.toml points `current` at '{current}', which is not in "
-                    f"{PROCESSED}. Run notebook 01.6 to produce it, then set `current` to the "
+                    f"{PROCESSED}. Run notebook 01.3 to produce it, then set `current` to the "
                     f"filename it writes."
                 )
             return None
