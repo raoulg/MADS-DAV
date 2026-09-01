@@ -8,8 +8,9 @@ Two sources, and every lesson uses both:
 - `load_own_chat()` — your own exported chat, after you have run the preprocessor. This is
   where the technique gets used, and where a null result is a legitimate answer.
 
-`load_own_chat()` returns None rather than raising when there is no chat to load, so a
-notebook runs top to bottom on the showcase half whether or not you have an export yet.
+`load_own_chat()` raises when there is no chat to load. A your-turn notebook without data
+has nothing to test, and a notebook that quietly runs on nothing teaches nothing — the
+error message says exactly which step of the setup is missing.
 """
 
 from __future__ import annotations
@@ -120,8 +121,8 @@ def load_showcase(name: str) -> pd.DataFrame:
 
 def load_own_chat(
     filename: Optional[str] = None, verbose: bool = True
-) -> Optional[pd.DataFrame]:
-    """Load your own preprocessed chat, or return None if there is not one yet.
+) -> pd.DataFrame:
+    """Load your own preprocessed chat.
 
     Reads `config.toml` for the `current` key — the parquet file written by notebook 01.3 —
     unless `filename` is given, which loads that file from `data/processed/` directly and
@@ -131,29 +132,31 @@ def load_own_chat(
         filename: load this file from `data/processed/` instead of consulting
             `config.toml`'s `current` key. Use it to point at a specific export without
             editing the config, e.g. to compare two of your own chats side by side.
-        verbose: log an explanation when there is nothing to load.
+        verbose: log a success line when the chat loads.
 
     Returns:
-        Your chat as a DataFrame, or None if there is nothing to load yet.
-        Returning None rather than raising is deliberate: the showcase half of every
-        notebook must run whether or not you have an export.
+        Your chat as a DataFrame.
+
+    Raises:
+        FileNotFoundError: when there is nothing to load yet, saying which setup step is
+            missing. A your-turn notebook without data has nothing to test, so it stops
+            here rather than running on nothing.
     """
     if filename is not None:
         datafile = PROCESSED / filename
         if not datafile.exists():
-            if verbose:
-                logger.warning(f"{datafile} does not exist.")
-            return None
+            raise FileNotFoundError(
+                f"{datafile} does not exist. Run the preprocessor "
+                "(`analyzer --device ios` or android) and notebook 01.3 first."
+            )
     else:
         if not CONFIG.exists():
-            if verbose:
-                logger.info(
-                    "No config.toml yet, so there is no chat of your own to load. "
-                    "The showcase half of this notebook runs without it. "
-                    "To use your own data: copy config.example.toml to config.toml, "
-                    "export a chat, and run `analyzer --device ios` (or android)."
-                )
-            return None
+            raise FileNotFoundError(
+                "No config.toml, so there is no chat of your own to load yet. "
+                "See the README's 'Run the preprocessor' section: copy "
+                "config.example.toml to config.toml, export a chat, run "
+                "`analyzer --device ios` (or android), then notebook 01.3."
+            )
 
         with CONFIG.open("rb") as f:
             config = tomllib.load(f)
@@ -161,13 +164,11 @@ def load_own_chat(
         current = config.get("current", "")
         datafile = PROCESSED / current
         if not current or not datafile.exists():
-            if verbose:
-                logger.warning(
-                    f"config.toml points `current` at '{current}', which is not in "
-                    f"{PROCESSED}. Run notebook 01.3 to produce it, then set `current` to the "
-                    f"filename it writes."
-                )
-            return None
+            raise FileNotFoundError(
+                f"config.toml points `current` at '{current}', which is not in "
+                f"{PROCESSED}. Run notebook 01.3 to produce it, then set `current` to "
+                f"the filename it writes."
+            )
 
     data = (
         pd.read_parquet(datafile)

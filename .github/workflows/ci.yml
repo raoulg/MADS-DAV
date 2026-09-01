@@ -26,8 +26,12 @@ jobs:
       - name: Check ParseIRCLines hasn't drifted (lesson 1 vs scripts/pipelines.py)
         run: uv run python tools/check_pipeline_drift.py
 
-      # The acceptance test for the whole M4 refactor: every notebook runs top-to-bottom
-      # on the showcase data alone. `config.toml` is gitignored, so a CI checkout never
-      # has one — this job is the "no own chat yet" path every notebook must survive.
+      # `load_own_chat()` raises when there is no export — a your-turn notebook without
+      # data has nothing to test. CI is a testing environment, so it gets data: a
+      # synthetic chat with the preprocessor's schema and enough structure for every
+      # lesson's technique to find something.
+      - name: Build the fixture chat CI runs the your-turn notebooks on
+        run: uv run python tools/make_ci_own_chat.py
+
       - name: Run every notebook top-to-bottom
         run: uv run notebooktester -f -t 900 notebooks/
