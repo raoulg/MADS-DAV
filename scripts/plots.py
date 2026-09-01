@@ -39,6 +39,10 @@ class BarPlotWithError(BasePlot):
     draws one container per hue level in `hue_order`, and the categories along the
     x-axis in tick order — so those two are what the lookup keys on, and the check
     turns a layout change into a failure rather than a silently misplaced error bar.
+
+    Colour comes from the settings, following 02.2's grey-first rule: every hue
+    level but the last is `settings.base_color`, the last — the one the plot is
+    about — is `settings.highlight_color`. Pass `palette=` to override.
     """
 
     def build(
@@ -51,6 +55,11 @@ class BarPlotWithError(BasePlot):
         hue_order: list[str],
         **kwargs,
     ):
+        kwargs.setdefault(
+            "palette",
+            [self.settings.base_color] * (len(hue_order) - 1)
+            + [self.settings.highlight_color],
+        )
         sns.barplot(
             data=data, x=x, y=y, hue=hue, hue_order=hue_order, ax=self.ax, **kwargs
         )
