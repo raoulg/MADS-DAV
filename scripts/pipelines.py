@@ -71,6 +71,24 @@ class ParseIRCLines(TransformBase):
         return parsed
 
 
+class BuildTimestamp(TransformBase):
+    """Combine the parse's `date` + `hh` + `mm` columns into one timestamp.
+
+    `ParseIRCLines` keeps the clock as the integers the regex captured; the time
+    lessons want a real datetime to resample and sessionize on. One row of
+    arithmetic, but arithmetic that belongs in the pipeline with the parse it
+    completes, not re-pasted into every notebook that needs a timestamp.
+    """
+
+    def transform(self, data: pd.DataFrame, feature: str = "timestamp") -> pd.DataFrame:
+        data[feature] = (
+            data["date"]
+            + pd.to_timedelta(data["hh"], unit="h")
+            + pd.to_timedelta(data["mm"], unit="m")
+        )
+        return data
+
+
 def build_irc_pipeline() -> Pipeline:
     """Assemble lesson 1's full pipeline: parse, then enrich.
 
