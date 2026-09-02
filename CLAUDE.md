@@ -18,8 +18,9 @@ that's the failure to avoid.
 
 ## Using the servers
 
-`.mcp.json` (Claude Code) and `.cursor/mcp.json` (Cursor) pin both servers
-to a tagged release.
+`.mcp.json` pins both servers to a tagged release. Cursor users create a
+`.cursor` folder and copy `.mcp.json` there as `.cursor/mcp.json` themselves;
+the repo does not maintain one.
 
 ## Keeping a plan across sessions
 

@@ -17,7 +17,7 @@ You can check this by typing `which uv` in your bash terminal. If that doesnt re
 
 ## use the course assistant
 
-This repo ships a `.mcp.json` (and `.cursor/mcp.json`). If you're on Claude Code or Cursor, opening the folder is enough — it will offer to connect two coaching servers, `goad` and `codestyle`, and you approve them once. See [CLAUDE.md](CLAUDE.md) for what they do and what's expected of you when you use them.
+This repo ships a `.mcp.json`. If you're on Claude Code, opening the folder is enough — it will offer to connect two coaching servers, `goad` and `codestyle`, and you approve them once. If you use Cursor, create a `.cursor` folder and copy `.mcp.json` into it as `.cursor/mcp.json`; Cursor reads the same format from there. See [CLAUDE.md](CLAUDE.md) for what the servers do and what's expected of you when you use them.
 
 On any other MCP client, install both by hand:
 

@@ -6,30 +6,32 @@ small enough to test, import, or run twice with different data. A script does.
 
 The pipeline runs on public Dutch COVID figures rather than a showcase dataset on
 purpose: the loop — config -> process -> compare -> model -> residual -> distribution
-fit — is the transferable part, not the topic. Lesson 6.2 asked the same question of
-a different domain and the pattern held; this one demonstrates it in script form.
+fit — is the transferable part, not the topic. The model is the one lesson 04.2 arrives
+at: a straight line in positive tests whose ratio turns down along a logistic curve.
 
     uv run python scripts/covid_pipeline.py
 
 Every step is also importable, which is what 05.3 does to walk through it inline:
 
-    from scripts.covid_pipeline import preprocess, fit_linear
+    from scripts.covid_pipeline import preprocess, fit_model
 
     data = preprocess()
-    data = fit_linear(data)
+    data = fit_model(data)
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
-from goad_toolkit.analytics import DistributionFitter
+from goad_toolkit.analytics import DistributionFitter, fit_table
 from goad_toolkit.config import DataConfig, FileConfig
 from goad_toolkit.dataprocessor import CovidDataProcessor
-from goad_toolkit.models import linear_model, mse, train_model
+from goad_toolkit.models import linear_model, logistic, mse, train_model
 from goad_toolkit.visualizer import (
     ComparePlot,
+    ComparePlotDate,
     FitPlotSettings,
     PlotFits,
     PlotSettings,
@@ -42,7 +44,7 @@ VACCINATION_START = "2021-01-06"
 
 
 def preprocess() -> pd.DataFrame:
-    """Download (if needed), clean and z-score the Dutch COVID series."""
+    """Download (if needed), clean, lag and z-score the Dutch COVID series."""
     logger.info("Preprocessing COVID data...")
     processed = CovidDataProcessor(FileConfig(), DataConfig()).process()
     logger.success(f"Processed {len(processed):,} days.")
@@ -57,6 +59,7 @@ def save_fig(fig, name: str) -> None:
 
 
 def plot_zscores(data: pd.DataFrame):
+    """Deaths and positive tests on one scale: the shape a model has to match."""
     settings = PlotSettings(
         xlabel="date",
         ylabel="normalised values",
@@ -69,32 +72,57 @@ def plot_zscores(data: pd.DataFrame):
     return fig, ax
 
 
-def fit_linear(data: pd.DataFrame) -> pd.DataFrame:
-    """Fit deaths as a straight line in positive tests, and keep the residual."""
-    x = data["positivetests"].to_numpy()
-    y = data["deaths"].to_numpy()
+def covid_model(X: np.ndarray, params: list[float]) -> np.ndarray:  # noqa: N803
+    """Deaths as a straight line in positive tests, times a logistic switch on the day.
+
+    `X` has two columns: positive tests, and the day number. `params` is
+    `[a, b, k, x0]`: the line's slope and intercept, and the switch's steepness
+    and halfway day. With `k < 0` the ratio of deaths to tests runs at its old
+    value, then decays as the switch turns.
+    """
+    a, b, k, x0 = params
+    return linear_model(X[:, 0], [a, b]) * logistic(X[:, 1], k=k, x0=x0)
+
+
+def fit_model(data: pd.DataFrame) -> pd.DataFrame:
+    """Fit the turning-ratio model and keep its prediction and residual."""
+    tests = data["positivetests"].to_numpy()
+    day = np.arange(len(data)).astype(float)
+    X = np.stack([tests, day], axis=1)  # noqa: N806
+    y = data["deaths_shifted"].to_numpy()
+
+    line = train_model(tests, y, linear_model, mse, [0.01, 1.0], bounds=[(0, 1.0), (0, None)])
+    vaccination_day = float(np.argmax(data.index >= VACCINATION_START))
+    initial = [line[0], line[1], -0.1, vaccination_day + 30]
     params = train_model(
-        x, y, linear_model, mse, [0.01, 1.0], bounds=[(0, 1.0), (0, None)]
+        X, y, covid_model, mse, initial,
+        bounds=[(0, 1.0), (0, None), (-1.0, 0), (0, len(data))],
     )
-    logger.success(f"Fitted linear model: {params}")
+    halfway = data.index[int(round(params[3]))].date()
+    logger.success(f"Fitted model: a={params[0]:.4f} b={params[1]:.1f} k={params[2]:.3f}, "
+                   f"switch halfway on {halfway}")
+
     data = data.copy()
-    data["predicted deaths"] = linear_model(x, params)
-    data["residual"] = data["deaths_shifted"].to_numpy() - data["predicted deaths"]
+    data["predicted deaths"] = covid_model(X, params)
+    data["residual"] = y - data["predicted deaths"]
     return data
 
 
 def plot_model(data: pd.DataFrame):
+    """Actual deaths against the model, with the vaccination start marked."""
     settings = PlotSettings(
         xlabel="date", ylabel="deaths", title="Deaths vs. the fitted model"
     )
-    fig, ax = ComparePlot(settings).plot(
-        data=data, x="date", y1="deaths_shifted", y2="predicted deaths"
+    fig, ax = ComparePlotDate(settings).plot(
+        data=data, x="date", y1="deaths_shifted", y2="predicted deaths",
+        date=VACCINATION_START, datelabel="vaccination started",
     )
-    save_fig(fig, "linear_model.png")
+    save_fig(fig, "model.png")
     return fig, ax
 
 
 def plot_residual(data: pd.DataFrame, title: str = "Residual"):
+    """What the model did not explain, day by day."""
     settings = PlotSettings(figsize=(12, 6), title=title, xlabel="date", ylabel="error")
     fig, ax = ResidualPlot(settings).plot(
         data=data,
@@ -109,8 +137,9 @@ def plot_residual(data: pd.DataFrame, title: str = "Residual"):
 
 
 def plot_residual_distribution(data: pd.DataFrame):
-    fitter = DistributionFitter()
-    fits = fitter.fit(data["residual"], discrete=False)
+    """Fit every continuous family to the residual: noise, or a shape the model lacks."""
+    fitter = DistributionFitter(seed=42)
+    fits = fitter.fit(data["residual"].to_numpy(), discrete=False)
     logger.success(f"Best fit: {fitter.best(fits)}")
     settings = PlotSettings(
         figsize=(12, 6),
@@ -119,18 +148,18 @@ def plot_residual_distribution(data: pd.DataFrame):
         ylabel="probability",
     )
     fig = PlotFits(settings).plot(
-        data=data["residual"],
+        data=data["residual"].to_numpy(),
         fit_results=fits,
         fitplotsettings=FitPlotSettings(bins=30, max_fits=3),
     )
     save_fig(fig, "residual_distribution.png")
-    return fig
+    return fig, fit_table(fits)
 
 
 def main() -> None:
     data = preprocess()
     plot_zscores(data)
-    data = fit_linear(data)
+    data = fit_model(data)
     plot_model(data)
     plot_residual(data)
     plot_residual_distribution(data)

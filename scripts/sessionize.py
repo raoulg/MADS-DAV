@@ -46,7 +46,7 @@ def fit_session_threshold(
     burst = gaps[(gaps > 0) & (gaps < 3600)]
 
     registry = DistributionRegistry()
-    fit = DistributionFitter(registry).fit_distribution("exponential", burst.to_numpy())
+    fit = DistributionFitter(registry, seed=42).fit_distribution("exponential", burst.to_numpy())
     if not isinstance(fit, FitResult):
         raise ValueError(f"exponential fit failed on the burst gaps: {fit}")
 
