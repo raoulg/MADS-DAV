@@ -1,6 +1,6 @@
 """A whole analysis loop as a script: config, process, model, and test the residual.
 
-This is the shape leerdoelen 1.8/1.10 ask for and no notebook demonstrates on its own —
+This is the shape leerdoel 5.11 asks for and no notebook demonstrates on its own —
 a notebook cell has no natural boundary, so nothing forces the analysis into functions
 small enough to test, import, or run twice with different data. A script does.
 
@@ -91,16 +91,24 @@ def fit_model(data: pd.DataFrame) -> pd.DataFrame:
     X = np.stack([tests, day], axis=1)  # noqa: N806
     y = data["deaths_shifted"].to_numpy()
 
-    line = train_model(tests, y, linear_model, mse, [0.01, 1.0], bounds=[(0, 1.0), (0, None)])
+    line = train_model(
+        tests, y, linear_model, mse, [0.01, 1.0], bounds=[(0, 1.0), (0, None)]
+    )
     vaccination_day = float(np.argmax(data.index >= VACCINATION_START))
     initial = [line[0], line[1], -0.1, vaccination_day + 30]
     params = train_model(
-        X, y, covid_model, mse, initial,
+        X,
+        y,
+        covid_model,
+        mse,
+        initial,
         bounds=[(0, 1.0), (0, None), (-1.0, 0), (0, len(data))],
     )
     halfway = data.index[int(round(params[3]))].date()
-    logger.success(f"Fitted model: a={params[0]:.4f} b={params[1]:.1f} k={params[2]:.3f}, "
-                   f"switch halfway on {halfway}")
+    logger.success(
+        f"Fitted model: a={params[0]:.4f} b={params[1]:.1f} k={params[2]:.3f}, "
+        f"switch halfway on {halfway}"
+    )
 
     data = data.copy()
     data["predicted deaths"] = covid_model(X, params)
@@ -114,8 +122,12 @@ def plot_model(data: pd.DataFrame):
         xlabel="date", ylabel="deaths", title="Deaths vs. the fitted model"
     )
     fig, ax = ComparePlotDate(settings).plot(
-        data=data, x="date", y1="deaths_shifted", y2="predicted deaths",
-        date=VACCINATION_START, datelabel="vaccination started",
+        data=data,
+        x="date",
+        y1="deaths_shifted",
+        y2="predicted deaths",
+        date=VACCINATION_START,
+        datelabel="vaccination started",
     )
     save_fig(fig, "model.png")
     return fig, ax

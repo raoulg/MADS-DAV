@@ -1,28 +1,37 @@
-4.1 leren toepassen van de visualisatie principes
-4.2 begrijpt de definitie van een waarschijnlijkheidsverdeling
-4.3 begrijpt het verschil tussen een discrete en continue verdeling
-4.4 begrijpt de bernoulli verdeling
-4.5 begrijpt de condities voor een pmf en pdf
-4.6 begrijpt de central limit theorem en waarom dit verklaart waarom veel distributies normaal zijn
-4.7 begrijpt wat het verschil is met een log-normaal verdeling, en waarom/wanneer deze verdeling gebruikt wordt
-4.8 (verplaatst naar 2.9: simpsons paradox)
-4.9 begrijpt wat quantiles zijn
-4.10 begrijpt wat een qq-plot is en hoe je die kunt lezen
-4.11 begrijpt hoe een ks-test werkt en hoe je deze kunt gebruiken
-4.12 begrijpt wat je doet als je een theoretische distributie wilt fitten aan data
-4.13 begrijpt wat een outlier kan representeren: een meetfout, een zeldzame maar correcte waarneming, of een teken dat de aangenomen distributie niet klopt
-4.14 kan het verschil beargumenteren tussen een fout en een zware staart (heavy tail)
-4.15 kan alternatieve methodes toepassen om outliers te detecteren in niet-normale data
-4.16 begrijpt de aannames achter imputatiemethodes voor ontbrekende data, en kent de risico's daarvan
-4.17 kan een simulatie gebruiken om te testen of een patroon door toeval kan zijn ontstaan
-4.18 begrijpt dat onzekerheid afneemt met het aantal onafhankelijke waarnemingen, en kan inschatten hoe groot een effect zou moeten zijn om zichtbaar te zijn bij de eigen n
+Notebooks: 04.1-distributions, 04.2-distribution_fitting
 
+De student begrijpt:
 
-Python:
-- begrijpt hoe je een histogram maakt met sns.histplot
-- begrijpt hoe je data kunt transformeren met np.log om een log-normaal verdeling te maken
-- begrijpt wat np.quantile doet en hoe je dit kunt gebruiken om visualisaties te maken
-- kan werken met np.linspace
-- kan met scipy.stats diverse distributies maken en samplen
-- kan met scipy.stats een distributie fitten aan data
-- kan met scipy.stats een kstest doen
+4.1 dat een verdeling een hypothese is over het proces dat de data maakte, en de drie redenen om er een te fitten in plaats van een gemiddelde te rapporteren: eerlijk samenvatten, bepalen wat ongewoon is, en twee situaties vergelijken
+4.2 zes families met het mechanisme erachter — normaal (sommen), lognormaal (producten), exponentieel (wachttijden bij een vaste rate), Poisson (tellingen bij een vaste rate), Weibull (time-to-failure), Pareto (rich-get-richer) — en herkent welk mechanisme bij een variabele in de eigen chat hoort
+4.3 het verschil tussen een discrete en een continue verdeling: een telling heeft een kans per waarde (pmf), geen dichtheid (pdf), en `discrete=` is jouw beslissing bij het fitten
+4.4 de centrale limietstelling: sommen van bijna alles gaan naar normaal, producten niet — en dat de log een product in een som verandert, waardoor een lange staart een klok wordt
+4.5 hoe je een familie fit (maximum likelihood via `DistributionFitter`), waarom er twee winnaars zijn (log-likelihood weegt de bulk, KS de grootste afstand tussen fitted en empirische cdf) en dat hun onenigheid het informatiefste getal in de tabel is
+4.6 wat een quantile en een qq-plot zijn en hoe je die leest: de staart, waar families verschillen en histogrammen onleesbaar zijn; en een ECDF als bin-vrije vergelijking van twee samples
+4.7 wat een outlier kan zijn — meetfout, zeldzame maar echte waarneming, of teken dat de aangenomen familie niet klopt — en dat "drie standaarddeviaties" een uitspraak is over een normaalverdeling die je niet wist dat je aannam; kan de staartkans onder de gefitte familie berekenen en beargumenteren wat een fout van een zware staart onderscheidt (proceskennis, geen statistiek)
+4.8 de belofte van Poisson (variantie = gemiddelde), waarom die in chatdata faalt (de rate zwerft) en dat de negatief-binomiale verdeling daar de familie voor is; kan dezelfde familie vóór en na een bekend event fitten en aflezen welke parameter bewoog (rate, dispersie, schaal)
+4.9 hoe een simulatie test of een verschil toeval kan zijn: het label schudden (`NullDistribution`), de wolk plotten en de echte waarde erin plaatsen
+4.10 dat wat je kunt zien het effect gedeeld door de spreiding is, dat onzekerheid afneemt met het aantal onafhankelijke waarnemingen, en dat je aan de gewone dagen vooraf kunt aflezen of tien event-dagen de vraag kunnen beslissen
+4.11 de modelleerlus: model (vorm + verlies + `train_model`), residu, en een verdeling aan het residu fitten — een symmetrisch residu uit een plausibele familie zonder patroon in de tijd betekent stoppen; een residu met een vorm (stap, drift, bocht) is een vergeten mechanisme, en wannéér het begint is meestal de bevinding
+4.12 dat een basisfunctie een claim is over de verwachte vorm (een logistische schakelaar zegt "de ratio draait"), en dat de parameters een bevinding zijn (de draai zit half maart) terwijl het mechanisme (vaccinatie) een aparte claim blijft die het model niet bewijst
+
+De student kan:
+
+4.13 met `scipy.stats` families maken, samplen en de cdf gebruiken; met `np.log` transformeren
+4.14 met goad fitten en tonen: `DistributionRegistry` (en `register_distribution` voor een familie die niet meegeleverd wordt), `DistributionFitter(seed=...)`, `fit` / `fit_distribution`, `fit_table`, `FitResult` / `FailedFit`, `frozen_dist`; `HistogramPlot`, `DistPlot`, `PlotFits`, `QQPlot`, `ECDFPlot`, `NullPlot`
+4.15 een pipeline lezen die een tijdreeks klaarmaakt (`DiffValues`, `ShiftValues`, `SelectDataRange`, `RollingAvg`, `ZScaler`) en zeggen welke beslissing elke stap neemt
+4.16 een model schrijven als functie van twee inputs en vier parameters, trainen met startwaarden en bounds, en `ResidualPlot` / `ComparePlot(Date)` gebruiken om fit en residu te tonen
+4.17 de eigen chat splitsen op een bekend event (uit 03.3), berichten per dag en gaps binnen bursts aan beide kanten fitten, en het resultaat opschrijven als zin met parameters erin
+
+Python: `scipy.stats`, `np.log`, `np.linspace`, pandas `resample`, goad `analytics` / `distributions` / `models` / `dataprocessor`
+
+## Vervallen of verplaatst
+
+- ⚠️ Bernoulli (oude 4.4): wordt niet meer behandeld
+- ⚠️ de condities voor een pmf en pdf (oude 4.5): alleen impliciet ("een telling heeft geen dichtheid"); niet als definitie
+- ⚠️ `np.quantile` (oude Python-lijst): quantiles komen alleen via de qq-plot voor
+- ⚠️ hoe een KS-test wérkt (oude 4.11): KS wordt gebruikt en uitgelegd als "grootste afstand tussen twee cdf's", maar de toets zelf niet afgeleid
+- ⚠️ imputatie en de aannames erachter (oude 4.16): niet meer in het materiaal; 03.1 zegt alleen dat invullen een aparte beslissing is ná het eerlijke gat
+- ⚠️ Pareto op woordfrequenties (de "registreer een familie"-oefening uit goad's teaching path): genoemd in 04.1, niet uitgewerkt
+- Simpson's paradox (oude 4.8): staat in 2.3 en 5.8
+- Metropolis, beta, de losse pareto-sectie: bewust geschrapt

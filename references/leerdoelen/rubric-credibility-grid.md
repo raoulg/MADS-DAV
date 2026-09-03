@@ -28,7 +28,7 @@ before landing on the one that's reported.
 | Onvoldoende (0-0.4) | *(unchanged)* | *(unchanged)* |
 | Voldoende (0.6-0.8) | Basisaandacht voor validiteit. Enige onderbouwing van patronen. Noemt mogelijke alternatieve verklaringen. | Basisaandacht voor validiteit. Enige onderbouwing van patronen. Noemt mogelijke alternatieve verklaringen. Vermeldt of er een mechanisme is, ook als dat mechanisme ontbreekt. |
 | Uitstekend (0.8-1.0) | Sterke onderbouwing van patronen met statistisch bewijs waar dat nodig is om twijfel weg te nemen. Duidelijke afweging van alternatieve verklaringen. Heldere erkenning van beperkingen, zowel statistisch als van het gekozen model. | Voor elke gerapporteerde bevinding: een benoemd mechanisme (of expliciet "geen mechanisme gevonden"), het aantal overwogen vergelijkingen, en — waar mogelijk — een replicatiepoging (andere periode, andere groep, andere maat). **Een bevinding met alle drie, ook als het resultaat "plausibel, onbewezen" is, scoort gelijk aan of hoger dan een significant resultaat zonder mechanisme.** Heldere erkenning van beperkingen, zowel statistisch als van het gekozen model. |
-| Specifieke aandachtspunten | *(unchanged)* | *add a line:* Een net zo overtuigend eindresultaat is: "plausibel, onbewezen, en dit is de n die het zou beslissen" — zie leerdoel 5.21 (evidence / mechanism / replication) en de Spurious findings-doc. |
+| Specifieke aandachtspunten | *(unchanged)* | *add a line:* Een net zo overtuigend eindresultaat is: "plausibel, onbewezen, en dit is de n die het zou beslissen" — zie leerdoel 5.5 (evidence / mechanism / replication) en de Spurious findings-doc. |
 
 ## Also worth a one-line addition
 
@@ -41,7 +41,7 @@ so isn't penalised for lacking a clean significant result:
 
 ## Not proposed here
 
-Leerdoel 5.21 (the three legs: evidence, mechanism, replication) and the checklist.md
+Leerdoel 5.5 (the three legs: evidence, mechanism, replication) and the checklist.md
 "Wat beweer je?" section (PTT-55, already merged) carry the same idea into the teaching
 material and the self-check tool. This document only touches the graded rubric, since that
 is the piece PTT-54 flags as the actual incentive.
