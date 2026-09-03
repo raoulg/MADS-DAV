@@ -1,4 +1,4 @@
-Notebooks: 05.1-relationships, 05.2-correlation, 05.3-notebook-to-script, 05.4-how-people-type
+Notebooks: 05.1-relationships, 05.2-correlation, 05.3-covid-modelling, 05.4-covid-solution, 05.5-how-people-type
 
 De student begrijpt:
 

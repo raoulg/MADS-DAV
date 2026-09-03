@@ -6,12 +6,13 @@ small enough to test, import, or run twice with different data. A script does.
 
 The pipeline runs on public Dutch COVID figures rather than a showcase dataset on
 purpose: the loop — config -> process -> compare -> model -> residual -> distribution
-fit — is the transferable part, not the topic. The model is the one lesson 04.2 arrives
-at: a straight line in positive tests whose ratio turns down along a logistic curve.
+fit — is the transferable part, not the topic. The model is the one 05.3 poses and
+05.4 works out: a straight line in positive tests whose ratio turns down along a
+logistic curve.
 
     uv run python scripts/covid_pipeline.py
 
-Every step is also importable, which is what 05.3 does to walk through it inline:
+Every step is also importable, which is what 05.4 does to walk through it inline:
 
     from scripts.covid_pipeline import preprocess, fit_model
 
