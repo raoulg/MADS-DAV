@@ -1,4 +1,4 @@
-Notebooks: 04.1-distributions, 04.2-distribution_fitting
+Notebooks: 04.1-families, 04.2-long-tail, 04.3-penguins, 04.4-before-and-after, 04.5-fitting-the-residual
 
 De student begrijpt:
 
@@ -13,7 +13,6 @@ De student begrijpt:
 4.9 hoe een simulatie test of een verschil toeval kan zijn: het label schudden (`NullDistribution`), de wolk plotten en de echte waarde erin plaatsen
 4.10 dat wat je kunt zien het effect gedeeld door de spreiding is, dat onzekerheid afneemt met het aantal onafhankelijke waarnemingen, en dat je aan de gewone dagen vooraf kunt aflezen of tien event-dagen de vraag kunnen beslissen
 4.11 de modelleerlus: model (vorm + verlies + `train_model`), residu, en een verdeling aan het residu fitten — een symmetrisch residu uit een plausibele familie zonder patroon in de tijd betekent stoppen; een residu met een vorm (stap, drift, bocht) is een vergeten mechanisme, en wannéér het begint is meestal de bevinding
-4.12 dat een basisfunctie een claim is over de verwachte vorm (een logistische schakelaar zegt "de ratio draait"), en dat de parameters een bevinding zijn (de draai zit half maart) terwijl het mechanisme (vaccinatie) een aparte claim blijft die het model niet bewijst
 
 De student kan:
 

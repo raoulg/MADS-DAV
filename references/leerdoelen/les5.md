@@ -13,6 +13,7 @@ De student begrijpt:
 5.9 dat een classifier een instrument is, niet het resultaat: de accuracy is een poort, de gewichten zijn de bevinding — en dat je die gewichten leest om te zien of het model gelijk heeft om een reden die generaliseert (typegewoonte) of niet (onderwerp, andermans nicknames, locatie)
 5.10 waarom een sterk signaal per bericht toch een lage accuracy geeft (driekwart van de berichten draagt geen vingerafdruk) en dat blokken van berichten de eenheid zijn die de claim nodig heeft; dat stabiliteit over een gat van vier jaar de replicatie-poot is, en dat een maat die níet stabiel is (vragen stellen) de bevinding geloofwaardiger maakt
 5.11 het verschil tussen een notebook en een script: kleine functies met expliciete inputs, geen lekkende variabelen, één stap opnieuw draaien, importeren, op een schema draaien; en dat een basisfunctie (linear, sinus, exponential, logistic) een claim is over de vorm die je verwacht, bevestigd doordat het residu krimpt
+5.20 dat een basisfunctie een claim is over de verwachte vorm (een logistische schakelaar zegt "de ratio draait"), en dat de parameters een bevinding zijn (de draai zit half maart) terwijl het mechanisme (vaccinatie) een aparte claim blijft die het model niet bewijst
 
 De student kan:
 
