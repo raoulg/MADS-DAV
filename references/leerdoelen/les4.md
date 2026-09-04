@@ -1,5 +1,3 @@
-Notebooks: 04.1-families, 04.2-long-tail, 04.3-penguins, 04.4-before-and-after, 04.5-fitting-the-residual
-
 De student begrijpt:
 
 4.1 dat een verdeling een hypothese is over het proces dat de data maakte, en de drie redenen om er een te fitten in plaats van een gemiddelde te rapporteren: eerlijk samenvatten, bepalen wat ongewoon is, en twee situaties vergelijken
@@ -22,7 +20,10 @@ De student kan:
 4.16 een model schrijven als functie van twee inputs en vier parameters, trainen met startwaarden en bounds, en `ResidualPlot` / `ComparePlot(Date)` gebruiken om fit en residu te tonen
 4.17 de eigen chat splitsen op een bekend event (uit 03.3), berichten per dag en gaps binnen bursts aan beide kanten fitten, en het resultaat opschrijven als zin met parameters erin
 
-Python: `scipy.stats`, `np.log`, `np.linspace`, pandas `resample`, goad `analytics` / `distributions` / `models` / `dataprocessor`
+Python: 
+- `scipy.stats`, `np.log`, `np.linspace`;
+- pandas `resample`;
+- goad `analytics` / `distributions` / `models` / `dataprocessor`
 
 ## Vervallen of verplaatst
 

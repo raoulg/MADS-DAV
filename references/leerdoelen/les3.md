@@ -1,5 +1,3 @@
-Notebooks: 03.1-time, 03.2-statistics-of-time, 03.3-events-in-your-chat
-
 De student begrijpt:
 
 3.1 dat "mensen slapen" niet een interessante plot is: het residu ten opzichte van normale verwachte patronen kan dat wel zijn.
@@ -21,12 +19,11 @@ De student kan:
 3.14 small multiples per weekdag of per auteur maken met `FacetPlot`, en per-dag rijen met `errorbar=("ci", 95)` plotten
 3.15 een ACF plotten en de sterkste lag na de eerste stretch aflezen; `seasonal_decompose` draaien en het residu opnieuw op autocorrelatie testen
 
-Python: pandas `.dt`, `resample`, `reindex`, `rolling`, `pivot`; goad `TimeFeatures`, `FlagDates`, `Filter`, `CountValues`, `Share`, `GroupAgg`, `MapValues`, `SortValues`, `SubtractBaseline`, `RollingAvg`; goad `LinePlot`, `FacetPlot`, `HistogramPlot`, `GroupedBarPlot`, `HorizontalLine`, `VerticalDate`, `ACFPlot`, `DecomposePlot`; `FileHandler` voor cachen van downloads; statsmodels `acf`, `seasonal_decompose`; `scipy.fft`; plotly `px.area`
-
-## Vervallen of verplaatst
-
-- oude 3.2 (venv, pdm, path, scripts, git): niet in les 3
-- oude 3.8 (linear / sinus / exponential / logistic als basisfuncties): verplaatst naar 05.4 (logistic switch en sinus op flights) — zie 5.20 en 5.11
-- seaborn `FacetGrid` / `.map` (oude 3.10, 3.11): vervangen door goad `FacetPlot`
-- ⚠️ `scipy.signal` (oude 3.14): wordt niet meer gebruikt
-- ⚠️ materiaal, geen leerdoel: het Fourier-deel van 03.2 (vanaf "3.4 Fourier transforms") is nog in de oude stijl (losse `plt`-plots, uitleg als commentaarregels); de ACF/decompose-helft is wel herschreven
+Python: 
+- pandas `.dt`, `resample`, `reindex`, `rolling`, `pivot`; 
+- goad `TimeFeatures`, `FlagDates`, `Filter`, `CountValues`, `Share`, `GroupAgg`, `MapValues`, `SortValues`, `SubtractBaseline`, `RollingAvg`; 
+- goad `LinePlot`, `FacetPlot`, `HistogramPlot`, `GroupedBarPlot`, `HorizontalLine`, `VerticalDate`, `ACFPlot`, `DecomposePlot`;
+-  `FileHandler` voor cachen van downloads; 
+- statsmodels `acf`, `seasonal_decompose`; 
+- `scipy.fft`; 
+- plotly `px.area`

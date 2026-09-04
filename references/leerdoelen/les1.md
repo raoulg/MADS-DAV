@@ -1,5 +1,3 @@
-Notebooks: 01.1-goad-toolkit-101, 01.2-irc-chat, 01.3-your-own-chat
-
 De student begrijpt:
 
 1.1 Gestalt principles (proximity, similarity, enclosure, closure, continuity, connection), preattentive processing (de eerste 200ms) en de five guidelines: show the data / reduce clutter / integrate text / avoid spaghetti / start with grey (college en `checklist.md`; in de notebooks vanaf les 2 toegepast)

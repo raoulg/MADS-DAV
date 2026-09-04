@@ -2,6 +2,14 @@ This is the repository for the Master of Applied Data Science course "Data Analy
 
 The manual for setting up the VM can be found in the `references` folder, in addition to a `git_crash_course` to help you work with git. Make sure to read both documents before you start asking questions about either.
 
+If you would rather be walked through the setup by your assistant, hand it this URL and ask it to guide you:
+
+```
+https://raw.githubusercontent.com/raoulg/MADS-DAV/main/references/lab-setup.md
+```
+
+It covers the same ground as the PDF, one step at a time, and it keeps track of where you are between sessions.
+
 
 # Setup the virtual environment
 

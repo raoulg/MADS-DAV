@@ -1,5 +1,3 @@
-Notebooks: 02.1-baseplot-101, 02.2-comparing_categories, 02.3-simpsons_paradox, 02.4-counting-and-averages, 02.5-your_turn
-
 De student begrijpt:
 
 2.1 de visualisatieprincipes voor een categorische vergelijking: volgorde is een beslissing (sorteer op waarde tenzij de categorie een eigen volgorde heeft), grijs eerst en dan kleuren kiezen voor het onderwerp, en een titel is een headline
