@@ -2,7 +2,7 @@ Notebooks: 02.1-baseplot-101, 02.2-comparing_categories, 02.3-simpsons_paradox, 
 
 De student begrijpt:
 
-2.1 de visualisatieprincipes voor een categorische vergelijking: volgorde is een beslissing (sorteer op waarde tenzij de categorie een eigen volgorde heeft), grijs eerst en dan één kleur voor het ding waar de titel over gaat, en een titel is een claim
+2.1 de visualisatieprincipes voor een categorische vergelijking: volgorde is een beslissing (sorteer op waarde tenzij de categorie een eigen volgorde heeft), grijs eerst en dan kleuren kiezen voor het onderwerp, en een titel is een headline
 2.2 twee manieren waarop een groepsvergelijking misleidt terwijl elk getal klopt: te veel ongesorteerde balken in te veel kleuren, en een percentage zonder de aantallen waarop het rust — plus een categorie die stilzwijgend wegvalt omdat hij `NaN` is
 2.3 Simpson's paradox: een geaggregeerde vergelijking en elk van de subgroep-vergelijkingen kunnen tegengesteld wijzen zonder rekenfout; de vraag die ertegen beschermt (is er een variabele die verschilt tussen de groepen én de uitkomst beïnvloedt?) en de gebruikelijke verdachten (periode, activiteit, subkanaal, platform, weekdag)
 2.4 dat de eenheid van tellen de vraag beantwoordt: berichten tellen en mensen tellen kunnen een tegengesteld antwoord geven, en alleen de eenheid waar de claim over gaat test de claim
@@ -19,11 +19,3 @@ De student kan:
 2.12 dezelfde vergelijking uitvoeren per bericht en per persoon, met intervallen, en zeggen op hoeveel mensen een claim rust
 2.13 de `goad` MCP-tools inzetten als coach: `goad_analysis_checklist` (zes stadia, één tegelijk), `goad_search` / `goad_get_concept`, `goad_critique_visual`
 
-Python: pandas `groupby`/`agg`, `pivot`, `sort_values`, `nlargest`; palettes als dict; goad `PlotSettings` (`highlight`, `base_color`, `highlight_color`, `subplot_titles`, `subplot_ylabels`, `max_cols`, `sharey`), `BarPlot`, `GroupedBarPlot`, `HeatmapPlot`, `BarbellPlot`, `HighlightCategory`, `Annotate`, `ScatterPlot`, `ComparePlotDate`; goad `Pipeline` met `Filter`, `CountValues`, `Head`, `GroupAgg`
-
-## Vervallen of verplaatst
-
-- oude 2.2 / 2.4 (regex oefenen, features extraheren): les 2 importeert lesson 1's pipeline; regex-features komen terug in les 5 (05.1, 05.4) en 03.3
-- oude 2.3 (venv, pdm, path, scripts): `pdm` is vervangen door `uv`; venv en paden zijn les 0/1; "code naar scripts/" is hierboven 2.7
-- ⚠️ `pandas.cut` (oude 2.8): wordt nergens meer gebruikt
-- oude 2.7 (list comprehensions): komt alleen terloops voor, geen leerdoel meer
