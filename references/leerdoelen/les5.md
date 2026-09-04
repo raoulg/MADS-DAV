@@ -30,11 +30,4 @@ Python: `RegPlot`, `ScatterPlot`, `BarbellPlot`, `GroupedBarPlot(errorbar=...)`,
 
 ## Vervallen of verplaatst
 
-- ⚠️ "the map is not the territory" (oude 5.3): alleen in de slides, niet in de notebooks
-- ⚠️ overfitting (oude 5.4): wordt aangeraakt (order=3 in de your-turn van 05.1, Fourier-componenten in 03.2) maar nergens uitgewerkt; de ML-cursus neemt het over — beslissen of het hier een leerdoel blijft
-- ⚠️ impliciete regularisatie (oude 5.6): niet meer in het materiaal; expliciete regularisatie (5.8) wel
-- oude 5.7 / 5.8 (Condorcet, diversity prediction theorem): blijven uitgesteld, zoals eerder afgesproken
-- Anscombe en datasaurus: alleen nog een verwijzende zin in 05.1; de "plot het eerst"-les zit nu in 5.1 en 5.7
-- `sns.lmplot`, `sns.scatterplot` met size/shape (oude 5.12, 5.13): vervangen door goad `RegPlot` / `ScatterPlot`
-- ⚠️ materiaal, geen leerdoel: 05.2's regularisatiedeel (vanaf "Finding correlation through regularization") is nog in de oude stijl (losse `plt`-plots, `df`); de correlatie/confounder-helft is wel herschreven
 - het rubric-voorstel in `rubric-credibility-grid.md` verwijst naar de drie pijlers; dat is hier 5.5

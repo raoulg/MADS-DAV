@@ -15,11 +15,11 @@ De student kan:
 1.10 een reeks bewerkingen uitdrukken als een `Pipeline` van benoemde stappen, een eigen stap schrijven door `TransformBase` te subclassen (één methode: `transform`), en `print(pipeline)` lezen als het antwoord op "wat is er met deze data gebeurd"
 1.11 de typehints van een `transform`-signatuur lezen als contract
 1.12 een stap die af is verplaatsen van een notebook-cel naar `scripts/` en importeren, en beargumenteren waarom een factory (`build_irc_pipeline()`) beter is dan een gedeelde instantie
-1.13 bots opsporen op structuur (herhaling, actieve dagen, aandeel op de drukste dag) zonder berichten te lezen, en weet dat herhaling mensen en scripts niet scheidt omdat mensen rituelen hebben
+1.13 auteurs vinden, zoals bots, op structuur (herhaling, actieve dagen, aandeel op de drukste dag) zonder berichten te lezen
 1.14 de eigen chat anonimiseren (`humanize`), de preprocessor draaien en het resultaat via `config.toml` aan `load_own_chat()` koppelen
 
 Python: `re`, pandas `groupby`/`agg`, `itertuples`, `loguru`, goad `Pipeline` / `TransformBase` / `RegexFeature` / `TimeFeatures`, dunder `__call__`
 
 ## Vervallen of verplaatst
 
-- ⚠️ regex-onderdelen uit de oude 1.11 die in 01.2 niet meer expliciet geoefend worden: alternatieven `[Bb]`, lookbehind `(?<=...)`, lookahead `(?=...)`. Als het examen ze vraagt is dit een gat.
+- ⚠️ regex-onderdelen uit de oude 1.11 die in 01.2 niet meer expliciet geoefend worden: alternatieven `[Bb]`, lookbehind `(?<=...)`, lookahead `(?=...)`. 

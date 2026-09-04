@@ -26,12 +26,3 @@ De student kan:
 6.19 met `sentence-transformers` embedden, `scripts.sessionize` (`fit_session_threshold`, `sessionize`, `merge_messages`) gebruiken, een self-retrieval-check schrijven, en een `transformers.pipeline` sentiment-model als korte afsluiter draaien (tabel, geen claim)
 
 Python: `numpy.linalg.svd`, sklearn `PCA` / `TSNE` / `StandardScaler` / `silhouette_score` / `KMeans` / `CountVectorizer` / `manhattan_distances` / `LogisticRegression`; `fetch_openml`, `make_swiss_roll`; torch `normalize` / `cdist`; `vectormesh.VectorCache`; `SentenceTransformer.encode`; `transformers.pipeline`; goad `ProjectionPlot`, `ScreePlot`, `HeatmapPlot`, `FileHandler`; `notebooktester.param` voor snelle CI-runs
-
-## Vervallen of verplaatst
-
-- ⚠️ de analogie van een vectorruimte met het opruimen van een kamer (oude 6.2): staat in geen notebook en niet in de slides
-- ⚠️ de definitie van een vectorruimte passief kunnen volgen (oude 6.5): niet meer in het materiaal; de metric-helft (oude 6.6) zit in 6.8
-- ⚠️ curse of dimensionality (oude 6.3): alleen via de ruis-demo (6.12); de "grote getallen"-intro staat in de slides
-- `.apply()` met `pd.to_datetime` (oude 6.15): de tijd-bins van het oude 06.2 zijn vervallen (ze werden nergens gebruikt); `pd.to_datetime(..., unit="s")` komt nog wel voor
-- `@dataclass` (oude 6.16): verplaatst naar les 0 (00.1-classes)
-- de sentiment-pipeline (oude 6.17) is een korte afsluiter in 06.4, geen leerdoel op zichzelf
