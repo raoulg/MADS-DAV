@@ -1,6 +1,8 @@
-Notebooks: 05.1-relationships, 05.2-correlation, 05.3-covid-modelling, 05.4-covid-solution, 05.5-how-people-type
+# Lesson 5: Relationships, and what makes one believable
 
-De student begrijpt:
+Exported from the learn app. Edit the goals there, not here.
+
+## De student begrijpt
 
 5.1 dat een gefitte lijn een claim is over het soort relatie (recht, polynoom, lowess): lowess als beschrijving wanneer je de vorm niet kent, een polynoom als model zodra je die wél kent; en dat een log-log-fit een claim over ratio's is
 5.2 waarom je bij vijftien vergelijkingen ongeveer de helft van de tijd iets "significants" vindt als er niets is (1 − 0.95¹⁵), hoe je die basislijn meet door labels te schudden, en waarom gecorreleerde metrics minder dan vijftien kansen zijn (effectief aantal onafhankelijke metrics)
@@ -15,7 +17,7 @@ De student begrijpt:
 5.11 het verschil tussen een notebook en een script: kleine functies met expliciete inputs, geen lekkende variabelen, één stap opnieuw draaien, importeren, op een schema draaien; en dat een basisfunctie (linear, sinus, exponential, logistic) een claim is over de vorm die je verwacht, bevestigd doordat het residu krimpt
 5.20 dat een basisfunctie een claim is over de verwachte vorm (een logistische schakelaar zegt "de ratio draait"), en dat de parameters een bevinding zijn (de draai zit half maart) terwijl het mechanisme (vaccinatie) een aparte claim blijft die het model niet bewijst
 
-De student kan:
+## De student kan
 
 5.12 `RegPlot` gebruiken met `fit_reg`, `order` en `lowess`, met grijze punten en een gekleurde lijn; `scipy.stats.linregress` (ook op `np.log`) en `np.polyfit`
 5.13 een Welch-t-toets, gepaarde t-toets en tekentoets kiezen op basis van de eenheid en de vraag, en p-waarden op een log-as plotten met de lijn op 0.05
@@ -25,9 +27,3 @@ De student kan:
 5.17 typegewoontes meten als `RegexFeature`-stappen (smileys met en zonder neus, apostrofs, hoofdletters) en per auteur samenvatten in een heatmap; een `TransformBase`-stap schrijven die berichten tot blokken poolt (`BlockMessages`); twee modellen op dezelfde blokken racen (tf-idf op alle woorden versus tien gewoontes)
 5.18 een script met zes functies (`scripts/covid_pipeline.py`) lezen en de functies één voor één in een notebook aanroepen; een extra basisfunctie (sinus met periode 12) aan een lineair model toevoegen met `train_model`
 5.19 een bevinding opschrijven zoals hij gerapporteerd hoort te worden: n op het niveau van de claim, de effectgrootte, wat wél en niet getest is, zonder het woord "significant" als conclusie
-
-Python: `RegPlot`, `ScatterPlot`, `BarbellPlot`, `GroupedBarPlot(errorbar=...)`, `HistogramPlot` + `VerticalLine`, `HeatmapPlot`, `CorrelationHeatmap`, `Annotate`; `scipy.stats` `linregress` / `ttest_ind` / `ttest_rel` / `binomtest`; `np.polyfit`; sklearn `SGDRegressor`, `GridSearchCV`, `TfidfVectorizer`, `LogisticRegression`, `train_test_split`, `StandardScaler`; goad `Pipeline` met `Filter`, `FlagDates`, `GroupAgg(feature=...)`, `RegexFeature`, `CountValues`, `Head`; goad `models` (`linear_model`, `mse`, `train_model`), `ComparePlot`
-
-## Vervallen of verplaatst
-
-- het rubric-voorstel in `rubric-credibility-grid.md` verwijst naar de drie pijlers; dat is hier 5.5

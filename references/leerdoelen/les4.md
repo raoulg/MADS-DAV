@@ -1,4 +1,8 @@
-De student begrijpt:
+# Lesson 4: Distributions, a hypothesis about the process
+
+Exported from the learn app. Edit the goals there, not here.
+
+## De student begrijpt
 
 4.1 dat een verdeling een hypothese is over het proces dat de data maakte, en de drie redenen om er een te fitten in plaats van een gemiddelde te rapporteren: eerlijk samenvatten, bepalen wat ongewoon is, en twee situaties vergelijken
 4.2 zes families met het mechanisme erachter — normaal (sommen), lognormaal (producten), exponentieel (wachttijden bij een vaste rate), Poisson (tellingen bij een vaste rate), Weibull (time-to-failure), Pareto (rich-get-richer) — en herkent welk mechanisme bij een variabele in de eigen chat hoort
@@ -12,15 +16,10 @@ De student begrijpt:
 4.10 dat wat je kunt zien het effect gedeeld door de spreiding is, dat onzekerheid afneemt met het aantal onafhankelijke waarnemingen, en dat je aan de gewone dagen vooraf kunt aflezen of tien event-dagen de vraag kunnen beslissen
 4.11 de modelleerlus: model (vorm + verlies + `train_model`), residu, en een verdeling aan het residu fitten — een symmetrisch residu uit een plausibele familie zonder patroon in de tijd betekent stoppen; een residu met een vorm (stap, drift, bocht) is een vergeten mechanisme, en wannéér het begint is meestal de bevinding
 
-De student kan:
+## De student kan
 
 4.13 met `scipy.stats` families maken, samplen en de cdf gebruiken; met `np.log` transformeren
 4.14 met goad fitten en tonen: `DistributionRegistry` (en `register_distribution` voor een familie die niet meegeleverd wordt), `DistributionFitter(seed=...)`, `fit` / `fit_distribution`, `fit_table`, `FitResult` / `FailedFit`, `frozen_dist`; `HistogramPlot`, `DistPlot`, `PlotFits`, `QQPlot`, `ECDFPlot`, `NullPlot`
 4.15 een pipeline lezen die een tijdreeks klaarmaakt (`DiffValues`, `ShiftValues`, `SelectDataRange`, `RollingAvg`, `ZScaler`) en zeggen welke beslissing elke stap neemt
 4.16 een model schrijven als functie van twee inputs en vier parameters, trainen met startwaarden en bounds, en `ResidualPlot` / `ComparePlot(Date)` gebruiken om fit en residu te tonen
 4.17 de eigen chat splitsen op een bekend event (uit 03.3), berichten per dag en gaps binnen bursts aan beide kanten fitten, en het resultaat opschrijven als zin met parameters erin
-
-Python: 
-- `scipy.stats`, `np.log`, `np.linspace`;
-- pandas `resample`;
-- goad `analytics` / `distributions` / `models` / `dataprocessor`

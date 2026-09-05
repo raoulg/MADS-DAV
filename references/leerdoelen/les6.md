@@ -1,6 +1,8 @@
-Notebooks: 06.1-dimensionality_reduction, 06.2-modelling, 06.3-vectorspaces, 06.4-your-own-vectors
+# Lesson 6: High dimensional spaces
 
-De student begrijpt:
+Exported from the learn app. Edit the goals there, not here.
+
+## De student begrijpt
 
 6.1 de motivatie voor het embedden van data in een hoogdimensionale vectorruimte: een representatie waarin "dichtbij" "lijkt op" betekent, zodat je erin kunt zoeken, clusteren en een eigen model op kunt trainen; en dat het embedden losstaat van de analyse (een cache is vectoren plus een manifest, één keer berekend en gepubliceerd)
 6.2 wat PCA zoekt: de lijn met de meeste spreiding erlangs is precies de lijn waar de punten het dichtst bij liggen (Pythagoras), en dus de projectie die het minst verliest; de drie delen van een SVD (richtingen, singuliere waarden, posities) en de betekenis van orthogonaal, genormaliseerd en basis
@@ -15,7 +17,7 @@ De student begrijpt:
 6.11 dat een semantische embedding meet waarvoor hij getraind is — inhoud, niet gewoonte — en dat trigram-tellingen daardoor op auteurschap winnen van een sentence-embedding; kies het instrument bij de vraag, en race ze voor je kiest
 6.12 de curse of dimensionality voor zover de ruis-demo hem laat zien: in vijftig dimensies heeft elk punt buren, ook als er niets te vinden is
 
-De student kan:
+## De student kan
 
 6.13 `np.linalg.svd` en `sklearn` `PCA` toepassen, controleren dat ze hetzelfde geven (op een teken na), en `explained_variance_ratio_` met `ScreePlot` tonen
 6.14 `StandardScaler` toepassen vóór PCA en de loadings per component lezen als zin ("PC1 is grootte")
@@ -24,5 +26,3 @@ De student kan:
 6.17 een gepubliceerde stijlometrie-claim ("twee auteurs") langs het rooster van les 5 leggen: het bewijs benoemen, twee mechanismen die het plaatje allebei voorspellen, en opschrijven wat het zou beslissen
 6.18 voorberekende vectoren en labels van de hub laden (`VectorCache.from_hub`), cosinus als dot-product na normaliseren berekenen, en met torch een 1-NN-baseline schrijven
 6.19 met `sentence-transformers` embedden, `scripts.sessionize` (`fit_session_threshold`, `sessionize`, `merge_messages`) gebruiken, een self-retrieval-check schrijven, en een `transformers.pipeline` sentiment-model als korte afsluiter draaien (tabel, geen claim)
-
-Python: `numpy.linalg.svd`, sklearn `PCA` / `TSNE` / `StandardScaler` / `silhouette_score` / `KMeans` / `CountVectorizer` / `manhattan_distances` / `LogisticRegression`; `fetch_openml`, `make_swiss_roll`; torch `normalize` / `cdist`; `vectormesh.VectorCache`; `SentenceTransformer.encode`; `transformers.pipeline`; goad `ProjectionPlot`, `ScreePlot`, `HeatmapPlot`, `FileHandler`; `notebooktester.param` voor snelle CI-runs

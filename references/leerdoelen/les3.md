@@ -1,4 +1,8 @@
-De student begrijpt:
+# Lesson 3: Time, subtract the cycle, keep the residual
+
+Exported from the learn app. Edit the goals there, not here.
+
+## De student begrijpt
 
 3.1 dat "mensen slapen" niet een interessante plot is: het residu ten opzichte van normale verwachte patronen kan dat wel zijn.
 3.2 de afweging van een rolling window: raw en smoothed altijd op één as, en een window zo breed als de cyclus verwijdert de cyclus zelf in plaats van de ruis
@@ -11,19 +15,10 @@ De student begrijpt:
 3.9 het globale idee van een Fourier-transformatie (elk patroon als som van sinussen) en waarom meer componenten overfitten
 3.10 dat je in de eigen chat begint bij een event dat je kent, de verwachte impact opschrijft vóór je kijkt (hoeveel / wanneer / wie / hoe), en dan de ene plot bouwt die het zou laten zien — niet andersom
 
-De student kan:
+## De student kan
 
 3.11 met timestamps werken: `pd.to_datetime`, `.dt`-accessors, `resample("D")`, `date_range` + `reindex`, `rolling`
 3.12 een event-study bouwen als pipeline: `FlagDates` → `Filter` → `CountValues(normalize=True)` / `GroupAgg` + `Share(by=...)` → `SubtractBaseline`, en een eigen `TransformBase`-stap schrijven voor het model (`MeanOfDayShares`)
 3.13 een geïmporteerde pipeline uitbreiden met `.add(...)` (`BuildTimestamp`, `TimeFeatures`)
 3.14 small multiples per weekdag of per auteur maken met `FacetPlot`, en per-dag rijen met `errorbar=("ci", 95)` plotten
 3.15 een ACF plotten en de sterkste lag na de eerste stretch aflezen; `seasonal_decompose` draaien en het residu opnieuw op autocorrelatie testen
-
-Python: 
-- pandas `.dt`, `resample`, `reindex`, `rolling`, `pivot`; 
-- goad `TimeFeatures`, `FlagDates`, `Filter`, `CountValues`, `Share`, `GroupAgg`, `MapValues`, `SortValues`, `SubtractBaseline`, `RollingAvg`; 
-- goad `LinePlot`, `FacetPlot`, `HistogramPlot`, `GroupedBarPlot`, `HorizontalLine`, `VerticalDate`, `ACFPlot`, `DecomposePlot`;
--  `FileHandler` voor cachen van downloads; 
-- statsmodels `acf`, `seasonal_decompose`; 
-- `scipy.fft`; 
-- plotly `px.area`
