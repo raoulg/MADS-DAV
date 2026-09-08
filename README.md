@@ -10,6 +10,12 @@ https://raw.githubusercontent.com/raoulg/MADS-DAV/main/references/lab-setup.md
 
 It covers the same ground as the PDF, one step at a time, and it keeps track of where you are between sessions.
 
+The tools on your own machine (git, uv, VS Code, and the pre-commit hooks) have a guide of the same kind:
+
+```
+https://raw.githubusercontent.com/raoulg/MADS-DAV/main/references/tooling-setup.md
+```
+
 
 # Setup the virtual environment
 
@@ -20,7 +26,7 @@ Besides being the fastest manager out there, is also has a very robust developme
 1. Make sure you have `uv` installed.
 You can check this by typing `which uv` in your bash terminal. If that doesnt return a location but `uv not found` you need to install it: On Unix systems, you can use `curl -LsSf https://astral.sh/uv/install.sh | sh`, for Windows read the [uv documentation](https://docs.astral.sh/uv/getting-started/installation/)
 2. check if the `MADS-DAV` folder is already available cloned to the machine. If not, clone it yourself with the command `git clone https://github.com/raoulg/MADS-DAV.git`
-3. Navigate to the MADS-DAV folder where the `pyproject.toml` is located with `cd MADS-DAV` and run `uv sync --all-extras`. This should create a virtual environment (a `.venv` folder) and install all dependencies there.
+3. Navigate to the MADS-DAV folder where the `pyproject.toml` is located with `cd MADS-DAV` and run `uv sync`. This should create a virtual environment (a `.venv` folder) and install all dependencies there.
 4. Read through the [uv docs](https://docs.astral.sh/uv/guides/projects/) "working on projects" intro into `uv`
 
 ## use the course assistant

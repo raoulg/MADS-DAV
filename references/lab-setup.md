@@ -16,6 +16,10 @@ then follow the protocol below.
 > If the student was invited to a **SURF** research cloud VM instead of an Azure lab,
 > this document does not apply — send them to `references/00-SURF-lab-setup.pdf` and the
 > teacher.
+>
+> This document is about the VM. The tools on the student's own machine — git, uv,
+> the editor, and the pre-commit hooks — have their own guide,
+> `references/tooling-setup.md`, run the same way. Do that one after this one.
 
 ---
 
@@ -518,13 +522,12 @@ It is pre-installed on the VM. If it is genuinely missing:
 Then, in the folder holding `pyproject.toml`:
 
 ```bash
-uv sync --all-extras
+uv sync
 ```
 
 Worth a sentence of explanation, because most students arrive with conda or pip habits.
 `pyproject.toml` is a readable list of what this project needs; `uv sync` makes a `.venv`
-folder match that list exactly, and `--all-extras` includes the optional groups this
-course uses. Instead of `pip install x`, from now on: `uv add x` — which installs it *and*
+folder match that list exactly. Instead of `pip install x`, from now on: `uv add x` — which installs it *and*
 records it, so the environment is reproducible rather than remembered. Have them open
 `pyproject.toml` and look; it is short.
 

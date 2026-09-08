@@ -30,3 +30,9 @@ config.toml
 data/processed/**
 dev/
 .current_values.json
+# Per-student assistant memory and local hook overrides; never part of the course material.
+CLAUDE.local.md
+AGENTS.local.md
+.cursor/
+.lefthook-local.yml
+lefthook-local.yml

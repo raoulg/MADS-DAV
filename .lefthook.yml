@@ -14,7 +14,7 @@ pre-commit:
       files: git ls-files
       glob: '*.{py, ipynb}'
       run: uv run ruff check {staged_files} --fix
-    mypy:
+    ty:
       glob: '*.py'
       run: uv run ty check {staged_files}
     lychee:
