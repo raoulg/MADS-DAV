@@ -12,7 +12,7 @@ https://raw.githubusercontent.com/raoulg/MADS-DAV/main/references/tooling-setup.
 If you are the assistant: you are coaching one student through a one-time installation
 of the tools used in the course *Data Analysis & Visualisation* (and the Machine
 Learning course that follows it): a terminal, git, uv, an editor, the course repository,
-and the git hooks that guard code quality. Read this whole file now, then follow the
+the git hooks that guard code quality, and the two coaching servers. Read this whole file now, then follow the
 protocol below.
 
 > This document is about the tools on **the machine the student writes code on**. If
@@ -46,7 +46,7 @@ the same message as a checkpoint.
 
 ### The familiarity question
 
-Every milestone starts with a version of *"Next: milestone 3 of 6, installing uv. Do you
+Every milestone starts with a version of *"Next: milestone 3 of 7, installing uv. Do you
 know what uv is?"*
 
 - **They say yes** → one line to confirm their picture is right, then *"OK, I will
@@ -149,6 +149,7 @@ Track these. Each is a section below.
 - [ ] **M4 — An editor.** VS Code with Python, Jupyter, Git Graph; or their own choice with SSH.
 - [ ] **M5 — The course repo.** Cloned, own branch, `uv sync`, a cell runs. `main` untouched.
 - [ ] **M6 — Lefthook.** Hooks installed; each hook explained; one commit made through them.
+- [ ] **M7 — The coaches.** `goad` and `codestyle` connected, and they know what a coach will and will not do.
 
 Roughly an hour if nothing goes wrong. Tell the student that, and tell them most of it
 is once, ever.
@@ -563,7 +564,7 @@ question, and do not install anything until the student has heard what the hooks
 
 ### Ask first
 
-*"Milestone 6 of 6: lefthook. Do you know what a git hook is?"*
+*"Milestone 6 of 7: lefthook. Do you know what a git hook is?"*
 
 For a no: a hook is a script git runs by itself at a certain moment — here, right
 before every commit. Lefthook is a small program that reads a list of such scripts
@@ -726,7 +727,7 @@ following the rename rule from M5 never does. Say it exists; move on.
 
 ### Install
 
-Lefthook is a global tool, not a project dependency (the README says the same):
+Lefthook is a global tool, not a project dependency:
 
 ```bash
 uv tool install lefthook
@@ -788,7 +789,93 @@ file: an image, a parquet, a report.*
 
 **CHECKPOINT.** M6 is done when `lefthook version` answers, `.git/hooks/pre-commit`
 mentions lefthook, the demo commit went through the hooks, and the memory file holds the
-lines above. Tick the last box and tell the student the setup is finished.
+lines above. Tick the box.
+
+---
+
+## M7 — The coaches
+
+### Ask first
+
+*"Last one, 7 of 7: the coaching servers. Do you know what an MCP server is?"*
+
+For a no: an MCP server is a small program that gives an assistant tools it does not
+have by itself. This repo ships two, written by the teacher: `goad` (*is my analysis any
+good?*) holds the course's analysis method, `codestyle` (*is my code any good?*) holds
+the code guidelines. Both are coaches, not oracles: they ask questions, wait for the
+student's own words, and only then write code. `CLAUDE.md` in the repo root spells out
+that contract.
+
+The effect they will notice: their assistant will sometimes decline to just write the
+plot and ask them a question instead. That is the tool working. The whole course is
+graded on whether they can defend every claim, plot and line without the assistant in
+the room, and the coaches are how the assistant helps with that instead of undermining it.
+
+### How it works
+
+Open `.mcp.json` together. Each entry is one command:
+
+```
+uv run --no-project https://raw.githubusercontent.com/raoulg/<repo>/<tag>/<script>.py
+```
+
+Read it out: uv downloads a single Python script from GitHub at a fixed version, builds
+an isolated environment for that script's own dependencies (the first start takes a
+minute; after that it is cached), and runs it. Nothing lands in the project's `.venv`,
+nothing to `uv sync`, nothing to update by hand — the teacher bumps the tag in
+`.mcp.json` and the next `git pull` brings it. This is also why M3 mattered: no uv, no
+coaches.
+
+### Connect
+
+- **Claude Code**: open a terminal in the `MADS-DAV` folder and start `claude`. It sees
+  `.mcp.json`, asks whether to use the project's MCP servers, and the student approves
+  once. That is all.
+- **Cursor**: the copy to `.cursor/mcp.json` from M5. Settings → MCP shows both servers
+  with a green dot once they have started.
+- **Anything else**: `docs/setup.md` has the two `claude mcp add` lines; every MCP client has
+  an equivalent config with the same command and environment variable.
+
+### Verify (you run this)
+
+In Claude Code, from the repo folder:
+
+```bash
+claude mcp list
+```
+
+Both `goad` and `codestyle` must say connected. If you are the assistant running inside
+the session, prove it instead: call one tool from each server (list the goad concepts,
+list the codestyle topics) and tell the student one title from each.
+
+A server that fails to connect is almost always diagnosable in ten seconds by running
+its command by hand: copy the `uv run --no-project ...` line out of `.mcp.json`, prefix
+the environment variable, run it in the terminal. A Python traceback in the first lines
+is the actual error; a silent wait means it started fine and is waiting for a client.
+
+### Then ask
+
+*"What will the coach do when you ask your assistant to make the plot for you?"*
+
+Accept: *ask me questions first / make me say what the plot should show.* If they say
+"make the plot", point at `CLAUDE.md` and try again.
+
+### Optional: the course site
+
+https://learn.pttrn.io holds the lessons, learning goals, rubric and the student's own
+feedback, and has a student MCP server so an assistant can read them. The student
+connects it themselves: sign in, https://learn.pttrn.io/link, run the command shown.
+It contains a personal token — **a password, in effect: not into a shared chat, not into
+a repository, not into the memory file.**
+
+**Remember** (memory file):
+
+- `goad` and `codestyle` from `.mcp.json` are the course coaches. Use them for analysis
+  and code questions; they ask first, and the student must answer in their own words.
+- The `learn` token, if connected, is a credential. Never write it anywhere in the repo.
+
+**CHECKPOINT.** M7 is done when both servers are connected and the student answered
+the question. Tick the last box and tell the student the setup is finished.
 
 ---
 
@@ -799,19 +886,6 @@ lines above. Tick the last box and tell the student the setup is finished.
 Open the memory file and read it through together. Every line came from a milestone
 they did. If a line surprises them, that milestone needs another two sentences now, not
 in week four.
-
-### Connect the coaching servers
-
-The repo ships `.mcp.json` with two MCP servers, `goad` (is my analysis any good?) and
-`codestyle` (is my code any good?). In Claude Code, opening the folder is enough — it
-offers to connect them and the student approves once. Cursor users copied the file in M5.
-`CLAUDE.md` in the repo root says what the servers expect: they coach, they do not
-answer, and they will not write code before the student has answered their questions.
-
-Optionally, https://learn.pttrn.io holds the lessons, learning goals and rubric and has
-a student MCP server. The student connects it themselves via https://learn.pttrn.io/link.
-It contains a personal token — **a password, in effect: not into a shared chat, not into
-a repository.**
 
 ### Git practice, matched to how they learn
 
@@ -876,6 +950,7 @@ course. Do not do that now; do tell them it is five commands and you know them.
 | Merge conflict in a `01.x-...ipynb` after `git merge main` | They edited the teacher's file in place. Resolve, then rename their copy |
 | `code: command not found` (Windows) | VS Code installed without "Add to PATH"; reinstall or add `.../Microsoft VS Code/bin` |
 | Git Bash has no `ssh` | Settings → Apps → Optional features → OpenSSH Client |
+| A coach says "failed to connect" | Run its `uv run --no-project ...` line from `.mcp.json` by hand; the traceback is the error. First start is slow, that is the env build |
 
 If something falls outside this table, do not guess in a loop. Read the actual error,
 say what you think it means, and if two attempts do not fix it, tell the student to mail
