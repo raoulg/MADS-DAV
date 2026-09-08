@@ -7,7 +7,7 @@
         "uv run --no-project https://raw.githubusercontent.com/raoulg/goad_toolkit/$GOAD_REF/goad_mcp.py"
       ],
       "env": {
-        "GOAD_REF": "v0.2.16.1"
+        "GOAD_REF": "stable"
       }
     },
     "codestyle": {
@@ -17,7 +17,7 @@
         "uv run --no-project https://raw.githubusercontent.com/raoulg/codestyle/$CODESTYLE_REF/codestyle_mcp.py"
       ],
       "env": {
-        "CODESTYLE_REF": "v0.2.1"
+        "CODESTYLE_REF": "stable"
       }
     }
   }

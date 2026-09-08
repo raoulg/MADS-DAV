@@ -121,21 +121,21 @@ present; that is what CI checks on every push.
 
 `.mcp.json` registers two MCP servers: `goad` (is my analysis any good?) and
 `codestyle` (is my code any good?). Each is one command, `uv run --no-project` on a
-script fetched from GitHub at a pinned tag, so there is nothing to install. See
+script fetched from GitHub at the `stable` tag, so there is nothing to install and
+nothing to update: the tag moves with each release. See
 [CLAUDE.md](../CLAUDE.md) for what they expect of you: they coach, they do not answer.
 
 - **Claude Code**: open the folder; it offers to connect the project's servers and you
   approve once. `claude mcp list` shows both as connected.
 - **Cursor**: `mkdir .cursor && cp .mcp.json .cursor/mcp.json`.
 - **Other MCP clients**: register the two commands from `.mcp.json` by hand. On a
-  client that speaks the `claude mcp add` syntax (the tags below are the ones
-  `.mcp.json` pins; when that file moves on, so should these):
+  client that speaks the `claude mcp add` syntax:
 
   ```bash
-  claude mcp add goad -e GOAD_REF=v0.2.16.1 -- \
+  claude mcp add goad -e GOAD_REF=stable -- \
     sh -c 'uv run --no-project https://raw.githubusercontent.com/raoulg/goad_toolkit/$GOAD_REF/goad_mcp.py'
 
-  claude mcp add codestyle -e CODESTYLE_REF=v0.2.1 -- \
+  claude mcp add codestyle -e CODESTYLE_REF=stable -- \
     sh -c 'uv run --no-project https://raw.githubusercontent.com/raoulg/codestyle/$CODESTYLE_REF/codestyle_mcp.py'
   ```
 

@@ -819,12 +819,12 @@ Open `.mcp.json` together. Each entry is one command:
 uv run --no-project https://raw.githubusercontent.com/raoulg/<repo>/<tag>/<script>.py
 ```
 
-Read it out: uv downloads a single Python script from GitHub at a fixed version, builds
+Read it out: uv downloads a single Python script from GitHub at the `stable` tag, builds
 an isolated environment for that script's own dependencies (the first start takes a
 minute; after that it is cached), and runs it. Nothing lands in the project's `.venv`,
-nothing to `uv sync`, nothing to update by hand — the teacher bumps the tag in
-`.mcp.json` and the next `git pull` brings it. This is also why M3 mattered: no uv, no
-coaches.
+nothing to `uv sync`, nothing to update by hand — `stable` moves to each new release,
+and the next time the assistant starts it runs the newest one. This is also why M3
+mattered: no uv, no coaches.
 
 ### Connect
 
