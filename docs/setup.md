@@ -127,15 +127,15 @@ script fetched from GitHub at a pinned tag, so there is nothing to install. See
 - **Claude Code**: open the folder; it offers to connect the project's servers and you
   approve once. `claude mcp list` shows both as connected.
 - **Cursor**: `mkdir .cursor && cp .mcp.json .cursor/mcp.json`.
-- **Other MCP clients**: register the two commands from `.mcp.json` by hand, with the
-  `GOAD_REF` and `CODESTYLE_REF` values it pins. On a client that speaks the `claude
-  mcp add` syntax:
+- **Other MCP clients**: register the two commands from `.mcp.json` by hand. On a
+  client that speaks the `claude mcp add` syntax (the tags below are the ones
+  `.mcp.json` pins; when that file moves on, so should these):
 
   ```bash
-  claude mcp add goad -e GOAD_REF=<tag from .mcp.json> -- \
+  claude mcp add goad -e GOAD_REF=v0.2.16.1 -- \
     sh -c 'uv run --no-project https://raw.githubusercontent.com/raoulg/goad_toolkit/$GOAD_REF/goad_mcp.py'
 
-  claude mcp add codestyle -e CODESTYLE_REF=<tag from .mcp.json> -- \
+  claude mcp add codestyle -e CODESTYLE_REF=v0.2.1 -- \
     sh -c 'uv run --no-project https://raw.githubusercontent.com/raoulg/codestyle/$CODESTYLE_REF/codestyle_mcp.py'
   ```
 

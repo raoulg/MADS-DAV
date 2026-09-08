@@ -17,7 +17,7 @@
         "uv run --no-project https://raw.githubusercontent.com/raoulg/codestyle/$CODESTYLE_REF/codestyle_mcp.py"
       ],
       "env": {
-        "CODESTYLE_REF": "v0.2.0"
+        "CODESTYLE_REF": "v0.2.1"
       }
     }
   }
