@@ -26,11 +26,3 @@ Two rules that matter from day one, whichever route you take:
 
 - **Work on your own branch, never on `main`**, and copy a notebook under a new name before editing it. `main` receives new material every week; a renamed file never conflicts with it.
 - **Python and packages come from uv only.** No pip, no conda, no separately installed Python.
-
-# Code style
-
-The course grades code that can be maintained, not only code that runs. The [codestyle](https://github.com/raoulg/codestyle) repository is the reference, and the `codestyle` MCP server coaches against it. By the end of the course you should have everything up to and including "make a proper module" in hand.
-
-# Using this code in your own work
-
-Do not copy files out of this repository. The package is on [PyPI](https://pypi.org/project/wa-analyzer/): `uv add wa-analyzer` installs it into your own project and records the dependency.
