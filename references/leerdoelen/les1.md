@@ -8,7 +8,7 @@ Exported from the learn app. Edit the goals there, not here.
 1.2 dat "wat is één rij?" de eerste vraag van elke analyse is, en dat de vraag bepaalt welke eenheid een rij moet zijn (een dag, een bericht, een persoon)
 1.4 waarom je na een parse eerst kijkt naar wat er níet matchte, de restcategorieën benoemt en telt, en beslist welke je repareert en welke je laat staan
 1.5 de motivatie achter een virtual environment en een projectopzet (`src/`, `data/raw` en `data/processed`, `pyproject.toml`, `notebooks/`, `scripts/`, `tools/`), en kent de vraag die bepaalt waar code hoort: wie anders zou dit nog willen gebruiken (`goad_toolkit` / `wa_analyzer` / `scripts/`)
-1.6 dat een onverwacht null-resultaat, eerlijk begrensd, ook een resultaat is als het onverwachts is — en dat een drempel bijstellen tot je een effect ziet dat niet is
+1.6 dat een null-resultaat, eerlijk begrensd, een volwaardig resultaat is — en dat een drempel bijstellen tot het verhaal klopt dat niet is
 
 ## De student kan
 
