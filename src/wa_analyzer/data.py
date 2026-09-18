@@ -119,9 +119,7 @@ def load_showcase(name: str) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-def load_own_chat(
-    filename: Optional[str] = None, verbose: bool = True
-) -> pd.DataFrame:
+def load_own_chat(filename: Optional[str] = None, verbose: bool = True) -> pd.DataFrame:
     """Load your own preprocessed chat.
 
     Reads `config.toml` for the `current` key — the parquet file written by notebook 01.3 —
@@ -135,7 +133,7 @@ def load_own_chat(
         verbose: log a success line when the chat loads.
 
     Returns:
-        Your chat as a DataFrame.
+        Your chat as a DataFrame, with `timestamp` as a UTC-labelled datetime column.
 
     Raises:
         FileNotFoundError: when there is nothing to load yet, saying which setup step is
@@ -175,6 +173,11 @@ def load_own_chat(
         if datafile.suffix in {".parq", ".parquet"}
         else pd.read_csv(datafile)
     )
+    if "timestamp" in data.columns:
+        # A csv, and a parquet written from one, carry the timestamp as text. Every
+        # lesson from 03 onwards resamples, flags and subtracts on it, so the loader
+        # hands out a UTC-labelled datetime column whatever the file stored.
+        data["timestamp"] = pd.to_datetime(data["timestamp"], utc=True)
     if verbose:
         logger.success(
             f"Loaded {len(data):,} of your own messages from {datafile.name}"
