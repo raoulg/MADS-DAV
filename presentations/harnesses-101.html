@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Harnesses 101</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root{
+  --paper:#F2F3EF; --ink:#15181C; --muted:#67716C; --rule:#D6D9D1;
+  --raise:#E8EAE3; --sink:#E2E5DC;
+  --pass:#1C6B48; --warn:#A3402F; --accent:#1C6B48; --brand-dot:#e2481f;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#101311; --ink:#E7EBE3; --muted:#8C958E; --rule:#272C27;
+    --raise:#181C19; --sink:#1C211D;
+    --pass:#5FC08C; --warn:#E2917E; --accent:#5FC08C; --brand-dot:#f2643c;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#101311; --ink:#E7EBE3; --muted:#8C958E; --rule:#272C27;
+  --raise:#181C19; --sink:#1C211D;
+  --pass:#5FC08C; --warn:#E2917E; --accent:#5FC08C; --brand-dot:#f2643c;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);margin:0}
+
+.wrap{max-width:1360px;margin:0 auto;padding-block:20px;padding-left:16px;padding-right:16px}
+
+.slide{
+  position:relative;
+  container-type:size;
+  aspect-ratio:16/9;
+  background:var(--paper);
+  border:1px solid var(--rule);
+  border-radius:2px;
+  overflow:hidden;
+}
+.pad{
+  height:100%;width:100%;
+  font-size:1.6cqi;
+  padding:4.2cqi 5cqi 4.6cqi;
+  display:flex;flex-direction:column;
+}
+/* ---- type scale (em on .pad font-size) ---- */
+h1{font-family:var(--display);font-weight:800;font-size:4.6em;line-height:.96;letter-spacing:-.03em;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:800;font-size:2.35em;line-height:1.03;letter-spacing:-.022em;margin:0 0 .55em;text-wrap:balance}
+h3{font-family:var(--display);font-weight:700;font-size:1.05em;line-height:1.2;letter-spacing:-.01em;margin:0 0 .35em}
+p{margin:0 0 .75em;line-height:1.45}
+.lede{font-size:1.35em;line-height:1.35;max-width:30ch}
+.eyebrow{
+  flex:0 0 auto;
+  font-family:var(--mono);font-size:.78em;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
+  display:flex;gap:1.1em;align-items:baseline;margin-bottom:auto
+}
+.eyebrow .act{color:var(--accent)}
+.foot{flex:0 0 auto;margin-top:auto;padding-top:1.4em;border-top:1px solid var(--rule);
+  font-family:var(--mono);font-size:.72em;color:var(--muted);display:flex;align-items:center;
+  justify-content:space-between;gap:1em}
+.foot .brand{display:flex;align-items:center;gap:.85em}
+.mark{height:2.6em;width:auto;display:block;color:var(--ink);opacity:.72;margin-block:-.85em}
+.mark .dot{fill:var(--brand-dot)}
+@media print{.mark{opacity:.85}}
+.foot a{color:var(--muted)}
+.body{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
+code{font-family:var(--mono);font-size:.88em;background:var(--sink);padding:.08em .32em;border-radius:2px}
+.body.top{justify-content:flex-start}
+
+/* ---- components ---- */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:3.4cqi;align-items:start}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:2.6cqi;align-items:start}
+
+ol.num{list-style:none;counter-reset:n;margin:0;padding:0;display:flex;flex-direction:column;gap:.72em}
+ol.num li{counter-increment:n;position:relative;padding-left:3.1em;line-height:1.35}
+ol.num li::before{
+  content:counter(n,decimal-leading-zero);position:absolute;left:0;top:.1em;
+  font-family:var(--mono);font-weight:700;font-size:.85em;color:var(--accent);
+  letter-spacing:.02em}
+ol.num b{font-weight:600}
+
+ul.plain{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.62em}
+ul.plain li{line-height:1.38;padding-left:1.15em;position:relative}
+ul.plain li::before{content:"";position:absolute;left:0;top:.62em;width:.45em;height:.45em;background:var(--accent)}
+
+.term{
+  font-family:var(--mono);font-size:.78em;line-height:1.55;
+  background:var(--sink);border-left:.28em solid var(--rule);
+  padding:1em 1.2em;white-space:pre;overflow-x:auto}
+.term code{background:none;padding:0}
+.term .c{color:var(--muted)}
+.term .g{color:var(--pass)}
+.term .r{color:var(--warn)}
+.term.good{border-left-color:var(--pass)}
+.term.bad{border-left-color:var(--warn)}
+
+.quote{border-left:.24em solid var(--accent);padding-left:1.1em;margin:.2em 0}
+.quote p{font-size:1.12em;line-height:1.35;font-style:italic;margin-bottom:.4em}
+.quote cite{font-family:var(--mono);font-size:.74em;font-style:normal;color:var(--muted);letter-spacing:.01em}
+
+table{width:100%;border-collapse:collapse;font-size:.95em}
+th,td{text-align:left;padding:.62em .8em;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.3}
+thead th{font-family:var(--mono);font-size:.76em;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;border-bottom-width:2px}
+td.k{font-weight:600;width:20%}
+td.chat{color:var(--muted);width:38%}
+td.harn{color:var(--ink)}
+tbody tr:last-child td{border-bottom:none}
+
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:.55em 1.6em}
+.tool{display:grid;grid-template-columns:1fr auto;gap:.6em;align-items:baseline;
+  border-bottom:1px solid var(--rule);padding-bottom:.4em}
+.tool a{font-weight:600;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--accent)}
+.tool span{font-family:var(--mono);font-size:.68em;color:var(--muted);white-space:nowrap}
+.grouplabel{font-family:var(--mono);font-size:.74em;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);margin:0 0 .7em}
+
+.tiers{display:flex;flex-direction:column;gap:.5em}
+.tier{display:grid;grid-template-columns:9.2em 1fr;gap:1.3em;align-items:start;
+  padding:.7em 0;border-top:1px solid var(--rule)}
+.tier.lead{border-top:none;background:var(--sink);border-left:.3em solid var(--accent);padding:.95em 1.2em}
+.tier .tl{font-family:var(--mono);font-size:.71em;font-weight:700;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--muted);padding-top:.32em;line-height:1.4}
+.tier.lead .tl{color:var(--accent)}
+.tier p{margin:0 0 .3em;line-height:1.36}
+.tier p:last-child{margin-bottom:0}
+.tier .nm{font-weight:600}
+.note{font-size:.84em;color:var(--muted);line-height:1.4;max-width:78ch}
+.badge{font-family:var(--mono);font-size:.68em;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--warn);border:1px solid var(--warn);
+  padding:.14em .5em;border-radius:2px;white-space:nowrap}
+
+.srcs{columns:2;column-gap:3.4cqi;font-size:.82em;line-height:1.5}
+.srcs p{break-inside:avoid;margin:0 0 .5em}
+.srcs a{color:var(--ink)}
+a{color:var(--accent)}
+
+svg{display:block;width:100%;height:auto}
+svg text{font-family:var(--body);fill:var(--ink)}
+svg .lbl{font-family:var(--mono);font-weight:700;letter-spacing:.09em}
+svg .sub{fill:var(--muted)}
+
+/* ---- title slide ---- */
+.title .pad{justify-content:flex-end}
+.rulebar{height:.55em;background:var(--accent);width:14em;margin-bottom:1.4em}
+
+/* ---- deck chrome ---- */
+.bar{
+  position:sticky;bottom:0;z-index:5;
+  display:flex;align-items:center;gap:.9rem;
+  padding:.7rem 0 calc(.7rem + env(safe-area-inset-bottom,0px));
+  background:var(--paper);border-top:1px solid var(--rule);margin-top:14px}
+.bar button{
+  font-family:var(--mono);font-size:.78rem;font-weight:700;letter-spacing:.06em;
+  background:var(--raise);color:var(--ink);border:1px solid var(--rule);
+  padding:.45rem .9rem;border-radius:2px;cursor:pointer}
+.bar button:hover{border-color:var(--accent)}
+.bar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.count{font-family:var(--mono);font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.rail{flex:1;height:2px;background:var(--rule);position:relative}
+.rail i{position:absolute;inset:0 auto 0 0;background:var(--accent);display:block}
+.hint{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+
+@media (min-width:760px){
+  .slide{display:none}
+  .slide.on{display:block}
+}
+@media (max-width:759px){
+  .slide{container-type:normal;aspect-ratio:auto;margin-bottom:14px}
+  .pad{font-size:15px;padding:24px 20px 26px}
+  h1{font-size:2.6em}
+  h2{font-size:1.65em}
+  .cols,.cols3,.tools,.srcs{grid-template-columns:1fr;columns:1;display:grid;gap:1.4em}
+  .term{white-space:pre-wrap}
+  .bar{display:none}
+  table{font-size:.9em}
+  td.k,td.chat{width:auto}
+}
+@media print{
+  :root{--paper:#fff;--ink:#000;--muted:#555;--rule:#bbb;--raise:#f0f0f0;--sink:#f4f4f2}
+  @page{size:1280px 720px;margin:0}
+  .wrap{max-width:none;padding:0}
+  .bar{display:none}
+  .slide{display:block!important;border:none;break-after:page;break-inside:avoid;width:100%}
+  .slide:last-child{break-after:auto}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+ <symbol id="pttrn" viewBox="130 270 660 500">
+  <g fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+   <path d="M180 740 L180 480 A50 50 0 0 1 230 430 L648 430 A50 50 0 0 1 698 480 L698 600"/>
+   <path d="M280 300 L280 550 A50 50 0 0 0 330 600"/>
+   <path d="M380 300 L380 550 A50 50 0 0 0 430 600"/>
+   <path d="M480 600 L480 480 A50 50 0 0 1 530 430"/>
+   <path d="M598 600 L598 480 A50 50 0 0 1 648 430"/>
+  </g>
+  <circle cx="230" cy="520" r="11" class="dot"/>
+  <circle cx="430" cy="520" r="11" class="dot"/>
+ </symbol>
+</svg>
+
+<div class="deck" id="deck">
+
+<!-- 1 -->
+<section class="slide title on">
+ <div class="pad">
+  <div class="eyebrow"><span>MADS-DAV</span><span>Data Analysis &amp; Visualisation</span></div>
+  <div class="rulebar"></div>
+  <h1>Harnesses&nbsp;101</h1>
+  <p class="lede" style="margin-top:.7em">Right now, you are the harness. This is what to replace yourself with — and what you still have to do yourself.</p>
+  <div class="foot"><span>pttrn — for Hogeschool Utrecht</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">01 — Problem</span><span>the loop you're in now</span></div>
+  <div class="body">
+   <h2>You are a very slow USB cable</h2>
+   <div class="cols">
+    <div class="term"><span class="c"># the loop, as actually performed</span>
+1  open the chat tab
+2  describe the bug in prose
+3  paste 40 lines of a 900-line file
+4  read answer, copy the code block
+5  paste into notebook, run it
+6  <span class="r">it fails</span>
+7  copy the traceback back into the tab
+8  <span class="c">goto 4</span></div>
+    <div>
+     <p>Every arrow in that loop is a human being moving text between two windows.</p>
+     <p>The model never touched your repository. It never ran your code. It never saw the traceback unless you carried it. And the moment you closed the tab, all of it was gone.</p>
+     <p class="note">This is not a bad way to use an LLM. It is just an extremely limited one — and it is the only one many of you have tried.</p>
+    </div>
+   </div>
+  </div>
+  <div class="foot"><span>01 / Problem</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">01 — Problem</span><span>five things that loop cannot do</span></div>
+  <div class="body">
+   <div class="cols" style="grid-template-columns:1.25fr 1fr">
+    <div>
+     <h2>What copy–paste structurally can't reach</h2>
+     <ol class="num">
+      <li><b>See your repo.</b> It has 40 lines out of 900. The rest it reconstructs from the average of the internet.</li>
+      <li><b>Run anything.</b> It cannot execute your code, so it cannot know whether the answer works.</li>
+      <li><b>Close its own loop.</b> The traceback only reaches it if you carry it there.</li>
+      <li><b>Remember.</b> No branch, no conventions, no <code>pyproject.toml</code>, no last week.</li>
+      <li><b>Be wrong cheaply.</b> Each wrong guess costs you a full paste–run–read cycle.</li>
+     </ol>
+    </div>
+    <div class="quote">
+     <p>“Claude stops when the work looks done. Without a check it can run, ‘looks done’ is the only signal available, and you become the verification loop.”</p>
+     <cite>Anthropic — Claude Code best practices</cite>
+    </div>
+   </div>
+  </div>
+  <div class="foot"><span>02 / Problem</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">01 — Problem</span><span>the failure mode that bites data analysts</span></div>
+  <div class="body">
+   <div class="cols">
+    <div>
+     <h2>“It ran” is not evidence</h2>
+     <p>A hallucinated method name explodes on the first execution. You will catch that one.</p>
+     <p>What you will not catch is code that runs perfectly and returns a <i>plausible</i> number: the wrong join key, the <code>groupby</code> that silently drops the nulls, the axis limit that flatters the result, the resample that shifts everything by one day.</p>
+     <p class="note">In this course the deliverable is a claim about data. A chart that is confidently wrong is worse than a crash — a crash at least tells you.</p>
+    </div>
+    <div>
+     <div class="quote">
+      <p>“You should never trust any piece of code until you've seen it work with your own eye — or, even better, seen it fail and then fixed it.”</p>
+      <cite>Simon Willison — Hallucinations in code</cite>
+     </div>
+     <div class="term bad" style="margin-top:1.4em"><span class="c"># the crash you catch</span>
+<span class="r">AttributeError</span>: 'DataFrame' has no
+attribute 'groupby_time'
+
+<span class="c"># the one you don't</span>
+df.merge(other, on='id')   <span class="c"># 12,004 rows</span>
+<span class="g">→ silently drops 3,118 unmatched rows</span></div>
+    </div>
+   </div>
+  </div>
+  <div class="foot"><span>03 / Problem</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">02 — Solution</span><span>the definition</span></div>
+  <div class="body">
+   <h2>Agent = Model + Harness</h2>
+   <div class="cols" style="grid-template-columns:1.3fr 1fr">
+    <div>
+     <p class="lede" style="max-width:38ch">A language model, by itself, only produces text.</p>
+     <p>The <b>harness</b> is everything built around it that turns text into action: the files it may read, the shell it may run, the tools it may call, the memory that survives the session, and the loop that decides whether to stop or try again.</p>
+     <p class="note">Vocabulary warning: some sources split “scaffold” (what the model sees) from “harness” (the loop that executes). Most use the two interchangeably. The concept is stable; the word is not.</p>
+    </div>
+    <div class="quote">
+     <p>“A decent model with a great harness beats a great model with a bad harness.”</p>
+     <cite>Addy Osmani — Agent harness engineering</cite>
+    </div>
+   </div>
+  </div>
+  <div class="foot"><span>04 / Solution</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">02 — Solution</span><span>what is in the box</span></div>
+  <div class="body">
+   <h2>Five parts, in every harness</h2>
+   <svg viewBox="0 0 1000 300" role="img" aria-label="Diagram: a model feeds into a harness made of context, tools, memory, control loop and quality gates, which produces working code in your repository.">
+    <rect x="20" y="70" width="960" height="130" fill="none" stroke="var(--accent)" stroke-width="2"/>
+    <text class="lbl" x="34" y="62" font-size="15" fill="var(--accent)">HARNESS</text>
+    <g font-size="17" font-weight="700">
+      <rect x="44" y="96" width="166" height="78" fill="var(--sink)" stroke="var(--rule)"/>
+      <text x="127" y="128" text-anchor="middle">Context</text>
+      <text class="sub" x="127" y="150" text-anchor="middle" font-size="12.5" font-weight="400">right files, right time</text>
+
+      <rect x="230" y="96" width="166" height="78" fill="var(--sink)" stroke="var(--rule)"/>
+      <text x="313" y="128" text-anchor="middle">Tools</text>
+      <text class="sub" x="313" y="150" text-anchor="middle" font-size="12.5" font-weight="400">shell, git, MCP</text>
+
+      <rect x="416" y="96" width="166" height="78" fill="var(--sink)" stroke="var(--rule)"/>
+      <text x="499" y="128" text-anchor="middle">Memory</text>
+      <text class="sub" x="499" y="150" text-anchor="middle" font-size="12.5" font-weight="400">survives the session</text>
+
+      <rect x="602" y="96" width="166" height="78" fill="var(--sink)" stroke="var(--rule)"/>
+      <text x="685" y="128" text-anchor="middle">Control loop</text>
+      <text class="sub" x="685" y="150" text-anchor="middle" font-size="12.5" font-weight="400">plan · act · observe</text>
+
+      <rect x="788" y="96" width="166" height="78" fill="var(--sink)" stroke="var(--pass)" stroke-width="2"/>
+      <text x="871" y="128" text-anchor="middle">Quality gates</text>
+      <text class="sub" x="871" y="150" text-anchor="middle" font-size="12.5" font-weight="400">tests, linters, review</text>
+    </g>
+    <g stroke="var(--muted)" stroke-width="1.5" fill="none">
+      <path d="M210 135 h20"/><path d="M396 135 h20"/><path d="M582 135 h20"/><path d="M768 135 h20"/>
+    </g>
+    <g fill="var(--muted)">
+      <polygon points="230,135 222,131 222,139"/><polygon points="416,135 408,131 408,139"/>
+      <polygon points="602,135 594,131 594,139"/><polygon points="788,135 780,131 780,139"/>
+    </g>
+    <rect x="404" y="240" width="192" height="46" fill="none" stroke="var(--rule)" stroke-width="1.5"/>
+    <text x="500" y="269" text-anchor="middle" font-size="16" font-weight="700">the model</text>
+    <path d="M500 240 V206" stroke="var(--muted)" stroke-width="1.5" fill="none"/>
+    <polygon points="500,198 494,208 506,208" fill="var(--muted)"/>
+    <path d="M871 96 V48" stroke="var(--pass)" stroke-width="1.5" fill="none"/>
+    <polygon points="871,40 865,50 877,50" fill="var(--pass)"/>
+    <text x="871" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="var(--pass)">working code, in your repo</text>
+   </svg>
+   <p class="note" style="margin-top:1.1em">Two independent explainers — <a href="https://sundaylettersfromsam.substack.com/p/what-is-a-harness-and-why-do-i-care">Sam Schillace's</a> and <a href="https://pinggy.io/blog/best_ai_harnesses_to_supercharge_llm_models/">Pinggy's</a> — arrive at this same decomposition from different directions. That convergence is why it is worth memorising.</p>
+  </div>
+  <div class="foot"><span>05 / Solution</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">02 — Solution</span><span>the control loop</span></div>
+  <div class="body">
+   <h2>The loop closes without you in it</h2>
+   <div class="cols" style="grid-template-columns:.95fr 1.05fr;align-items:center">
+    <svg viewBox="0 0 420 260" role="img" aria-label="Diagram: plan, act, observe and refine form a cycle, gated by a test that must pass before the agent reports done.">
+     <g font-size="15" font-weight="700" text-anchor="middle">
+      <rect x="18" y="16" width="130" height="52" fill="var(--sink)" stroke="var(--rule)"/><text x="83" y="47">Plan</text>
+      <rect x="252" y="16" width="130" height="52" fill="var(--sink)" stroke="var(--rule)"/><text x="317" y="47">Act</text>
+      <rect x="252" y="122" width="130" height="52" fill="var(--sink)" stroke="var(--rule)"/><text x="317" y="153">Observe</text>
+      <rect x="18" y="122" width="130" height="52" fill="var(--sink)" stroke="var(--rule)"/><text x="83" y="153">Refine</text>
+     </g>
+     <g stroke="var(--muted)" stroke-width="1.5" fill="none">
+      <path d="M148 42 h96"/><path d="M317 68 v46"/><path d="M252 148 h-96"/><path d="M83 122 V76"/>
+     </g>
+     <g fill="var(--muted)">
+      <polygon points="252,42 244,38 244,46"/><polygon points="317,122 313,114 321,114"/>
+      <polygon points="148,148 156,144 156,152"/><polygon points="83,16 79,24 87,24"/>
+     </g>
+     <path d="M317 174 V206" stroke="var(--pass)" stroke-width="1.5" fill="none"/>
+     <polygon points="317,214 313,206 321,206" fill="var(--pass)"/>
+     <rect x="196" y="214" width="208" height="34" fill="none" stroke="var(--pass)" stroke-width="2"/>
+     <text x="300" y="236" text-anchor="middle" font-size="13" font-weight="700" fill="var(--pass)">uv run pytest → pass?</text>
+     <path d="M196 231 H83 V180" stroke="var(--warn)" stroke-width="1.5" fill="none" stroke-dasharray="4 4"/>
+     <polygon points="83,172 79,180 87,180" fill="var(--warn)"/>
+     <text x="112" y="205" font-size="12" font-weight="700" fill="var(--warn)" text-anchor="start">no</text>
+    </svg>
+    <div>
+     <div class="term bad"><span class="c"># no gate</span>
+model writes code
+  → <span class="r">"looks done"</span>
+    → <span class="r">you</span> run it
+      → <span class="r">you</span> find the bug
+        → <span class="r">you</span> explain the bug</div>
+     <div class="term good" style="margin-top:.85em"><span class="c"># with a gate</span>
+model writes code
+  → runs uv run pytest
+    → reads the failure itself
+      → fixes it, runs again
+        → <span class="g">shows you passing output</span></div>
+     <p style="margin-top:1em;font-size:.95em"><b>The highest-value sentence you can add to any prompt:</b> “run the tests and keep going until they pass.”</p>
+    </div>
+   </div>
+  </div>
+  <div class="foot"><span>06 / Solution</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- who writes the check -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">02 — Solution</span><span>the obvious objection</span></div>
+  <div class="body">
+   <h2 style="margin-bottom:.5em">“But who writes the check?”</h2>
+   <div class="cols" style="grid-template-columns:1fr 1.05fr">
+    <div>
+     <p>Fair. If the agent writes the test from the same misreading that wrote the code, it passes for the same wrong reason. <b>A gate built by the thing it is gating is not a gate.</b></p>
+     <p><b>So be honest about what the loop buys you: a harness raises the floor, not the ceiling.</b> Nothing that crashes survives. Nothing that is merely wrong is touched. The plausible number is still yours to catch — and always will be.</p>
+     <p class="note">Checks that cannot be faked into passing are the ones anchored outside the code: one row you worked out by hand, a figure from the source system, last month's total.</p>
+    </div>
+    <div>
+     <h3>The division of labour that works</h3>
+     <p style="margin-bottom:.6em">You state the invariant. It writes the code that checks it. The invariant is the abstraction you own.</p>
+     <div class="term good"><span class="c"># things you can assert without</span>
+<span class="c"># knowing the answer</span>
+len(merged) == len(left)
+no new nulls where there were none
+total preserved across the reshape
+date range unchanged
+the key is unique where you think it is</div>
+     <p class="note" style="margin-top:.8em">Legitimate, non-circular use: ask it <i>“what could silently go wrong in this join?”</i> It generates candidates well. You decide which matter. You are the selector, not the author.</p>
+    </div>
+   </div>
+  </div>
+  <div class="foot"><span>07 / Solution</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">02 — Solution</span><span>side by side</span></div>
+  <div class="body">
+   <h2>Chat window vs. harness</h2>
+   <table>
+    <thead><tr><th></th><th>Chat window in a browser</th><th>Harness in your project</th></tr></thead>
+    <tbody>
+     <tr><td class="k">What it sees</td><td class="chat">What you pasted</td><td class="harn">The repository — it opens the files it decides it needs</td></tr>
+     <tr><td class="k">What it can run</td><td class="chat">Nothing</td><td class="harn">Your shell: <code>uv run pytest</code>, <code>ruff</code>, <code>git</code>, your notebook</td></tr>
+     <tr><td class="k">Who carries the error</td><td class="chat">You, by hand, every time</td><td class="harn">It reads its own traceback and tries again</td></tr>
+     <tr><td class="k">What persists</td><td class="chat">One tab, until you close it</td><td class="harn"><code>AGENTS.md</code> in git — conventions the whole cohort shares</td></tr>
+     <tr><td class="k">Tools &amp; data</td><td class="chat">Whatever you retype into the box</td><td class="harn">MCP servers — <code>goad</code> and <code>codestyle</code> become callable</td></tr>
+     <tr><td class="k">Your job</td><td class="chat">Courier, compiler and reviewer</td><td class="harn">Reviewer — which is the only one that was ever worth your time</td></tr>
+    </tbody>
+   </table>
+  </div>
+  <div class="foot"><span>08 / Solution</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">02 — Solution</span><span>evidence, and the limits of it</span></div>
+  <div class="body">
+   <div class="cols" style="grid-template-columns:1.1fr 1fr">
+    <div>
+     <h2>The harness is not a detail</h2>
+     <ul class="plain">
+      <li><b>SWE-agent</b> (Princeton, 2024) named the <i>agent–computer interface</i> and showed that changing only the interface — model held fixed — changes how well the agent performs. <span class="note">arXiv:2405.15793</span></li>
+      <li><b>mini-swe-agent</b> is roughly 100 lines of Python with <i>bash and nothing else</i> — no tool-calling API at all — and reports over 74% on SWE-bench Verified.</li>
+     </ul>
+    </div>
+    <div>
+     <div class="term"><span class="c"># the entire tool surface</span>
+subprocess.run(cmd, shell=True)</div>
+     <p style="margin-top:1.2em"><span class="badge">Read this critically</span></p>
+     <p class="note" style="margin-top:.7em">That 74% is self-reported by the project. Most head-to-head “harness X beats harness Y on benchmark Z” numbers circulating right now are vendor marketing, two blog-hops from any methodology, and frequently contradict each other. Take the <i>shape</i> of the finding — scaffolding matters a lot — and distrust every decimal, including the ones on this slide.</p>
+    </div>
+   </div>
+  </div>
+  <div class="foot"><span>09 / Solution</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">02 — Solution</span><span>in this repository, concretely</span></div>
+  <div class="body">
+   <h2>What changes in MADS-DAV</h2>
+   <div class="cols">
+    <div>
+     <ul class="plain">
+      <li><b><code>goad</code> and <code>codestyle</code> are MCP servers.</b> From a browser chat they are unreachable — that is the whole reason they exist as servers. In a harness they become tools the agent calls, so the coaching happens where the code is.</li>
+      <li><b>A pass/fail signal already exists here.</b> <code>uv run pytest</code>, <code>ruff</code>, the pre-commit hooks. You have been running them by hand. Hand them to the agent instead.</li>
+     </ul>
+    </div>
+    <div>
+     <ul class="plain">
+      <li><b>Write the house rules down once.</b> uv only — no pip, no conda. Work on your own branch, never <code>main</code>. Copy a notebook under a new name before editing. That is an <code>AGENTS.md</code>, committed, not a paragraph you retype every session.</li>
+      <li><b>What does not change:</b> nothing here is graded on the agent's behalf. You defend the flow, the types and the contracts — signatures, <code>Protocol</code>s, ABCs — with the agent closed. Not every line; the abstraction.</li>
+     </ul>
+    </div>
+   </div>
+  </div>
+  <div class="foot"><span>10 / Solution</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 11 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">02 — Solution</span><span>pick one and install it</span></div>
+  <div class="body">
+   <h2 style="margin-bottom:.4em">The landscape, September 2026</h2>
+   <p class="grouplabel">Commercial</p>
+   <div class="tools">
+    <div class="tool"><a href="https://code.claude.com/docs">Claude Code</a><span>Anthropic · CLI+IDE</span></div>
+    <div class="tool"><a href="https://github.com/openai/codex">Codex CLI</a><span>OpenAI · CLI, Apache-2.0</span></div>
+    <div class="tool"><a href="https://antigravity.google/">Antigravity</a><span>Google · IDE+CLI</span></div>
+    <div class="tool"><a href="https://github.com/google-gemini/gemini-cli">Gemini CLI</a><span>Google · CLI</span></div>
+    <div class="tool"><a href="https://cursor.com/docs">Cursor</a><span>Anysphere · IDE+CLI</span></div>
+    <div class="tool"><a href="https://github.com/features/copilot/cli">Copilot CLI</a><span>GitHub · CLI</span></div>
+   </div>
+   <p class="grouplabel" style="margin-top:1.5em">Open source</p>
+   <div class="tools">
+    <div class="tool"><a href="https://opencode.ai/">opencode</a><span>MIT · 75+ providers</span></div>
+    <div class="tool"><a href="https://pi.dev/">pi</a><span>MIT · minimal, hackable</span></div>
+    <div class="tool"><a href="https://github.com/charmbracelet/crush">Crush</a><span>Charm · FSL, not OSI</span></div>
+    <div class="tool"><a href="https://github.com/block/goose">goose</a><span>Apache-2.0 · desktop+CLI</span></div>
+    <div class="tool"><a href="https://github.com/Kilo-Org/kilocode">Kilo Code</a><span>MIT · VS Code + CLI</span></div>
+    <div class="tool"><a href="https://github.com/cline/cline">Cline</a><span>Apache-2.0 · VS Code</span></div>
+   </div>
+   <p class="note" style="margin-top:1.1em;font-size:.76em">Every tool above speaks <a href="https://modelcontextprotocol.io">MCP</a> — non-negotiable here, because <code>goad</code> and <code>codestyle</code> <i>are</i> MCP servers. Most read <a href="https://agents.md">AGENTS.md</a>. <b>Copilot CLI</b> needs a paid seat; the free student tier counts, plain Copilot Free does not — see the next slide for what that seat actually gets you.</p>
+   <p class="note" style="margin-top:.5em;font-size:.76em"><b>Read rather than install:</b> <a href="https://github.com/SWE-agent/mini-swe-agent">mini-swe-agent</a> is a control, not a daily driver — bash only, ~100 lines, built so a benchmark can hold the scaffold fixed while the model varies. Also: <a href="https://aider.chat">Aider</a>, the original git-native pair programmer, still works but has no native MCP; <a href="https://github.com/NousResearch/hermes-agent">hermes-agent</a> (Nous Research, MIT) is a general-purpose agent built on persistent memory and self-written skills — not a coding harness, and not their Hermes <i>models</i>.</p>
+  </div>
+  <div class="foot"><span>11 / Solution</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 12 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">02 — Solution</span><span>what I can vouch for</span></div>
+  <div class="body">
+   <h2 style="margin-bottom:.45em">What I would actually install</h2>
+   <div class="tiers" style="font-size:.89em">
+
+    <div class="tier lead">
+     <p class="tl">I use this<br>daily</p>
+     <div>
+      <p><span class="nm">Claude Code</span>, on a Claude Pro plan — $20 a month, $17 if you pay yearly. Claude Code is included in Pro.</p>
+      <p class="note" style="font-size:.86em">It is the one I run every day and the only one I can answer your questions about. If you are going to spend anything on this course, spend it here.</p>
+     </div>
+    </div>
+
+    <div class="tier">
+     <p class="tl">Try it —<br>no promises</p>
+     <div>
+      <p><span class="nm">Codex CLI</span> — needs a paid ChatGPT plan. Plausibly in the same class — but I have not tested it.</p>
+      <p><span class="nm">Gemini CLI</span> — free with a personal Google account: 1,000 requests a day on Gemini 3, shell and MCP included. The best free option there is.</p>
+      <p><span class="nm">Copilot CLI</span> — only if you already hold the GitHub Student seat. Auto model selection only, and agent mode drains the credits fast.</p>
+     </div>
+    </div>
+
+    <div class="tier">
+     <p class="tl">Free, if you<br>have the box</p>
+     <div>
+      <p><span class="nm">Ollama</span> behind <span class="nm">opencode · pi · Crush · goose</span> — a local model, no subscription, nothing leaving your machine. Needs real memory; on a thin laptop it disappoints.</p>
+     </div>
+    </div>
+
+   </div>
+   <p class="note" style="margin-top:.8em;font-size:.75em"><b>The harness is not the model.</b> Copilot CLI and opencode drive Claude models too — what you pay for is which models the tool may pick and how many turns you get. Prices and student allowances change every few months.</p>
+  </div>
+  <div class="foot"><span>12 / Solution</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 12 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">03 — Tips</span><span>eight habits</span></div>
+  <div class="body">
+   <h2 style="margin-bottom:.45em">Eight habits worth building now</h2>
+   <div class="cols" style="font-size:.93em">
+    <ul class="plain">
+     <li><b>Give it the repo, not a snippet.</b> Start it inside the project directory and point at real files. Grounded beats plausible.</li>
+     <li><b>Write <code>AGENTS.md</code> once and commit it.</b> Only what it cannot infer from the code. Under ~200 lines — a bloated file gets ignored.</li>
+     <li><b>Ask for a plan before code.</b> Then read the plan and edit it. The plan is the cheapest place to catch a wrong approach.</li>
+     <li><b>Hand it a pass/fail check.</b> Without one, “looks done” is the only signal it has, and you are back to being the loop.</li>
+    </ul>
+    <ul class="plain">
+     <li><b>Branch first. Read the diff, then let it commit.</b> It writes better messages than you do. Review the diff itself — not the agent's summary of it, written by the same process that wrote the bug.</li>
+     <li><b>Clear between unrelated tasks.</b> Long sessions degrade measurably. After two failed corrections, restart with a better prompt.</li>
+     <li><b>Auto-approve is a fair trade — for the risk you mean.</b> Git makes a bad edit free to undo. It does nothing about a fetched page telling the agent to read your <code>.env</code> and POST it. Sandbox, or keep secrets out of reach.</li>
+     <li><b>Own the abstraction, not every line.</b> You need not have typed it. You do need the flow, the signatures, the type hints, and which <code>Protocol</code> or ABC a thing satisfies.</li>
+    </ul>
+   </div>
+  </div>
+  <div class="foot"><span>13 / Tips</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 13 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">03 — Tips</span><span>do this today</span></div>
+  <div class="body">
+   <div class="cols" style="grid-template-columns:1.15fr .85fr">
+    <div>
+     <h2>Your first thirty minutes</h2>
+     <ol class="num">
+      <li>Install <b>one</b> harness. Any of them. Do not comparison-shop first.</li>
+      <li><code>cd</code> into your MADS-DAV clone, on your own branch.</li>
+      <li>Write <code>AGENTS.md</code>: uv only, branch rule, where the data lives, how to run the tests.</li>
+      <li>Give it a real task you would otherwise have googled.</li>
+      <li>Make it run <code>uv run pytest</code> before it is allowed to say it is done.</li>
+      <li>Read the diff. Then let it write the commit.</li>
+      <li>Clear the context. Next task.</li>
+     </ol>
+    </div>
+    <div>
+     <div class="term good">$ cd ~/code/MADS-DAV
+$ git switch -c my-branch
+$ claude          <span class="c"># or codex, opencode, …</span>
+
+<span class="c">&gt; read AGENTS.md, then fix the</span>
+<span class="c">  date parsing in notebooks/02.</span>
+<span class="c">  run uv run pytest and keep</span>
+<span class="c">  going until it passes.</span></div>
+     <p class="note" style="margin-top:1.2em">Step 3 is the one people skip and the one that pays. Everything you write there, you stop retyping forever.</p>
+    </div>
+   </div>
+  </div>
+  <div class="foot"><span>14 / Tips</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 14 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span class="act">03 — Tips</span><span>the honest part</span></div>
+  <div class="body">
+   <h2>Four things that are genuinely true and inconvenient</h2>
+   <div class="cols">
+    <ul class="plain">
+     <li><b>Context rot is measured, not folklore.</b> Chroma tested 18 models: performance degrades as input grows, non-uniformly. The 10,000th token is not handled as reliably as the 100th.</li>
+     <li><b>The lethal trifecta.</b> Private data + untrusted content + the ability to send something outwards = exfiltration. An agent that fetches one web page has all three. The model cannot reliably detect the attack.</li>
+    </ul>
+    <ul class="plain">
+     <li><b>Complacency is the documented risk.</b> Thoughtworks put “complacency with AI-generated code” on <i>Hold</i>: bigger diffs, less scrutiny, more duplication, less refactoring.</li>
+     <li><b>You are a bad judge of your own speedup.</b> METR's 2025 trial found experienced developers 19% <i>slower</i> with AI — while believing afterwards they had been 20% faster. METR now says that number is stale: “it is likely that developers are more sped up from AI tools now.” The 40-point gap between felt and measured is the part no model release fixes.</li>
+    </ul>
+   </div>
+   <p class="note" style="margin-top:1.6em">None of this argues for going back to the browser tab. It argues for a tight loop, small diffs, a real gate, and reading what you ship.</p>
+  </div>
+  <div class="foot"><span>15 / Tips</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+<!-- 15 -->
+<section class="slide">
+ <div class="pad">
+  <div class="eyebrow"><span>Sources</span><span>all links checked September 2026</span></div>
+  <div class="body top">
+   <h2>Read these, in this order</h2>
+   <div class="srcs">
+    <p><a href="https://sundaylettersfromsam.substack.com/p/what-is-a-harness-and-why-do-i-care">Sam Schillace — What is a harness and why do I care?</a></p>
+    <p><a href="https://simonwillison.net/guides/agentic-engineering-patterns/how-coding-agents-work/">Simon Willison — How coding agents work</a></p>
+    <p><a href="https://www.martinfowler.com/articles/exploring-gen-ai/harness-engineering.html">Birgitta Böckeler — Harness engineering for coding agent users</a></p>
+    <p><a href="https://addyosmani.com/blog/agent-harness-engineering/">Addy Osmani — Agent harness engineering</a></p>
+    <p><a href="https://huggingface.co/blog/agent-glossary">Hugging Face — Agent glossary (harness vs. scaffold)</a></p>
+    <p><a href="https://code.claude.com/docs/en/best-practices">Anthropic — Claude Code best practices</a></p>
+    <p><a href="https://agents.md">agents.md — the cross-tool instruction file</a></p>
+    <p><a href="https://modelcontextprotocol.io">modelcontextprotocol.io — what MCP actually is</a></p>
+    <p><a href="https://arxiv.org/abs/2405.15793">SWE-agent — agent–computer interfaces (arXiv:2405.15793)</a></p>
+    <p><a href="https://www.trychroma.com/research/context-rot">Chroma — Context rot</a></p>
+    <p><a href="https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/">Simon Willison — The lethal trifecta</a></p>
+    <p><a href="https://simonwillison.net/2025/Mar/2/hallucinations-in-code/">Simon Willison — Hallucinations in code</a></p>
+    <p><a href="https://www.thoughtworks.com/en-us/radar/techniques/complacency-with-ai-generated-code">Thoughtworks Radar — Complacency with AI-generated code</a></p>
+    <p><a href="https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/">METR — Do AI tools speed up developers?</a> and their <a href="https://metr.org/blog/2026-02-24-uplift-update/">2026 walk-back</a></p>
+   </div>
+  </div>
+  <div class="foot"><span>16 / Sources</span><svg class="mark" role="img" aria-label="pttrn"><use href="#pttrn"/></svg></div>
+ </div>
+</section>
+
+</div>
+
+<nav class="bar" aria-label="Slide navigation">
+ <button id="prev" type="button">← Prev</button>
+ <button id="next" type="button">Next →</button>
+ <span class="count" id="count">1 / 15</span>
+ <span class="rail"><i id="fill"></i></span>
+ <span class="hint">arrows · space · ⌘P for PDF</span>
+</nav>
+</div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var i = 0;
+  var count = document.getElementById('count');
+  var fill = document.getElementById('fill');
+  function show(n){
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function(s, k){ s.classList.toggle('on', k === i); });
+    count.textContent = (i + 1) + ' / ' + slides.length;
+    fill.style.width = ((i + 1) / slides.length * 100) + '%';
+    try { location.hash = 's' + (i + 1); } catch (e) {}
+  }
+  document.getElementById('prev').addEventListener('click', function(){ show(i - 1); });
+  document.getElementById('next').addEventListener('click', function(){ show(i + 1); });
+  document.addEventListener('keydown', function(e){
+    if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); show(i + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+  });
+  var x0 = null;
+  document.addEventListener('touchstart', function(e){ x0 = e.changedTouches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    if (x0 === null) return;
+    var dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if (Math.abs(dx) > 60 && window.innerWidth >= 760) show(i + (dx < 0 ? 1 : -1));
+  }, {passive:true});
+  var m = /^#s(\d+)$/.exec(location.hash || '');
+  show(m ? parseInt(m[1], 10) - 1 : 0);
+})();
+</script>
+</body>
+</html>

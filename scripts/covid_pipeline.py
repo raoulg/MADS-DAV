@@ -7,8 +7,8 @@ small enough to test, import, or run twice with different data. A script does.
 The pipeline runs on public Dutch COVID figures rather than a showcase dataset on
 purpose: the loop — config -> process -> compare -> model -> residual -> distribution
 fit — is the transferable part, not the topic. The model is the one 05.3 poses and
-05.4 works out: a straight line in positive tests whose ratio turns down along a
-logistic curve.
+05.4 works out: a share of positive tests that ends in death, switched off along a
+logistic curve, plus a constant number of deaths a day that the tests do not explain.
 
     uv run python scripts/covid_pipeline.py
 
@@ -74,15 +74,15 @@ def plot_zscores(data: pd.DataFrame):
 
 
 def covid_model(X: np.ndarray, params: list[float]) -> np.ndarray:  # noqa: N803
-    """Deaths as a straight line in positive tests, times a logistic switch on the day.
+    """Deaths as a share of positive tests that a logistic switch turns off, plus b.
 
     `X` has two columns: positive tests, and the day number. `params` is
-    `[a, b, k, x0]`: the line's slope and intercept, and the switch's steepness
-    and halfway day. With `k < 0` the ratio of deaths to tests runs at its old
-    value, then decays as the switch turns.
+    `[a, b, k, x0]`: the share of tests that ends in death, the deaths the tests do
+    not explain, and the switch's steepness and halfway day. With `k < 0` the share
+    runs at its old value, then decays to zero as the switch turns; `b` stays.
     """
     a, b, k, x0 = params
-    return linear_model(X[:, 0], [a, b]) * logistic(X[:, 1], k=k, x0=x0)
+    return a * X[:, 0] * logistic(X[:, 1], k=k, x0=x0) + b
 
 
 def fit_model(data: pd.DataFrame) -> pd.DataFrame:
@@ -92,8 +92,14 @@ def fit_model(data: pd.DataFrame) -> pd.DataFrame:
     X = np.stack([tests, day], axis=1)  # noqa: N806
     y = data["deaths_shifted"].to_numpy()
 
+    before = data.index < VACCINATION_START
     line = train_model(
-        tests, y, linear_model, mse, [0.01, 1.0], bounds=[(0, 1.0), (0, None)]
+        tests[before],
+        y[before],
+        linear_model,
+        mse,
+        [0.01, 1.0],
+        bounds=[(0, 1.0), (0, None)],
     )
     vaccination_day = float(np.argmax(data.index >= VACCINATION_START))
     initial = [line[0], line[1], -0.1, vaccination_day + 30]
