@@ -40,6 +40,7 @@ GitHub = "https://github.com/raoulg/MADS-DAV"
 dev = [
     "jupyter>=1.1.1",
     "notebooktester>=0.3.8",
+    "pandas-stubs>=3.0.5.260914",
     "ruff>=0.8.6",
     "ty>=0.0.71",
 ]
