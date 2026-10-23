@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 from scipy.stats import spearmanr
 from sentence_transformers import SentenceTransformer
@@ -76,6 +76,10 @@ SEQUENTIAL = LinearSegmentedColormap.from_list(
     "paper_petrol", [BG, ACCENT_LIGHT, ACCENT, "#0d2c38"]
 )
 ALONG = LinearSegmentedColormap.from_list("along", [ACCENT, "#c9a66b", SECOND])
+# cold to hot: petrol for low, near-white in the middle, vermilion for high
+DIVERGING = LinearSegmentedColormap.from_list(
+    "petrol_vermilion", [ACCENT, ACCENT_LIGHT, "#fdfcfa", "#e2481f", SECOND]
+)
 
 plt.rcParams.update(
     {
@@ -722,8 +726,12 @@ shown = sample_classes[:6]
 rows = torch.cat([torch.where(yte == k)[0][:5] for k in shown])
 cols = torch.cat([torch.where(ytr == k)[0][:10] for k in shown])
 fig, ax = plt.subplots(figsize=(11, 5.6))
+# split high from low: full petrol at 0.4 and below, white at 0.6, full vermilion at 0.8 and up
 image = ax.imshow(
-    similarity[rows][:, cols].numpy(), cmap=SEQUENTIAL, aspect="auto", vmin=-0.1, vmax=1
+    similarity[rows][:, cols].numpy(),
+    cmap=DIVERGING,
+    norm=TwoSlopeNorm(vmin=0.4, vcenter=0.6, vmax=0.8),
+    aspect="auto",
 )
 names6 = [f"class {k}" for k in shown.tolist()]
 ax.set_xticks(np.arange(4.5, 60, 10), names6)
@@ -735,7 +743,15 @@ for edge in np.arange(-0.5, 30, 5):
     ax.axhline(edge, color=BG, lw=1.5)
 ax.set_xlabel("training photos, ten per species")
 ax.set_ylabel("test photos, five per species")
-fig.colorbar(image, ax=ax, fraction=0.03, pad=0.02, label="cosine")
+fig.colorbar(
+    image,
+    ax=ax,
+    fraction=0.03,
+    pad=0.02,
+    label="cosine",
+    extend="both",
+    ticks=[0.4, 0.6, 0.8],
+)
 save(fig, "nn_matrix")
 
 torch.manual_seed(0)
