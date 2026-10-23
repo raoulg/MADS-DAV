@@ -1,0 +1,535 @@
+% ─────────────────────────────────────────────
+% Reader: Data Analysis & Visualisation
+% ─────────────────────────────────────────────
+\documentclass[12pt, a4paper]{article}
+
+% ── Encoding & language ──────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+
+% ── Mathematics ──────────────────────────────
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+
+% ── Layout ───────────────────────────────────
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{parskip}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{hyperref}
+
+% Figures are the ones from the lesson decks.
+\graphicspath{{../presentations/img/}}
+
+% Every subsubsection follows a slide title, so it is listed in the contents.
+\setcounter{tocdepth}{3}
+
+% ── Theorem environments ─────────────────────
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{example}{Example}[section]
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\newtheorem*{note}{Note}
+
+% ── Common shorthands ────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\E}{\mathbb{E}}
+\DeclareMathOperator{\Var}{Var}
+
+% The recap that closes each question, as on the "again, concretely" slides.
+\newcommand{\againconcretely}{\paragraph{Again, concretely.}}
+
+
+% ─────────────────────────────────────────────
+% Document metadata
+% ─────────────────────────────────────────────
+\title{Data Analysis \& Visualisation\\[0.3em]\large A reader for MADS-DAV}
+\author{Raoul Grouls}
+\date{\today}
+
+% ─────────────────────────────────────────────
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+\label{sec:introduction}
+This reader accompanies the course Data Analysis \& Visualisation. The slides of each lesson are built to be shown, not read: they carry a plot, a sentence and a question, and the reasoning happens in the room. This reader is where that reasoning is written down, so you can go back to it when you are working on your own data and the lesson is a few weeks behind you.
+
+The course is not a statistics course, and nobody has to become a statistician. What I want you to learn is to \emph{reason} about data: to ask how the numbers in front of you came about, which model of that process makes sense, and what you are allowed to conclude from it. Most mistakes I see in data analysis are not mistakes in the code or in the formulas. They are mistakes in thinking: a model that was chosen without noticing it was a choice, a pattern that was found by looking for it, a title that claims more than the data can carry. A good visualisation is the end of that reasoning, not a replacement for it.
+
+The course runs from visualisation principles and comparing categories, through time, distributions and modelling, to high-dimensional data and dashboards. Each lesson gets its own section in this reader, and each section follows the deck of that lesson: a subsection per question on the agenda, and a subsubsection per slide with real data, under the title of that slide. You can read the two side by side. Each question ends with the same recap as the deck, ``again, concretely''. The sections are written in the order I need them, so not every lesson is in here yet.
+\newpage
+
+\section{Lesson 4: Distributions}
+\label{sec:lesson4}
+You probably already know the bell curve, the standard deviation and the boxplot. This lesson is about everything else. The lesson is organised around five questions, and I would like you to be able to answer all five at the end of it:
+
+\begin{enumerate}
+\item \textbf{What} is a distribution? Chance has rules. A distribution describes them with parameters.
+\item \textbf{Which} distribution fits my data? Think about the underlying drivers before you fit.
+\item What is an \textbf{outlier}? This depends on the distribution you choose. Choose the wrong one and ordinary values look like outliers.
+\item Did something \textbf{change}, or is it chance? Random data always fluctuates. Compare before and after an event, and ask how big a difference chance alone makes.
+\item Is my \textbf{model} done? What your model can't explain might tell you whether you missed something.
+\end{enumerate}
+
+The first two are about describing data. The last three are about what you can do once you have a description: decide what is unusual, decide whether something really changed, and decide whether your model has captured what is going on.
+
+% ─────────────────────────────────────────────
+\subsection{What is a distribution?}
+\label{sec:what-is-a-distribution}
+You cannot predict a single roll of a die. You can, however, say a lot about a thousand rolls: every face will come up roughly a sixth of the time. Chance is not chaos; chance has rules, and a distribution is a description of those rules: every possible outcome, and how often it happens. Often a few numbers are enough. The bell curve needs a mean and a standard deviation; a count at a steady rate needs only its average. Those numbers are the \emph{parameters} of the distribution.
+
+A distribution is good for three things, and they are the rest of this lesson. It lets you \emph{describe} a random process with just a few parameters. It lets you \emph{judge} what is normal and what is unusual. And it lets you \emph{compare}: two distributions, before and after something happened, tell you whether the mechanism behind a random process has changed.
+
+\subsubsection{Two kinds of not knowing}
+It helps to separate two kinds of not knowing. The first is \emph{aleatoric} uncertainty, randomness that is part of the process itself. The word comes from the Latin \textit{alea}, a die\footnote{The oldest dice were astragali, the ankle bones of sheep and goats, which land on one of four sides. The ones on the slide are Greek glass copies from the 3rd--2nd century BC, in the Metropolitan Museum of Art.}. Even if you know everything there is to know about a fair die, you only know how often each face comes up, never which face comes up next. The second is \emph{epistemic} uncertainty: things you could know, but don't (yet). Your travel time is uncertain partly because you haven't checked the traffic. Check it, and that part of the uncertainty shrinks.
+
+Real data always mixes the two. A distribution describes whatever uncertainty is left after you have used what you know, which is why a better model, with more information, gives a narrower distribution. Keep this in mind for the last question of this lesson: a model that looks finished might still be missing knowledge.
+
+\subsubsection{Three rules make something a distribution}
+\begin{definition}
+\label{def:distribution}
+A \emph{probability distribution} assigns a probability to the outcomes of a random process, such that
+\begin{enumerate}
+\item no outcome has a negative probability;
+\item the probabilities over all possible outcomes sum to $1$;
+\item the probability of ``this or that'', for outcomes that cannot happen together, is the sum of their probabilities: $P(1 \text{ or } 2) = \tfrac{1}{6} + \tfrac{1}{6}$.
+\end{enumerate}
+\end{definition}
+
+That is all. A die is \emph{discrete}: it has a finite number of outcomes, and every bar is a probability. For a measurement, such as the flipper length of a penguin, the sum in the third rule becomes an area: the probability that a flipper is between $190$ and $200$ mm is the area under the curve between those values, $0.43$ for Adelie penguins.
+
+\subsubsection{\texorpdfstring{Continuous distributions: there is 0 chance of exactly 21.0\,°C}{Continuous distributions: there is 0 chance of exactly 21.0 °C}}
+A measurement such as a temperature is \emph{continuous}, and then something strange happens. Suppose the temperature in a room over the day follows a bell curve with mean $21\,^{\circ}$C and standard deviation $0.3$. What is the probability that it is exactly $21.0\,^{\circ}$C? The honest answer is zero. The temperature can be $21.0$, $21.03$, $21.0317$, and so on: there are infinitely many values, and a single value is a line under the curve, which has no area.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{lesson4/range.png}
+\caption{Room temperature, mean 21\,°C, sd 0.3. Only an area under the curve is a probability.}
+\label{fig:range}
+\end{figure}
+
+What you can ask about is a range. The probability that the temperature lies between $20.5$ and $21.5$ is the area under the curve between those two values, and here that area is $0.90$. Even the thermometer that shows ``21.0'' is giving you a range: it rounds, so ``21.0'' means somewhere between $20.95$ and $21.05$, which has probability $0.13$.
+
+The height of the curve is therefore not a probability. It is a \emph{density}, and only an area under a density is a probability. The quickest way to convince yourself: at its peak, the curve in this example has height $1.33$, and no probability can be larger than one. This is why the y-axis of a continuous distribution should say \emph{density}. For a count, like a die or messages per day, single values do have a probability: those are bars.
+
+\subsubsection{Same rolls, two plots: only one is a distribution}
+Notice what is \emph{not} in the definition: whether you draw bars or a line. A plot is a distribution because it follows the three rules, not because of how it looks. The most common plot I get handed as ``the distribution'' is the result of \texttt{value\_counts} followed by a bar chart. Figure~\ref{fig:dice} shows why that is not the same thing. Ten rolls of a fair die happened to produce no 5 and no 6. The left plot silently drops those faces from the axis, and its counts only mean something if you know there were ten rolls. It describes ten rolls, not the die. The right plot puts every outcome the process \emph{can} produce on the x-axis, including the ones that didn't happen, and its y-axis holds shares that sum to one. Only that plot can be compared with a model (here $1/6$ per face) or with a second sample of a different size. Sometimes you really do want counts; then say so on the axis and don't call it a distribution.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson4/dice.png}
+\caption{The same ten rolls of a fair die, twice. Only the right plot is a distribution.}
+\label{fig:dice}
+\end{figure}
+
+\subsubsection{Start from what you know about the process}
+The skill I want you to practise is choosing a distribution by thinking about how your numbers came about, before you look at a histogram. Stand under a tree and count how many leaves fall in each minute. You cannot predict which leaf falls when, but you do know a few things about the process, and each of them narrows down the choice:
+
+\begin{itemize}
+\item \textbf{What kind of number is it?} A count: $0, 1, 2, 3, \ldots$ Never $-1$, never $2.5$. So we need a discrete family.
+\item \textbf{Are the events independent?} Yes: one leaf doesn't pull another one down.
+\item \textbf{Is the rate steady?} On a calm day, roughly: about the same number of leaves every minute, give or take chance.
+\end{itemize}
+
+Those three facts are exactly the assumptions of the \emph{Poisson} distribution, and then a single number, the average per minute, describes the whole distribution. The interesting part is what happens when an assumption breaks. When the wind picks up, the rate is no longer steady: gusts make it wander, and the counts spread out far more than a Poisson allows. Then you need another family. We will meet exactly this in chat data under question two.
+
+\subsubsection{Six shapes, six ways numbers come about}
+You don't need to memorise formulas for the families of distributions. What you need is the one-liner that tells you which process produces which shape. Table~\ref{tab:families} has the six we use in this course.
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule
+\textbf{Family} & \textbf{The process that produces it} & \textbf{Example} \\
+\midrule
+Normal & Many small, independent parts \emph{added} up & Body height \\
+Lognormal & Many factors \emph{multiplied} together & Duration of a project \\
+Exponential & The wait for the next event, at a steady rate & Time between messages \\
+Poisson & The number of events in a window, at a steady rate & Leaves per minute \\
+Weibull & Time until something stops, when the risk changes with age & Lifetime of a part \\
+Pareto & The rich get richer & Followers on social media \\
+\bottomrule
+\end{tabularx}
+\caption{Six families and the processes behind them.}
+\label{tab:families}
+\end{table}
+
+The assumption people forget is the steady rate. Poisson and exponential both need one. Put the arrivals at a station during rush hour and during a quiet afternoon in one column, and neither fits. Poisson is the only count in the table, so its bars are probabilities; the others are curves where an area is a probability.
+
+\subsubsection{Adding makes a bell; multiplying makes a long tail}
+The difference between the first two families is one of the most useful things you can know about data. Roll thirty dice and add them up. Each die on its own is flat: every face is equally likely. But the sum is a bell. Two dice already make a triangle, five look like a bell, thirty are a bell. Human height works the same way: it is the sum of the contributions of more than a hundred genes that control the length of your femur, your spine, your neck. Many small things added together: that is where the normal distribution comes from\footnote{This is the central limit theorem, without the formula.}.
+
+Now multiply instead of add. Every factor makes the result more lopsided, with a long tail to the right. Projects work like this: a delay doesn't add a fixed week, it stretches everything that depends on it. If task $a$ takes $1.5$ times as long as planned and it has to be done ten times, the delay compounds. One trick is worth remembering here: the logarithm of a product is a sum of logarithms,
+$$\log(x_1 \cdot x_2 \cdots x_n) = \log x_1 + \log x_2 + \cdots + \log x_n.$$
+So if something is made by multiplying, its \emph{logarithm} is made by adding, and the logarithm looks like a bell. That is exactly what a lognormal distribution is.
+
+\paragraph{Project planning: delays multiply.}
+Figure~\ref{fig:sip} shows this in real data: 10,100 tasks from ten years of commercial software development, each with the estimated and the actual number of hours\footnote{The SiP dataset: Jones, D. \& Cullum, S. (2019), \url{https://github.com/Derek-Jones/SiP_dataset}, CC BY-NC-ND 4.0. Erik Bernhardsson analysed the same data in ``Why software projects take longer than you think'' (erikbern.com, 2019).}. The median task is exactly on time, so the estimates are not simply optimistic. But the tail runs one way. The average task takes $1.37$ times its estimate, one in ten takes more than twice as long, one in a hundred more than seven times, and the worst one $281$ times. A bell with this mean and standard deviation would put $39\%$ of the tasks below zero hours, which is impossible. On a log axis, though, the ratios form a rough bell around $1$: finishing in half the time ($13\%$) is about as common as taking twice as long ($10\%$). Symmetric in factors, not in hours. That is the signature of multiplying. (The spike in the middle is not the work but the people: $34\%$ of the tasks were booked at exactly their estimate.)
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{lesson4/sip_tasks.png}
+\caption{Actual divided by estimated hours for 10,100 software tasks. On a log axis the ratios form a rough bell around $1\times$.}
+\label{fig:sip}
+\end{figure}
+
+\againconcretely
+Dice add up to a bell. Project delays multiply into a long tail. Leaves on a calm day are a Poisson count. In each case the family followed from what we knew about how the numbers came about, not from a histogram. A distribution describes a random process: every possible outcome, with shares that sum to one. What you know about the process narrows down the family: a count or a measurement, added or multiplied, a steady rate or not. Then the data gets to check that choice. That is question two.
+
+% ─────────────────────────────────────────────
+\subsection{Which distribution fits my data?}
+\label{sec:fitting}
+A computer will fit any family to any data, and it will always return a winner. Choosing the family is your job. Fitting a distribution consists of three steps, and the order matters.
+
+\begin{enumerate}
+\item \textbf{Think.} Which families make sense for how these numbers came about? Is it a count or a measurement? Can it be negative? Is it a sum or a product, does it have a steady rate, does it have a snowball effect? Often several families fit about equally well; then the process decides.
+\item \textbf{Fit.} For each family that makes sense, let the computer find the parameters under which your data is most probable: the mean and standard deviation of a bell, the rate of a Poisson. This is called \emph{maximum likelihood}, and it is the part computers are good at.
+\item \textbf{Check.} Do model and data agree, up to the differences chance makes anyway? Look where they differ, in the tails too. A qq-plot shows you.
+\end{enumerate}
+
+The worst way to start is to hand a column to a fitter and report whatever wins. A winner that makes no sense for the process is noise, not an answer. The distribution fitter in goad, the course toolkit, also gives you test scores for every family. With thousands of rows every family gets rejected by a formal test, so use the scores to rank, and use your eyes and your knowledge of the process for the rest. A count is fitted with \texttt{discrete=True}, because a count has a probability per whole number.
+
+\subsubsection{Messages per day: the rate isn't steady}
+Messages per day on a chat channel are a count, so the first candidate is a Poisson. Before fitting, check its assumption: is the rate steady? On a chat channel that is unlikely, and figure~\ref{fig:irc} shows how unlikely. Over 250 ordinary Thursdays the Italian Ubuntu channel had between $10$ and almost $1{,}800$ messages a day, $564$ on average. A Poisson with that mean allows about $24$ messages either way and squeezes $164$ of the $250$ days into a single bar. Clearly wrong.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{lesson4/irc_poisson.png}
+\caption{Messages per ordinary Thursday in \#ubuntu-it. Poisson (red) against negative binomial (blue).}
+\label{fig:irc}
+\end{figure}
+
+There is a quick way to see this without a plot. For a Poisson distribution, the variance equals the mean:
+$$\Var(X) = \E[X].$$
+If the variance of your counts is much larger than their mean, the Poisson is the wrong model. The \emph{negative binomial} is a Poisson whose rate is itself drawn anew every day, and it fits these data well: mean $564$, standard deviation $399$. Who is around, what broke, the time of year: they all move the rate. That is the wind from the leaves example.
+
+Notice that the failed Poisson is informative. It tells you the rate moves. The honest summary of an ordinary Thursday is not ``about 560 messages'' but ``a rate of about 560 that routinely halves or doubles''.
+
+\subsubsection{A strange best fit can mean several groups}
+The penguin dataset\footnote{Palmer Penguins: Horst, A.M., Hill, A.P. \& Gorman, K.B. (2020), \url{https://allisonhorst.github.io/palmerpenguins/}.} contains the flipper length of 333 birds. Put that column into a fitter and the best single curve is a \emph{beta} distribution. A beta describes a percentage you are unsure about: flip a coin ten times, get seven heads, and the beta tells you which values of ``the chance of heads'' are plausible. It lives between zero and one. The fitting library (scipy) lets every family shift and stretch, so it can lay a beta over $170$ to $235$ millimetres. The fit is real; the meaning is nil. Nothing about a flipper length is a percentage.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson4/penguins_split.png}
+\caption{Left: one curve for all 333 penguins. Right: one normal distribution per species.}
+\label{fig:penguins}
+\end{figure}
+
+A winner like that is a warning. The histogram has two humps, and two humps usually mean two or more groups. Here we know the groups: three species. Fit one normal distribution per species and each one fits fine (figure~\ref{fig:penguins}); Adelie and Chinstrap overlap, Gentoo sits twenty millimetres further. The column was never one population. A species has a flipper length; ``a penguin'' doesn't. What told us to split was knowing the data, not the fit table. With some experience you can also see it in the plot: the gap between the humps is about two standard deviations, which is what two bells lying next to each other look like.
+
+\subsubsection{A qq-plot shows where model and data disagree}
+You know the boxplot. Its box marks three quantiles: the lengths below which a quarter, a half and three quarters of the birds fall. A \emph{qq-plot} does that for every single observation. Sort the data; for each rank, ask the fitted model which value it expects at that rank; plot the real value against the expected value. If the model is right, the dots lie on the diagonal. Where the dots leave the line, the model is wrong, and the way they leave it usually tells you why.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson4/penguins_qq.png}
+\caption{qq-plots against the normal. Left: all birds against one bell. Right: each species against its own.}
+\label{fig:penguins-qq}
+\end{figure}
+
+For all penguins against one bell, the dots snake around the line in an S-shape: too few birds in the middle, too many at both ends, because the pooled data has a dip in the middle where a bell has its peak. Each species against its own bell follows the line, apart from small steps that come from measuring to the whole millimetre. The qq-plot is most useful in the tails, where a histogram has too few points to show you anything. We use it on taxi fares under question three.
+
+\againconcretely
+The fitter crowned a stretched beta. Split by species, and three plain bells appear. The fitter always returns a winner; whether that winner makes sense is your call. Before trying a stranger family, ask whether your column holds several groups. Then check with a qq-plot: where the dots leave the line, the model is wrong. Messages per day failed the Poisson because the rate moves; the penguins failed one bell because there were three populations. Both failures told us something about the data.
+
+% ─────────────────────────────────────────────
+\subsection{What is an outlier?}
+\label{sec:outliers}
+Here is the central idea of this question: \emph{an outlier is not a property of the data, it is a property of your model.} An outlier is a value your model didn't expect. Pick the wrong model, and ordinary values look strange.
+
+\subsubsection{What does an outlier mean?}
+When you find an outlier, there are three possible explanations, and I list them in the order in which you should suspect them.
+
+\begin{enumerate}
+\item \textbf{A wrong model.} This is by far the most common reason, certainly among students. The value is ordinary; your distribution doesn't fit the data, or it mixes groups. A value that looks like an outlier may simply belong in a different distribution: another species of penguin, another phase of a process. Fix the model, not the data.
+\item \textbf{A rare, real value.} Unusual but possible: sometimes there really is an extremely long taxi ride or an exceptionally busy day. Keep it; it is often the most interesting row in your dataset.
+\item \textbf{An error.} A value the process cannot produce: a negative duration, a date in 1970, an amount of 70 million among amounts of 4,000. Remove it, and say that you did. But consider this last, not first.
+\end{enumerate}
+
+Statistics can point at the rows to look at. Which of the three it is takes knowledge of the process. And the two rules of thumb everyone knows, the boxplot whiskers and ``more than three standard deviations from the mean'', both assume a bell. On skewed data, they flag ordinary values.
+
+\subsubsection{The bell has no room for expensive rides}
+Taxi fares, $6{,}433$ New York rides. The mean is \$13, the median \$9.50: the tail pulls the mean up. Read the qq-plot in figure~\ref{fig:taxi-qq} the same way as the penguins: each dot is one ride, its real fare against the fare the model expects at that rank. Against a fitted bell the dots bend away from the line. At the bottom the bell expects negative fares; at the top it expects about \$55 where the real top is \$150. A right-skewed family, the lognormal, follows much further.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson4/taxi_qq.png}
+\caption{Taxi fares against a bell (left) and a lognormal (right).}
+\label{fig:taxi-qq}
+\end{figure}
+
+Why are the fares so skewed? Don't read a deep mechanism into it. Fares are a base charge plus a meter, so mostly a sum; the skew comes from the trips. Most rides are short, and for long distances people choose a train or a car, because a taxi becomes too expensive. The tail is cut off by people's choices, not by chance. We just need a family with room on the right. And the flat run at \$52 is the fixed airport fare: a second process in the same column.
+
+\subsubsection{Outliers, or the wrong model?}
+Most people use an outlier definition without knowing they chose one. The dots beyond the whiskers of a boxplot come from Tukey's rule: the whiskers reach $1.5$ times the interquartile range (IQR) past the box, and everything beyond is drawn as an outlier. Tukey designed that rule for roughly bell-shaped data; on a normal distribution it flags $0.7\%$ of the observations.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{lesson4/taxi_whiskers.png}
+\caption{Tukey's whisker rule on the taxi fares, and on the logarithm of the same fares.}
+\label{fig:whiskers}
+\end{figure}
+
+On the taxi fares, Tukey's rule flags $592$ rides as outliers: $9.2\%$, including every airport ride (figure~\ref{fig:whiskers}). Not $592$ strange rides: nothing is wrong with those rides, the model behind the rule is. Apply the same rule to the \emph{logarithm} of the fare, whose shape is close to a bell, and it flags $52$ rides, $0.8\%$, which is about what the rule expects. The rule isn't wrong. It assumes a bell.
+
+\subsubsection{The whisker rule makes four assumptions}
+Tukey's rule quietly makes four assumptions:
+
+\begin{enumerate}
+\item \textbf{Shape: roughly symmetric.} A bell, not a long tail. On taxi fares the rule flags 592 ordinary rides.
+\item \textbf{Population: one group.} Mix groups, and an ordinary member of another group looks like an outlier.
+\item \textbf{Numbers: continuous.} Measurements. Counts, categories and rounded values pile up on the same numbers, and the quartiles and whiskers land on awkward ties.
+\item \textbf{Order: independent.} Every value stands on its own. In a time series, where every value builds on the previous one, the rule is out of scope.
+\end{enumerate}
+
+Break one of these, and a dot past the whiskers no longer means ``unusual''. The same four assumptions hide behind ``more than three standard deviations''. Next: an analysis that breaks three of them.
+
+\subsubsection{What not to do: judge data without the process}
+Here is a real student analysis from an earlier year, shown as an example of what not to do. The data is the axle load of a garbage truck over a morning. The student saw gaps and an uneven number of measurements per day, wrote that this suggested ``inconsistent data collection'', and concluded that about $30\%$ of the data was unreliable.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson4/garbage_truck.png}
+\caption{The axle load of a garbage truck through one morning.}
+\label{fig:garbage}
+\end{figure}
+
+Now think about the process instead. The load grows while the truck collects along its route. It drops back to roughly the weight of the empty truck when the truck is emptied, and then the next round starts. The flat stretches and the gaps fit driving to the dump, waiting and breaks. A sudden drop of several thousand kilos is not someone throwing out a very heavy bag; it is the truck being unloaded. And a day with fewer measurements might simply be a shorter round.
+
+Check the four assumptions, and three of them are broken. The measurements are not independent: if the truck weighs $20{,}000$ kg and two bags are added, the next measurement is $20{,}050$ kg, strongly correlated with the previous one. There is not one population: a full truck and an empty truck are different situations. And so there is no single distribution over the day, and no whisker rule or threshold can say anything about reliability. None of this data was shown to be unreliable; the analysis never asked how it was made.
+
+What would work? Two things, both suggested by students in class: split the data into the two processes (collecting and unloading), and take the \emph{difference} between consecutive measurements. The differences ($10$ kg, $50$ kg, $100$ kg) are close to independent, and they do have a distribution. Against that distribution, a jump of $2{,}000$ kg during collection really is an outlier, and a very interesting one.
+
+\subsubsection{One \$150 ride, three verdicts}
+The most expensive ride in the dataset costs \$150. Is it an outlier? That depends entirely on the model you hold it against. Figure~\ref{fig:taxitail} shows, on a log scale, the share of rides at least this expensive: each step down is 1,000 times rarer. Black is the data.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{lesson4/taxi_tail.png}
+\caption{The share of rides at least this expensive, under three families.}
+\label{fig:taxitail}
+\end{figure}
+
+\begin{itemize}
+\item \textbf{1 in $10^{32}$.} Under a fitted bell the ride is $11.9$ standard deviations above the mean. To give you a feeling for that number: there are roughly $2 \times 10^{16}$ ants on earth\footnote{Schultheiss, P. et al. (2022). The abundance, biomass, and distribution of ants on Earth. \textit{PNAS}, 119(40).}. Pick a random ant; now I pick a random ant too, and it is the same one. Now do that twice in a row. That is the kind of rare we are talking about. Under this model, the ride cannot have happened.
+\item \textbf{1 in 19,000.} Under the lognormal, the best of goad's families.
+\item \textbf{1 in 1,700.} Under the log-logistic, a skewed family outside goad's list, which follows the real tail more closely. With $6{,}433$ rides, a few rides like this are within expectation.
+\end{itemize}
+
+The family decides how rare a value is. A check in numbers: $7$ rides cost \$100 or more; the lognormal expects $3$, the log-logistic $11$. And a warning: the Burr family has a better likelihood than both, because it fits the bulk of the data, and it expects $32$ rides of \$150 or more where there are $2$. The best fit overall is not the best fit in the tail, and the tail is where outlier questions live. Where data is thin, check the tail itself. Note that neither skewed family says ``delete the ride''; only the bell says it is impossible.
+
+\subsubsection{Ordinary among all penguins, rare among her own}
+A wrong model doesn't only make you find outliers that aren't there; it also makes you miss the ones that are. One Adelie female in the penguin data has a flipper of $202$ mm. Among all penguins she is completely ordinary: she stands in the middle of the crowd of another species, and no rule would flag her. Among the $73$ Adelie females she is two and a half standard deviations long, about one in $95$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{lesson4/penguin_adelie.png}
+\caption{Grey: all 333 birds. Blue: the 73 Adelie females. Red: one Adelie female with a 202 mm flipper.}
+\label{fig:adelie}
+\end{figure}
+
+It runs the other way too: the longest flipper in the data, $231$ mm, looks rare among all penguins (one in $146$) and is an ordinary large Gentoo male (one in $22$). ``Unusual'' always means unusual \emph{for a population}, so pick a population that exists. What to do with her is something the numbers cannot settle. It could be a mistyped measurement, a bird whose sex or species was recorded wrongly, or a genuinely large female. Someone who handled the birds knows.
+
+\paragraph{Why you want to find outliers.}
+After all these warnings you might think outliers are a nuisance. They are not. Outliers are often the first sign of a problem: in a factory, an unusual measurement is often an early warning that something is about to break; in a sales process, it can announce a dissatisfied customer or rising costs. And outliers are a way into discovering \emph{groups} you didn't know about. In a chat export, for example, you will often find a sharp peak in message length around eight characters. That is not a habit of the writers: it is the export writing a placeholder such as ``image omitted'' every time someone sent a picture. It is a different process in the same column, and it does not belong in the distribution of what people write. Often, when you go looking for an outlier, what you are really looking for is a different process. That is why it pays to have more than the normal distribution in your toolbox.
+
+\againconcretely
+A \$150 taxi ride is impossible under a bell and merely rare under a skewed family. Same ride, different model. Before you call something an outlier, check that your distribution fits, in the tails too, and that it describes one population. If it fits and the value is still extreme: is it an error, or a rare real event? That takes knowledge of the process, not statistics. In your chat that might be an export glitch, a birthday, or the week someone joined. If you remove anything, report how many values, on what criterion, and whether your conclusion survives with them left in.
+
+% ─────────────────────────────────────────────
+\subsection{Did something change, or is it chance?}
+\label{sec:change}
+A distribution describes a process. When something changes the process, the distribution moves with it. Someone \emph{falls in love} and sends more messages, at different hours, to one person. A \emph{holiday} means fewer messages and a different rhythm of the day. A \emph{new release} fills a chat channel with questions. So you compare the distribution before and after the event.
+
+The catch is that two samples always differ a little, even when they come from exactly the same process, and our eyes are very good at seeing change in noise. The question is therefore never ``is there a difference?'', but ``is the difference bigger than the differences chance alone produces?''
+
+\subsubsection{Did this person's texting change?}
+The example comes from the first chapter of \textit{Bayesian Methods for Hackers}\footnote{Davidson-Pilon, C. (2015). \textit{Bayesian Methods for Hackers: Probabilistic Programming and Bayesian Inference}. Addison-Wesley. The notebooks are at \url{https://github.com/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers}.}: the number of text messages one person sent per day, over $74$ days. From around day $45$ the average goes up from $17.8$ to $22.8$ messages a day. Did this person's texting habits change? Perhaps something happened: a new relationship, a new job. But look at the individual days: $2$ messages one day, $72$ another. With noise this large, a difference of $5$ a day could easily be luck. How do you tell?
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson4/texting.png}
+\caption{Messages per day for 74 days.}
+\label{fig:texting}
+\end{figure}
+
+\subsubsection{Shuffle the labels to see what chance does}
+Here is a way to find out that needs no formula and no distribution family at all. If nothing changed at day $45$, then which days we call ``before'' and which ``after'' is arbitrary. So we can shuffle those labels.
+
+\begin{definition}
+\label{def:shuffle}
+A \emph{shuffle test} (or permutation test) compares the difference between two groups with the differences you get when the group labels are randomly reassigned. Shuffle the labels, compute the difference again, and repeat many times (say $10{,}000$). The share of shuffles that produce a difference at least as large as the real one is the \emph{p-value}: how often chance alone does this well.
+\end{definition}
+
+For the texting data we keep $45$ days labelled ``before'' and $29$ labelled ``after'', shuffle, and compute the difference in means, ten thousand times. That cloud is what chance alone makes (figure~\ref{fig:texting-null}). The real difference sits in its upper tail, but $14\%$ of the shuffles produce a difference at least as large, in either direction ($p = 0.14$). A change is possible; this alone doesn't show it. Roughly: the more noise in your data, the larger the chance that what you see is chance.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{lesson4/texting_null.png}
+\caption{Grey: the differences chance produces in 10,000 shuffles. Red: the real difference, $+5$ a day.}
+\label{fig:texting-null}
+\end{figure}
+
+\subsubsection{Bayesian Methods for Hackers: a confident switch}
+The book answers the same question in a Bayesian way, and comes out much more confident. Its model says: the messages on each day are Poisson distributed, with rate $\lambda_1$ before an unknown day $\tau$ and rate $\lambda_2$ from $\tau$ on. The switch day $\tau$ gets a uniform prior: before we look at the data, every one of the $74$ days is equally likely to be the switch. A sampling method, Markov chain Monte Carlo (MCMC), then finds which combinations of $\lambda_1$, $\lambda_2$ and $\tau$ explain the data well. The verdict: from $17.8$ to $22.7$ messages a day, from day $44$ or $45$ on, and the probability that the rate went up is
+$$P(\lambda_2 > \lambda_1) = 0.998.$$
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson4/texting_book.png}
+\caption{The book's model. Left: the two rates. Right: the switch day $\tau$.}
+\label{fig:texting-book}
+\end{figure}
+
+The shuffle said a difference this size turns up in one shuffle out of seven. Same data, very different confidence.
+
+\subsubsection{Are those assumptions right?}
+Where does the difference come from? When we discussed this in class, the right objection came from the room: look at the spread. The book's method is fine; the question is whether its assumptions hold. A Poisson assumes $\Var(X) = \E[X]$, so a day with an average of $18$ messages varies by about $4$ either way. These days run from $0$ to $72$: the variance is around $155$ to $250$, against a mean of $18$ to $23$. The assumption is violated, and because the Poisson underestimates the day-to-day noise, it is far too sure about each rate. That is why the two rates hardly overlap in the book.
+
+Keep everything else in the book's model the same and only let the days vary more, with negative binomial counts instead of Poisson counts. Then no day stands out as the switch any more, and the probability that the second period is busier drops from $0.998$ to $0.59$. If you knew in advance that something happened on day $45$, it is $0.94$: a likely increase, not a certain one.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson4/texting_switch.png}
+\caption{The same model with days that may vary.}
+\label{fig:texting-switch}
+\end{figure}
+
+The technique is elegant; the distribution was wrong. The careful conclusion of the shuffle test turns out to be the more reliable one. There is a broader lesson here: you can model the same phenomenon in many ways, and depending on how you look, you get a different answer. A good reason to reject a model is a violated assumption, not a preference for a different answer.
+
+\subsubsection{Searching for the day costs you the evidence}
+There is one more thing hiding in the question ``did the texting change?'', and it is perhaps the most important point of this lesson. There are two different questions.
+
+\begin{enumerate}
+\item \emph{The day is known in advance.} Something happened on day $45$, and I want to know whether the texting went up after it. That is one comparison. The shuffle test gives $7\%$ (now counting only shuffles where ``after'' is busier), and the model with varying days gives $0.94$.
+\item \emph{The day is searched in the data.} I don't know whether anything happened, so I try every split and keep the biggest difference. Now chance gets a try at every possible split; here $55$ of them, with at least ten days on each side. The best of those $55$ tries beats $+5$ in $45\%$ of the shuffles. The model gives $0.59$.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson4/texting_search.png}
+\caption{Left: the difference for every possible split day; the grey band is what shuffled days do. Right: the biggest difference chance finds when it may pick the day (grey), against the difference at a day fixed in advance (blue).}
+\label{fig:texting-search}
+\end{figure}
+
+A difference of $+5$ is unusual for one fixed day and ordinary for the best of $55$. Day $45$ looks special because it was picked for looking special. An event you know beforehand turns $55$ questions into one. The Bayesian model does the same bookkeeping automatically: with $\tau$ unknown, it has to spread its belief over all days, and with realistic day-to-day noise no day stands out. With Poisson counts the data look so decisive that this cost disappears, which is why the book could find the day and be sure of it at the same time.
+
+I like to explain this with dice. Put $100{,}000$ people in a hall and let each of them roll a die six times. If you afterwards find someone who rolled six sixes, that is not proof of special powers, only of a big hall: with that many people you should expect it. But if you point at someone \emph{beforehand} and say ``this person has special powers'', and they roll six sixes, that is spectacular. And if they do it a second time, you call the army. Predicting the future afterwards is easy; the trick is doing it beforehand.
+
+This has a practical consequence for your own analysis. If you know beforehand that a trip, a hospital stay or the weeks of morning sickness in a pregnancy define your labels, you can simply use those labels. A short period or a small number of observations is then not a reason to give up, because a shuffle test on labels that were fixed in advance can still come out very significant. Name the event before you look. Searching first and testing afterwards finds a switch in almost any series.
+
+\subsubsection{Same lift, two verdicts}
+The same test, on two Ubuntu chat channels: is a release day busier than an ordinary Thursday? The labels are shuffled 2,000 times, as in notebook 04.4. In both channels a release day is busier, by a factor of about one and a half. In the small Italian channel, \#ubuntu-it, release days are $41\%$ busier, but the real difference sits at the edge of the shuffle cloud: $p = 0.07$. Ten days of a rate that wanders this much can't settle it. In the big channel, \#ubuntu, release days are $47\%$ busier, and far outside anything the shuffles produce: $p < 0.001$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson4/irc_null.png}
+\caption{Release days against ordinary Thursdays in two channels, 2,000 shuffles.}
+\label{fig:irc-null}
+\end{figure}
+
+Same effect, different evidence. The reason is the spread of the ordinary days: in \#ubuntu-it they wander by two thirds of their mean, in \#ubuntu by a third, because many people averaging out make days more alike. There is no sharp line between chance and change: the further outside the cloud, the more convincing.
+
+\againconcretely
+A $40\%$ busier release day is borderline in a small channel and unmistakable in a big one. The noise decides. Compare before and after, then ask how big a difference chance alone makes; shuffling the labels answers that without assuming a family. The noisier the ordinary days, the more event days you need before you can see a change, and that spread is something you can see before any event happens.
+
+% ─────────────────────────────────────────────
+\subsection{Is my model done?}
+\label{sec:residuals}
+The last question. Fit a model, subtract it from the data, and look at what your model can't explain:
+$$\text{observed} - \text{model} = \text{residual}.$$
+The model doesn't need to be a statistical model; a simple formula or a straight line will do. What matters is what the residual looks like.
+
+\begin{itemize}
+\item \textbf{The residual looks like chance:} errors around zero, from a plausible family, with no pattern over time. Then you may be done. \emph{May}: a cause you never measured also looks like chance, and adding it could still make the spread much smaller. That is the epistemic uncertainty from the start of this lesson.
+\item \textbf{The residual has a pattern:} a step, a drift, a bend. Then your model is missing a mechanism, and when the pattern starts is often the most interesting finding. That doesn't make the model useless; whether it is good enough depends on what you need.
+\end{itemize}
+
+Good enough is a goal, not a statistic. If you bet on something that is fifty-fifty, a mechanism that picks the right side $51\%$ of the time makes you rich, as long as you can bet often enough in a row and the mechanism stays consistent. You don't need $99\%$. (Living through the $49\%$ is the hard part, so write an algorithm for it.) What you do need is to communicate clearly what your model does and does not capture.
+
+\subsubsection{Before vaccination, the residual looks like chance}
+For this example I deliberately use data that is not chat data, because what transfers is the loop of modelling and checking, not the dataset. The data are the public Dutch COVID figures. A pipeline prepared them: daily deaths from the cumulative count, shifted fourteen days back next to the positive tests that led to them, and a seven-day average against the weekly reporting rhythm. The model is simple. On average, people who die of COVID die about two weeks after their infection, so deaths two weeks later are a fixed fraction of positive tests: a straight line. Fitted on the $85$ days from 13 October 2020 to 5 January 2021, before vaccination started, the line is
+$$\text{deaths}_{t+14} \approx 0.0065 \times \text{positive tests}_t + 20.$$
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson4/covid_before.png}
+\caption{Before vaccination (85 days). Left: the model. Middle: what the line missed. Right: its distribution.}
+\label{fig:covid-before}
+\end{figure}
+
+On that window the residual waves around zero with no drift (figure~\ref{fig:covid-before}); the last week runs high at the winter peak. There is also a bump around Christmas, and in class the temptation was to read it as the start of an upward trend. Be careful which pattern you think you see: if that were a real trend, it would mean the virus became deadlier over time. Much more plausible is that the Christmas holiday and the lockdown rhythm run through the data. When we fit distributions to the residual, six families fit within a few points of each other and none is rejected. Errors the data can't tell apart: that is what chance looks like.
+
+\subsubsection{The residual reveals what the model missed}
+Now fit the same kind of line on all $232$ days, from October 2020 to June 2021 (figure~\ref{fig:covid-full}). Nothing in the model knows that a vaccine exists. From March it predicts more deaths than happen, month after month. The residual changes character: positive through the winter wave, and then from 27 February to the end a long negative run that never comes back. Every family is rejected; the best is the uniform, which is what a fitter says when the errors lie along a trend instead of around zero.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson4/covid_full.png}
+\caption{The same kind of model over 232 days, October 2020 to June 2021.}
+\label{fig:covid-full}
+\end{figure}
+
+The residual is pointing at a process the model left out, and at roughly when it started: after vaccination, the same number of positive tests comes with fewer deaths. The correlation between tests and deaths over the whole period looks weak, but it is really two different random processes. Notice what the residual does and does not do. It dates the change; it does not prove the cause. Better treatment, or a change in who got tested, could leave a similar run.
+
+\againconcretely
+One straight line, two windows. Before vaccination, the line was a fine model: what it missed looked like chance, and for many purposes the line is good enough. Over the full window, the residual has a run with a start date: a mechanism is missing, here vaccination, and that pattern is the most informative thing the model produced. Next lesson, notebook 05.3 hands you this residual and asks you to write the missing mechanism into the model.
+
+% ─────────────────────────────────────────────
+\subsection{The five questions, answered}
+\label{sec:lesson4-summary}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\textbf{Question} & \textbf{Answer} \\
+\midrule
+What is a distribution? & A model of what you can predict about randomness: every possible outcome, with shares that sum to one. \\
+Which distribution fits my data? & First reason about a model that fits the underlying process, then fit, then check. Never the other way around. \\
+What is an outlier? & It shows what you modelled as ``expected''. \\
+Did something change, or is it chance? & Only if the difference is bigger than chance alone makes. Name the event before you look. \\
+Is my model done? & Study the residual, and wonder which patterns your model did not pick up. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Notebooks 04.1 to 04.5 work through each of the questions, ending on your own chat.
+
+\subsection{Feedback on your distribution plots}
+\label{sec:showing}
+In the second half of the lesson we discussed the distribution plots you made of your own data. The same points came back again and again, so I collect them here.
+
+\textbf{One message, in half a second.} A good visualisation works pre-attentively: the reader picks up the message within about $500$ milliseconds, before they start reading. That only works for simple messages: something is bigger, smaller, shifted, or happened. Two clearly different things, not more.
+
+\textbf{Reduce the clutter.} Remove the grid. Bring the palette back to two meaningful colours, for example grey for ``before'' and one colour for ``during''. Six lines of legend where one label next to the line would do is noise. Labels like ``axis is logarithmic'' or ``line is a fitted lognormal'' can go if the axis already says so.
+
+\textbf{One visualisation, not two.} People usually show two plots because they cannot choose. Two plots are only defensible if together they tell one story.
+
+\textbf{The title must match what the data can carry.} A neutral title is a waste; you are allowed to bring a message. But the message has to be backed up by the data. ``Our first holiday together made our group of friends closer'', based on the observation that messages got longer, is too big a leap: long messages can also be long arguments about who still owes money for that dinner. Either choose a less ambitious title, or dig deeper into what those messages are about. Always ask yourself: do I have the data to back this up?
+
+\textbf{Show a real distribution.} Follow the three rules of definition~\ref{def:distribution}, and decide whether you are showing probabilities (discrete) or a density (continuous). Put \emph{density} on the axis of a continuous plot. A y-axis that runs from $0$ to $75\%$ under a smooth fitted curve tells the reader you haven't made that choice.
+
+\textbf{Report the shuffle test.} If you compare two distributions, the number your reader is waiting for is how likely the difference is under chance: ``$p$-value after $10{,}000$ shuffles''. Not the standard deviation of your lognormal fit. Parameters are only interesting when you compare two processes, such as the two rates before and after day $45$.
+
+\textbf{Be careful with log scales in a presentation.} A log axis compresses, and makes two distributions look alike that are very different on a normal axis. Your audience cannot undo the logarithm in their head.
+
+\textbf{Know who you make it for.} Transparent histograms behind fitted lines are fine for a trained reader and noise for a business audience. That is a choice, not a matter of right or wrong.
+
+\textbf{A null result needs tension.} Sometimes you find that nothing changed. That is interesting only if there was a strong expectation that something would. If nobody expected an effect, finding none is not a story; dig deeper.
+
+\end{document}
