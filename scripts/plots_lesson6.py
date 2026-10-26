@@ -810,6 +810,41 @@ scatter_by(
 ax.set_title("1,500 messages, six authors, one row per message")
 save(fig, "blob")
 
+# the whole lesson in one picture: three messages, up to 384 axes, back down to two
+WHOLE = {
+    "like it? based on what?": SECOND,
+    "yeah that's definitely not good": ACCENT,
+    "because I'm a developer": THIRD,
+}
+picked = [int(np.flatnonzero(messages.message.to_numpy() == text)[0]) for text in WHOLE]
+SHOWN_AXES = 16
+fig, ax = plt.subplots(figsize=(6.4, 4.4))
+for k in range(SHOWN_AXES):
+    ax.axvline(k, color=GREY_FAINT, lw=1)
+for i, colour in zip(picked, WHOLE.values()):
+    ax.plot(
+        range(SHOWN_AXES), X[i, :SHOWN_AXES], color=colour, lw=2.2, marker="o", ms=4
+    )
+ax.text(SHOWN_AXES - 0.2, 0, "… 384", va="center", color=GREY_DIM, fontsize=16)
+ax.set_xlim(-0.5, SHOWN_AXES + 1.6)
+ax.set_xticks(range(SHOWN_AXES), [str(k + 1) for k in range(SHOWN_AXES)], fontsize=11)
+ax.set_yticks([])
+ax.spines["left"].set_visible(False)
+ax.set_xlabel("axis, the first 16 of 384")
+save(fig, "whole_up")
+
+fig, ax = plt.subplots(figsize=(6.4, 4.4))
+ax.scatter(coords[:, 0], coords[:, 1], color=GREY_FAINT, s=8, linewidths=0)
+for i, colour in zip(picked, WHOLE.values()):
+    ax.scatter(*coords[i], color=colour, s=170, edgecolors=BG, linewidths=1.5, zorder=3)
+ax.set_xticks([])
+ax.set_yticks([])
+ax.set_xlabel("PC1")
+ax.set_ylabel("PC2")
+for side in ["left", "bottom"]:
+    ax.spines[side].set_color(GREY)
+save(fig, "whole_down")
+
 fig, ax = plt.subplots(figsize=(10, 4.8))
 ax.plot(np.arange(1, len(cumulative) + 1), cumulative, color=ACCENT)
 half = int(np.argmax(cumulative >= 0.5)) + 1
