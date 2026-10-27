@@ -1240,7 +1240,7 @@ This course asks two things of your code. It has to make the plots in your repor
 % ─────────────────────────────────────────────
 \subsection{The problem with reading a lot of code}
 \label{sec:atlas-reading}
-Until recently, writing code was the slow part. Reading it kept up, because a person can only write so much in a day. With a coding agent that balance is gone. An agent writes a function in seconds, a feature in minutes, and several agents can work on several projects at once. Somebody still has to look at all of it and decide whether it is any good: you, for your own project; a senior developer, for a team (figure~\ref{fig:atlas-agents}). Writing has become cheap. Reading has not.
+Until recently, writing code was the slow part. Reading it kept up, because a person can only write so much in a day. With a coding agent that balance is gone. An agent writes a function in seconds, a feature in minutes, and several agents can work on several projects at once. Somebody still has to look at all of it and decide whether it is any good: you, for your own project; a senior developer, for a team (figure~\ref{fig:atlas-agents}). That is my own situation: at the province of Utrecht six people write code with Claude in a project I am responsible for, and in this course fifteen of you do. Even if I go through a code base quickly, it takes me half an hour. Writing has become cheap. Reading has not.
 
 \begin{figure}[H]
 \centering
@@ -1328,12 +1328,17 @@ Look at figure~\ref{fig:atlas-preattentive}. You found the red square before you
 
 Reading works the other way. You read in series, one word after another, and the time grows with the amount of text: twice the code, twice the reading. Seeing works in parallel. That is the difference between the blue dot and the red dots in figure~\ref{fig:atlas-timeline}, and it is the whole reason this course exists: a good plot shows in half a second what a table of numbers hides. So if the structure of your code is what you want to judge, turn the structure into a picture, and let your eyes do what they are good at: spotting the box that does not belong, the arrow that goes back, the place everything points to.
 
+You don't need to know the rules behind the picture to use it. Show people a set of faces and ask which ones they like, and many will pick the same faces. Those faces turn out to follow certain mathematical proportions. Nobody who picked them knew that; their eyes knew what a well-formed face looks like. A picture of code works the same way. Atlas checks a set of design principles, and you don't have to understand them all: a consistent design gives a calm picture, and a messy one looks messy. When something odd pops up (a box you didn't expect, a line that runs back), ask what it is doing there. In my own projects it quite often turns out to be a bug.
+
 % ─────────────────────────────────────────────
 \subsection{What atlas draws}
 \label{sec:atlas-draws}
 Atlas\footnote{\url{https://github.com/raoulg/atlas}. The tour at \url{https://raoulg.github.io/atlas/} shows every step on a real example.} reads your code and draws it as two kinds of thing. \emph{Places} are where data rests: a value in memory (a DataFrame, a \texttt{Settings} object), a file on disk, a table in a database, a page on the web, a program that runs, the screen, or a global variable that a module keeps. \emph{Functions} are what carries data from one place to the next. A \emph{route} is what one entry point does, a command you run for instance, drawn from left to right: what it finds on the left, what it leaves on the right, and the functions in between, in the order they run.
 
 Under the picture is a small piece of mathematics. The places are the objects of a category, the functions are its arrows, and composing arrows is calling one function after another; a route is the composite from an entry point to the places it reaches. One idea from that mathematics matters for how you read the picture: what a function does to the world belongs to the function. A file it writes is as much a part of what it gives as a value it returns, and a file it reads is as much a part of what it takes as a parameter. A function that quietly writes a file, or reads a global, shows that on the picture, even though its signature doesn't.
+
+\paragraph{A picture you can trust.}
+Why not simply ask your agent to draw a diagram of your code? I tried that. Claude made a beautiful HTML page with a flowchart that looked exactly right. Then I read the code, and the diagram turned out to show what I hoped the code did, not what it did: it had made something to make me happy. An LLM is a fuzzy calculator: very powerful, but it doesn't give the same answer twice, and it can invent. A picture you use to check code must not invent anything. Atlas therefore contains no language model at all. It reads the code, follows the same rules every time, and draws what is there. The same code always gives the same picture.
 
 \subsubsection{The same figure from two very different programs}
 Here are the two sunspot programs, as atlas draws them.
@@ -1368,6 +1373,12 @@ Atlas is also not a linter. ruff and ty own the level of lines: style, an unused
 Your coding agent lives in text, and you are much faster with images. Atlas gives the two of you the same picture. Register it once with your agent (\texttt{claude mcp add -{}-scope user atlas -{}- atlas mcp} for Claude Code), run \texttt{atlas serve} in your repository and open the page it prints. Then you can ask ``where does the smoothing happen?'' and the agent points at the box on your page, instead of describing it. You can write a note on a box (``what happens if the data on the web changes?''), and the agent reads it and answers on the box. And when you ask for a change, the agent can draw it first, beside the code as it is, so you see what it would add before a single file changes. You say yes to a picture, not to a paragraph of text.
 
 This matters for the same reason as everything above. You will write much of your code with an agent, and the danger of that is a fine outside and a mess inside: the plots come out, and nobody, you included, knows how. Looking at the picture together is a way to keep the inside something you understand.
+
+\subsection{A new level of abstraction}
+\label{sec:atlas-abstraction}
+Programming has moved up a level before. In Fortran, in the 1960s, you allocated memory yourself and built everything from scratch. Python manages memory for you, and nobody misses doing it by hand. Working with an agent and a picture of your code is a shift of the same kind: you spend less time on syntax and more on design, on which steps there are and what travels between them. What has to stay is the determinism. Python's memory management does the same thing every time; an agent does not. That is why the picture has to be deterministic: it is the part that keeps the fuzziness of the agent under control, while you still get its speed, and sometimes its creativity.
+
+Does that mean you no longer need to learn to program? No. Think of the step from a slide rule to a calculator. A calculator lets you do things that were impossible before, and still, for the first years of primary school, children don't get one: they first learn what multiplying is. An LLM is a new calculator, a fuzzy one. What you still need to learn is the way of thinking behind code: how to cut a problem into smaller problems, how a process runs step by step, what an if-else decides. That is why in class I sometimes ask you to close your laptop and work a problem out with pen and paper first. You learn to think with your hands, and only then open the laptop. The picture of your code is where that thinking shows: if you can explain it, I know you understand what you built.
 
 \subsection{Atlas in your final assignment}
 \label{sec:atlas-assignment}
