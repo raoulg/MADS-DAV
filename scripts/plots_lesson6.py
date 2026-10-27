@@ -364,6 +364,70 @@ for k, (coords, title) in enumerate(
     ax.set_title(title)
 save(fig, "swissroll")
 
+
+# t-SNE in a nutshell, on the same roll and map: for one point, whom it is likely to pick as a
+# neighbour in the data (p_{j|i}, a normal curve as wide as the perplexity asks) and in the map
+# (q_{j|i}, a Student-t curve); t-SNE moves the map until the two agree
+def conditional_p(points, i, perplexity=30.0):
+    """p_{j|i} for every j, with the width found by bisection on the perplexity."""
+    squared = ((points - points[i]) ** 2).sum(axis=1)
+    squared[i] = np.inf
+    low, high = 1e-3, 1e3
+    for _ in range(60):
+        sigma = np.sqrt(low * high)
+        weights = np.exp(-(squared - squared.min()) / (2 * sigma**2))
+        p = weights / weights.sum()
+        if np.exp(-np.sum(p[p > 0] * np.log(p[p > 0]))) > perplexity:
+            high = sigma
+        else:
+            low = sigma
+    return p
+
+
+def conditional_q(points, i):
+    """q_{j|i} for every j: the Student-t curve of the map, normalised over all other points."""
+    weights = 1 / (1 + ((points - points[i]) ** 2).sum(axis=1))
+    weights[i] = 0
+    return weights / weights.sum()
+
+
+# a point halfway along the sheet and halfway across it
+picker = int(
+    np.argmin((position - np.median(position)) ** 2 + ((roll[:, 1] - 10.5) / 3) ** 2)
+)
+picks_p = np.argsort(conditional_p(roll, picker))[-30:]
+picks_q = np.argsort(conditional_q(roll_tsne, picker))[-30:]
+print(
+    f"nutshell: of the 30 likeliest picks in the data, {len(np.intersect1d(picks_p, picks_q))} "
+    "are among the 30 likeliest in the map"
+)
+fig = plt.figure(figsize=(6.6, 7.4))
+ax3 = cast(Axes3D, fig.add_subplot(2, 1, 1, projection="3d"))
+rest = np.setdiff1d(np.arange(len(roll)), picks_p)
+ax3.scatter(roll[rest, 0], roll[rest, 1], roll[rest, 2], color=GREY_FAINT, s=6)
+ax3.scatter(*roll[picks_p].T, color=SECOND, s=36, depthshade=False)
+ax3.scatter(*roll[picker], color=ACCENT, s=150, edgecolor=BG, linewidths=2)
+ax3.view_init(10, -70)
+ax3.set_box_aspect(None, zoom=1.35)
+clean_3d(ax3)
+ax3.set_title(
+    "data: whom $x_i$ picks, 30 largest $p_{j|i}$", loc="center", pad=0, fontsize=21
+)
+ax = fig.add_subplot(2, 1, 2)
+rest = np.setdiff1d(np.arange(len(roll)), picks_q)
+ax.scatter(roll_tsne[rest, 0], roll_tsne[rest, 1], color=GREY_FAINT, s=6)
+ax.scatter(*roll_tsne[picks_q].T, color=SECOND, s=36)
+ax.scatter(*roll_tsne[picker], color=ACCENT, s=150, edgecolor=BG, linewidths=2)
+bare(ax)
+ax.set_title("map: whom $y_i$ picks, 30 largest $q_{j|i}$", fontsize=21)
+# a 3D panel shrinks its own box, so its title starts further right: line it up with the map's
+fig.tight_layout()
+fig.canvas.draw()
+box3, box = ax3.get_position(), ax.get_position()
+ax3.title.set_x((box.x0 - box3.x0) / box3.width)
+ax3.title.set_horizontalalignment("left")
+save(fig, "nutshell")
+
 mnist = fetch_openml("mnist_784", version=1, as_frame=False, data_home=str(CACHE))
 digits, digit_labels = mnist["data"], mnist["target"].astype(np.uint8)
 sample = np.random.default_rng(42).choice(len(digits), size=5000, replace=False)
@@ -1265,6 +1329,11 @@ save(fig, "sentiment")
 FORMULAS = {
     "formula_cosine": r"$\cos(u, v) \;=\; \dfrac{u \cdot v}{|u|\;|v|}$",
     "formula_dot": r"$u \cdot v \;=\; u_1 v_1 + u_2 v_2 + \cdots + u_{384}\, v_{384}$",
+    "formula_tsne_x": r"$\mathcal{X} = \{x_1, \ldots, x_N\},\;\; x_i \in \mathbb{R}^D$",
+    "formula_tsne_y": r"$\mathcal{Y} = \{y_1, \ldots, y_N\},\;\; y_i \in \mathbb{R}^d,\;\; d < D$",
+    "formula_tsne_p": r"$p_{j|i} \;\propto\; \exp\left(-\Vert x_i - x_j \Vert^2 / 2\sigma_i^2\right)$",
+    "formula_tsne_q": r"$q_{j|i} \;\propto\; \left(1 + \Vert y_i - y_j \Vert^2\right)^{-1}$",
+    "formula_tsne_kl": r"$\min_{\mathcal{Y}}\; \mathrm{KL}(P \;\Vert\; Q)$",
 }
 with plt.rc_context({"mathtext.fontset": "cm"}):
     for name, tex in FORMULAS.items():
