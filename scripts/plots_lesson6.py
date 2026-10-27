@@ -8,6 +8,7 @@ cache on the hub, and all-MiniLM-L6-v2 for the chat messages. Each computation r
 code and seeds of its notebook, so the numbers match 06.1–06.4.
 """
 
+import itertools
 import json
 import time
 from pathlib import Path
@@ -18,6 +19,7 @@ import numpy as np
 import pandas as pd
 import torch
 from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
+from matplotlib.patches import Polygon
 from mpl_toolkits.mplot3d.axes3d import Axes3D
 from scipy.stats import spearmanr
 from sentence_transformers import SentenceTransformer
@@ -817,20 +819,91 @@ WHOLE = {
     "because I'm a developer": THIRD,
 }
 picked = [int(np.flatnonzero(messages.message.to_numpy() == text)[0]) for text in WHOLE]
-SHOWN_AXES = 16
-fig, ax = plt.subplots(figsize=(6.4, 4.4))
-for k in range(SHOWN_AXES):
-    ax.axvline(k, color=GREY_FAINT, lw=1)
-for i, colour in zip(picked, WHOLE.values()):
-    ax.plot(
-        range(SHOWN_AXES), X[i, :SHOWN_AXES], color=colour, lw=2.2, marker="o", ms=4
+
+# the data: a stack of three pages, edged in the colours of the three messages
+fig, ax = plt.subplots(figsize=(4.6, 4.8))
+for k, colour in enumerate(list(WHOLE.values())[::-1]):
+    x0, y0 = 0.36 * k, -0.30 * k
+    page = [
+        (x0, y0),
+        (x0 + 1.6, y0),
+        (x0 + 1.6, y0 + 1.6),
+        (x0 + 1.15, y0 + 2.05),
+        (x0, y0 + 2.05),
+    ]
+    fold = [(x0 + 1.15, y0 + 2.05), (x0 + 1.15, y0 + 1.6), (x0 + 1.6, y0 + 1.6)]
+    edge = [(x0, y0), (x0 + 0.1, y0), (x0 + 0.1, y0 + 2.05), (x0, y0 + 2.05)]
+    ax.add_patch(
+        Polygon(page, facecolor="#fdfcfa", edgecolor=GREY_DIM, lw=1.6, zorder=k)
     )
-ax.text(SHOWN_AXES - 0.2, 0, "… 384", va="center", color=GREY_DIM, fontsize=16)
-ax.set_xlim(-0.5, SHOWN_AXES + 1.6)
-ax.set_xticks(range(SHOWN_AXES), [str(k + 1) for k in range(SHOWN_AXES)], fontsize=11)
-ax.set_yticks([])
-ax.spines["left"].set_visible(False)
-ax.set_xlabel("axis, the first 16 of 384")
+    ax.add_patch(
+        Polygon(fold, facecolor=GREY_FAINT, edgecolor=GREY_DIM, lw=1.2, zorder=k)
+    )
+    ax.add_patch(Polygon(edge, facecolor=colour, edgecolor="none", zorder=k))
+for row, width in enumerate([1.1, 1.2, 0.9, 1.2, 1.0, 0.6]):
+    y = 0.75 - row * 0.22
+    ax.plot(
+        [0.97, 0.97 + width],
+        [y, y],
+        color=GREY_FAINT,
+        lw=4,
+        solid_capstyle="round",
+        zorder=5,
+    )
+ax.set_xlim(-0.2, 2.6)
+ax.set_ylim(-0.8, 2.2)
+ax.set_aspect("equal")
+ax.set_axis_off()
+save(fig, "whole_docs")
+
+# the space: a hypercube, four of the 384 axes, with each message placed by its first four
+# coordinates; three axes are drawn as a cube, the fourth pulls a point towards the centre
+OBLIQUE = np.array([[1.0, 0.0], [0.0, 1.0], [-0.42, 0.30]])
+CUBE_CENTRE = np.array([0.5, 0.5, 0.5]) @ OBLIQUE
+
+
+def tesseract(p):
+    flat = p[:3] @ OBLIQUE
+    return CUBE_CENTRE + (flat - CUBE_CENTRE) * (1 - 0.5 * p[3])
+
+
+# each axis stretched over the three messages only, so their order along it is kept and
+# they spread over the cube instead of sitting together near its middle
+low, high = X[picked, :4].min(axis=0), X[picked, :4].max(axis=0)
+fig, ax = plt.subplots(figsize=(6.4, 4.8))
+corners = np.array(list(itertools.product([0, 1], repeat=4)), dtype=float)
+drawn = np.array([tesseract(c) for c in corners])
+for a, b in itertools.combinations(range(16), 2):
+    if np.abs(corners[a] - corners[b]).sum() != 1:
+        continue
+    axis = a == 0  # the four edges from the origin corner are the axes
+    ax.plot(
+        *zip(drawn[a], drawn[b]),
+        color=ACCENT if axis else GREY_FAINT,
+        lw=3 if axis else 1.4,
+        zorder=2 if axis else 1,
+        solid_capstyle="round",
+    )
+    if axis:
+        k = int(np.flatnonzero(corners[b] - corners[a])[0])
+        offset = [(0, -0.07), (0.06, 0), (-0.05, -0.04), (0.05, -0.04)][k]
+        label_x, label_y = (drawn[a] + drawn[b]) / 2 + offset
+        ax.text(
+            label_x,
+            label_y,
+            str(k + 1),
+            color=ACCENT,
+            ha="center",
+            va="center",
+            fontsize=16,
+        )
+for i, colour in zip(picked, WHOLE.values()):
+    inside = 0.2 + 0.6 * (X[i, :4] - low) / (high - low)
+    ax.scatter(
+        *tesseract(inside), color=colour, s=170, edgecolors=BG, linewidths=1.5, zorder=3
+    )
+ax.set_aspect("equal")
+ax.set_axis_off()
 save(fig, "whole_up")
 
 fig, ax = plt.subplots(figsize=(6.4, 4.4))
