@@ -401,32 +401,87 @@ print(
     f"nutshell: of the 30 likeliest picks in the data, {len(np.intersect1d(picks_p, picks_q))} "
     "are among the 30 likeliest in the map"
 )
-fig = plt.figure(figsize=(6.6, 7.4))
-ax3 = cast(Axes3D, fig.add_subplot(2, 1, 1, projection="3d"))
+# the picks see-through, so overlapping ones stay apart; the picker drawn last and opaque, and the
+# 3D panel told to keep that drawing order instead of sorting by depth
+fig = plt.figure(figsize=(13, 5.4))
+ax3 = cast(Axes3D, fig.add_subplot(1, 2, 1, projection="3d", computed_zorder=False))
 rest = np.setdiff1d(np.arange(len(roll)), picks_p)
-ax3.scatter(roll[rest, 0], roll[rest, 1], roll[rest, 2], color=GREY_FAINT, s=6)
-ax3.scatter(*roll[picks_p].T, color=SECOND, s=36, depthshade=False)
-ax3.scatter(*roll[picker], color=ACCENT, s=150, edgecolor=BG, linewidths=2)
-ax3.view_init(10, -70)
-ax3.set_box_aspect(None, zoom=1.35)
-clean_3d(ax3)
-ax3.set_title(
-    "data: whom $x_i$ picks, 30 largest $p_{j|i}$", loc="center", pad=0, fontsize=21
+ax3.scatter(
+    roll[rest, 0], roll[rest, 1], roll[rest, 2], color=GREY_FAINT, s=6, depthshade=False
 )
-ax = fig.add_subplot(2, 1, 2)
+ax3.scatter(
+    *roll[picks_p].T, color=SECOND, s=50, alpha=0.5, linewidths=0, depthshade=False
+)
+ax3.scatter(
+    *roll[picker], color=ACCENT, s=200, edgecolor=BG, linewidths=2, depthshade=False
+)
+ax3.view_init(10, -70)
+ax3.set_box_aspect(None, zoom=1.3)
+clean_3d(ax3)
+ax3.set_title("data: whom $x_i$ picks, 30 largest $p_{j|i}$", fontsize=21)
+ax = fig.add_subplot(1, 2, 2)
 rest = np.setdiff1d(np.arange(len(roll)), picks_q)
 ax.scatter(roll_tsne[rest, 0], roll_tsne[rest, 1], color=GREY_FAINT, s=6)
-ax.scatter(*roll_tsne[picks_q].T, color=SECOND, s=36)
-ax.scatter(*roll_tsne[picker], color=ACCENT, s=150, edgecolor=BG, linewidths=2)
+ax.scatter(*roll_tsne[picks_q].T, color=SECOND, s=50, alpha=0.5, linewidths=0)
+ax.scatter(*roll_tsne[picker], color=ACCENT, s=200, edgecolor=BG, linewidths=2)
 bare(ax)
 ax.set_title("map: whom $y_i$ picks, 30 largest $q_{j|i}$", fontsize=21)
-# a 3D panel shrinks its own box, so its title starts further right: line it up with the map's
-fig.tight_layout()
-fig.canvas.draw()
-box3, box = ax3.get_position(), ax.get_position()
-ax3.title.set_x((box.x0 - box3.x0) / box3.width)
-ax3.title.set_horizontalalignment("left")
-save(fig, "nutshell")
+save(fig, "nutshell_picks")
+
+# the two curves against the distance to point i, both 1 at distance 0: six example neighbours
+# on each, and the bell dashed under the t curve for comparison
+distance = np.linspace(0, 4.5, 300)
+neighbours = np.array([0.5, 1.0, 1.6, 2.3, 3.1, 4.0])
+fig, axes = plt.subplots(2, 1, figsize=(6.6, 6.4), sharex=True)
+for ax, curve, colour, title in [
+    (
+        axes[0],
+        lambda x: np.exp(-(x**2) / 2),
+        ACCENT,
+        "data: $p_{j|i}$, a bell curve around $x_i$",
+    ),
+    (
+        axes[1],
+        lambda x: 1 / (1 + x**2),
+        SECOND,
+        "map: $q_{j|i}$, a curve with heavier tails",
+    ),
+]:
+    ax.plot(distance, curve(distance), color=colour, lw=3)
+    ax.vlines(neighbours, 0, curve(neighbours), color=colour, lw=1.5, alpha=0.6)
+    ax.scatter(neighbours, curve(neighbours), color=colour, s=50, zorder=3)
+    for x in neighbours[-2:]:
+        ax.annotate(
+            f"{curve(x):.2f}",
+            (x, curve(x)),
+            xytext=(0, 10),
+            textcoords="offset points",
+            ha="center",
+            color=colour,
+        )
+    ax.set_ylim(0, 1.08)
+    ax.set_yticks([0, 0.5, 1])
+    ax.set_ylabel("chance of a pick")
+    ax.set_title(title, fontsize=21)
+axes[1].plot(
+    distance,
+    np.exp(-(distance**2) / 2),
+    color=GREY_FAINT,
+    lw=2,
+    ls="--",
+    zorder=1,
+    label="bell curve",
+)
+axes[1].legend(loc="upper right")
+axes[0].annotate(
+    "",
+    xy=(1, np.exp(-0.5)),
+    xytext=(0, np.exp(-0.5)),
+    arrowprops={"arrowstyle": "<->", "color": GREY_DIM, "lw": 1.5},
+)
+axes[0].text(1.12, 0.66, r"$\sigma_i$, set by the perplexity", color=GREY_DIM)
+axes[1].set_xlabel("distance to point $i$")
+save(fig, "nutshell_curves")
 
 mnist = fetch_openml("mnist_784", version=1, as_frame=False, data_home=str(CACHE))
 digits, digit_labels = mnist["data"], mnist["target"].astype(np.uint8)
