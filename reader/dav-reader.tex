@@ -1276,6 +1276,23 @@ There is a second problem: the output does not tell you whether the code was goo
 \label{fig:atlas-sunspots}
 \end{figure}
 
+What ``the way the lines are connected'' means is easiest to see. Figures~\ref{fig:atlas-sloppy} and~\ref{fig:atlas-clean} are the two programs as atlas draws them. Don't read the labels yet; just look. Which one would you rather change next month? Section~\ref{sec:atlas-draws} explains how to read them.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{atlas/python-sloppy.png}
+\caption{The sloppy script, drawn by atlas.}
+\label{fig:atlas-sloppy}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{atlas/clean-left.png}\\[0.6em]
+\includegraphics[width=\textwidth]{atlas/clean-right.png}
+\caption{The typed program, drawn by atlas. The route is long, so it is cut in two: the second half continues where the first ends, at \texttt{load}.}
+\label{fig:atlas-clean}
+\end{figure}
+
 \subsubsection{Bad code is a shape}
 What makes code hard to maintain is rarely one bad line. It is a shape: the way the pieces depend on each other. Figure~\ref{fig:atlas-shapes} shows three.
 
@@ -1328,45 +1345,120 @@ Look at figure~\ref{fig:atlas-preattentive}. You found the red square before you
 
 Reading works the other way. You read in series, one word after another, and the time grows with the amount of text: twice the code, twice the reading. Seeing works in parallel. That is the difference between the blue dot and the red dots in figure~\ref{fig:atlas-timeline}, and it is the whole reason this course exists: a good plot shows in half a second what a table of numbers hides. So if the structure of your code is what you want to judge, turn the structure into a picture, and let your eyes do what they are good at: spotting the box that does not belong, the arrow that goes back, the place everything points to.
 
-You don't need to know the rules behind the picture to use it. Show people a set of faces and ask which ones they like, and many will pick the same faces. Those faces turn out to follow certain mathematical proportions. Nobody who picked them knew that; their eyes knew what a well-formed face looks like. A picture of code works the same way. Atlas checks a set of design principles, and you don't have to understand them all: a consistent design gives a calm picture, and a messy one looks messy. When something odd pops up (a box you didn't expect, a line that runs back), ask what it is doing there. In my own projects it quite often turns out to be a bug.
+You don't need to know the rules behind the picture to use it. Show people a set of faces and ask which ones they like, and many will pick the same faces. Those faces turn out to follow certain mathematical proportions. Nobody who picked them knew that; their eyes knew what a well-formed face looks like. A picture of code works the same way. Atlas checks eleven design principles, built on $31$ notions from mathematics (section~\ref{sec:atlas-math}), and you don't have to understand them all: a consistent design gives a calm picture, and a messy one looks messy. When something odd pops up (a box you didn't expect, a line that runs back), ask what it is doing there. In my own projects it quite often turns out to be a bug.
 
 % ─────────────────────────────────────────────
 \subsection{What atlas draws}
 \label{sec:atlas-draws}
 Atlas\footnote{\url{https://github.com/raoulg/atlas}. The tour at \url{https://raoulg.github.io/atlas/} shows every step on a real example.} reads your code and draws it as two kinds of thing. \emph{Places} are where data rests: a value in memory (a DataFrame, a \texttt{Settings} object), a file on disk, a table in a database, a page on the web, a program that runs, the screen, or a global variable that a module keeps. \emph{Functions} are what carries data from one place to the next. A \emph{route} is what one entry point does, a command you run for instance, drawn from left to right: what it finds on the left, what it leaves on the right, and the functions in between, in the order they run.
 
-Under the picture is a small piece of mathematics. The places are the objects of a category, the functions are its arrows, and composing arrows is calling one function after another; a route is the composite from an entry point to the places it reaches. One idea from that mathematics matters for how you read the picture: what a function does to the world belongs to the function. A file it writes is as much a part of what it gives as a value it returns, and a file it reads is as much a part of what it takes as a parameter. A function that quietly writes a file, or reads a global, shows that on the picture, even though its signature doesn't.
-
 \paragraph{A picture you can trust.}
 Why not simply ask your agent to draw a diagram of your code? I tried that. Claude made a beautiful HTML page with a flowchart that looked exactly right. Then I read the code, and the diagram turned out to show what I hoped the code did, not what it did: it had made something to make me happy. An LLM is a fuzzy calculator: very powerful, but it doesn't give the same answer twice, and it can invent. A picture you use to check code must not invent anything. Atlas therefore contains no language model at all. It reads the code, follows the same rules every time, and draws what is there. The same code always gives the same picture.
 
 \subsubsection{The same figure from two very different programs}
-Here are the two sunspot programs, as atlas draws them.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{atlas/python-sloppy.png}
-\caption{The sloppy script, drawn by atlas.}
-\label{fig:atlas-sloppy}
-\end{figure}
-
-\begin{figure}[p]
-\centering
-\rotatebox{90}{\includegraphics[width=0.9\textheight]{atlas/python-clean.png}}
-\caption{The typed program, drawn by atlas. Turned a quarter, because the route is long: read it from bottom to top.}
-\label{fig:atlas-clean}
-\end{figure}
-
-Both reach the same places: the web, the raw CSV, the figure. Inside they part. In the sloppy script (figure~\ref{fig:atlas-sloppy}) every step reads and changes one global, \texttt{Global(sunspots.df)}, and nothing is handed from step to step. The order in which things must happen is in nobody's signature: you have to know that \texttt{get\_data} runs before \texttt{clean} and \texttt{clean} before \texttt{smooth}, and two of the steps pick their own files. That is the spaghetti of figure~\ref{fig:atlas-shapes}, in a script of a few dozen lines.
+Now read the two sunspot programs of figures~\ref{fig:atlas-sloppy} and~\ref{fig:atlas-clean}. Both reach the same places: the web, the raw CSV, the figure. Inside they part. In the sloppy script (figure~\ref{fig:atlas-sloppy}) every step reads and changes one global, \texttt{Global(sunspots.df)}, and nothing is handed from step to step. The order in which things must happen is in nobody's signature: you have to know that \texttt{get\_data} runs before \texttt{clean} and \texttt{clean} before \texttt{smooth}, and two of the steps pick their own files. That is the spaghetti of figure~\ref{fig:atlas-shapes}, in a script of a few dozen lines.
 
 In the typed program (figure~\ref{fig:atlas-clean}) you can read the story off the picture. \texttt{download} runs only when there is no raw CSV yet; the CSV stands between \texttt{download} and \texttt{load}; \texttt{load} gives a DataFrame; \texttt{smooth} takes it, together with the settings, and gives a DataFrame with a smoothed column; \texttt{Trend.save} draws that frame into a file. And the command names every file, so you can see where the data comes from and where the figure goes without opening a single function. Same output, same libraries. The difference is entirely in the connections, and the picture shows it in a second.
 
 \subsubsection{A red dot is a question}
-Some boxes carry a red dot. A dot is a question atlas asks the author: something in the code does not follow one of the design principles atlas checks. A step reads and changes a global; a function reads a file whose path it chose itself, so nobody calling it can tell where its data comes from; a function's signature doesn't say what it gives. \texttt{atlas check} lists the same questions as text, each with the place in the code, what atlas saw, and a question for you.
+Some boxes carry a red dot. A dot is a question atlas asks the author: something in the code does not follow one of the eleven design principles atlas checks (table~\ref{tab:atlas-principles}). A step reads and changes a global; a function reads a file whose path it chose itself, so nobody calling it can tell where its data comes from; a function's signature doesn't say what it gives. \texttt{atlas check} lists the same questions as text, each with the principle, the place in the code, what atlas saw, and a question for you.
 
 A red dot is not a verdict. Atlas coaches; it doesn't fix. Sometimes the answer is to change the code, and the dot disappears. Sometimes the code is right as it is, and then you write that decision down beside the code, with your reason. What I am interested in is that you know which it is, and why. That is the same thing I ask of every number in your report.
 
 Atlas is also not a linter. ruff and ty own the level of lines: style, an unused import, a type that doesn't match. Atlas owns the level above: which steps there are, what travels between them, where data rests. If you make three plots that are really three separate things, the picture should show three separate things; if they come from one preprocessing step, it should show one flow. A linter cannot know which one you meant. Only you can.
+
+% ─────────────────────────────────────────────
+\subsection{The mathematics behind the picture}
+\label{sec:atlas-math}
+Why would a picture of code show whether the code is good? Because good practice in programming is a set of consistent habits, and mathematics is a language for consistency. Atlas reads your code as a small piece of mathematics and draws that. If the code follows the habits, the mathematics is simple, and so is the picture. This doesn't depend on the language: Python, Rust and TypeScript are drawn by the same rules.
+
+The mathematics comes from four fields: category theory (how the parts of a program connect), topology (what stays the same when you zoom in or out), type theory (what goes into a function and what comes out) and graph theory (what leads to what). Atlas's documentation names $31$ notions from these fields, each with what it is, what it is in atlas, and where it lives in the code\footnote{\texttt{docs/reference/mathematics.md} in the atlas repository; the tour at \url{https://raoulg.github.io/atlas/\#math} has a picture for ten of them.}. A test checks each of them on every change to atlas. Atlas is still in beta and there are known exceptions, which are tracked in the open as issues.
+
+You don't need the theory to use the picture, just as you don't need the proportions to recognise a well-formed face. But six of the notions explain most of what you see. For each, the left picture is how atlas draws it, and the right one what a picture would look like without the principle.
+
+\newcommand{\atlaspair}[4]{%
+\begin{figure}[H]
+\centering
+\begin{minipage}[b]{0.48\textwidth}\centering
+\includegraphics[width=\linewidth]{atlas/math/#1-in.pdf}\\[0.3em]
+{\small\textbf{In atlas.} #3}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.48\textwidth}\centering
+\includegraphics[width=\linewidth]{atlas/math/#1-without.pdf}\\[0.3em]
+{\small\textbf{Without the principle.} #4}
+\end{minipage}
+\caption{#2}\label{fig:atlas-math-#1}
+\end{figure}}
+
+\subsubsection{A category: functions are arrows}
+The places are the objects of a category, the functions are its arrows, and calling one function after another is composing arrows. A route is the composite from the place where a program starts to the places it reaches.
+
+\atlaspair{category}{A category.}{Every step hands its result to the next. You can follow the arrows from where the program starts to where the data ends up.}{Each step reaches into one shared value. Nothing is handed on, so there is no route: you cannot tell what comes first.}
+
+The right picture is the sloppy sunspot script. Its steps are functions, but they are not arrows from something to something: they all reach into the same global. That is why its order lives only in the head of whoever wrote it.
+
+\subsubsection{Effects belong to the arrow}
+What a function does to the world is part of the function. A file it writes is as much a part of what it gives as a value it returns; a file it reads is as much a part of what it takes as a parameter.
+
+\atlaspair{effects}{Effects belong to the arrow.}{The file a step writes hangs on that step. You see who writes it.}{The file is there, but no arrow leads to it. Something writes it, and the picture cannot say what.}
+
+\subsubsection{Signatures say the arrow}
+From type theory: a signature says what goes in and what comes out. A function's type annotations are the arrow's two ends, and they let atlas follow a value from step to step.
+
+\atlaspair{signature}{Signatures say the arrow.}{\texttt{get\_store} says it gives a \texttt{Store}, so the picture follows the value to where it goes, like every other route.}{Without a return type, nobody knows what \texttt{get\_store} gives, and its route stops where the others go on.}
+
+This is why atlas asks for type annotations, and why ty is in your setup from lesson 1: a function without a return type is a route that stops.
+
+\subsubsection{A quotient: zooming out is gluing}
+From topology: closing a box glues everything inside it into one point. A real overview must not lose anything when you zoom out.
+
+\atlaspair{quotient}{A quotient.}{Closing a box glues its insides into one. Every line in and out stays, so the closed box still says what it reads and writes.}{If zooming out could forget a line, a closed box would hide what it reads, and no overview could be trusted.}
+
+This is what makes the big picture of a large project trustworthy: you can close a whole package into one box and it still shows every place it reads and writes.
+
+\subsubsection{Reach: what a step does, and what a step inside it does}
+From graph theory: a line from a closed box can mean that the function does it itself, or that a function it calls does.
+
+\atlaspair{reach}{Reach.}{Closed, a solid line is what \texttt{run} does itself, a dashed one what a step inside it does. Open it, and the dashed line turns out to be \texttt{store}'s.}{Drawn alike, the closed picture says \texttt{run} writes the database itself. You look for the write in \texttt{run}'s code, and it is in \texttt{store}.}
+
+\subsubsection{One direction}
+Also from graph theory: packages depend on one another in one direction, without cycles.
+
+\atlaspair{dag}{One direction.}{Packages depend in one direction, so each can be read, tested or replaced on its own.}{Two packages that reach for each other have no order: you cannot take either apart.}
+
+This is the house of cards and the spaghetti of figure~\ref{fig:atlas-shapes} again, now as a rule. (It is about packages: inside one route a line may run back, where a step hands its result to the step that called it.)
+
+\paragraph{Four more in the tour.}
+A \emph{pushout}: the same meaning gives the same picture, so an option the caller can change is one box whether Python, Rust or TypeScript spells it. \emph{Yoneda}: a thing is what it connects to, not what it is called, so a function you only renamed shows as unchanged when you compare two commits. A \emph{partial map}: a design that is not built yet is part of the picture, drawn dotted. And \emph{Liskov substitution}: a subclass keeps its base's promise, so it fits wherever the base is expected.
+
+\subsubsection{Eleven questions atlas check asks}
+On top of this mathematics, \texttt{atlas check} asks eleven questions of your code, one per design principle (table~\ref{tab:atlas-principles}). Each is stated once, on the graph, for every language; a language decides how much of it can be traced. Rust's compiler already forbids some of the careless forms, so there atlas has less to ask than in Python. Each principle has its own section in \texttt{docs/reference/principles.md}, with what it means in Python, Rust and TypeScript, and \texttt{atlas explain} prints that section for you.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\textbf{Id} & \textbf{Principle} \\
+\midrule
+\texttt{doors} & A package names its doors, and each door says what goes in and what comes out. \\
+\texttt{sums} & A sum type is unwrapped where it arises. \\
+\texttt{overrides} & An override keeps the promise of its base. \\
+\texttt{places} & Library code does not decide where data lives. \\
+\texttt{changes} & A change to an input shows in the signature. \\
+\texttt{gives} & A function whose value is used says what it gives back. \\
+\texttt{choices} & A choice is made once, in a place with a name. \\
+\texttt{nothing} & A call leaves something behind. \\
+\texttt{layers} & The packages of a part depend on one another in one direction. \\
+\texttt{lens} & What a lens puts, it gets back. \\
+\texttt{prophecy} & Code that is built does not lean on code that is not. \\
+\bottomrule
+\end{tabularx}
+\caption{The principles behind the red dots, in atlas's own words.}
+\label{tab:atlas-principles}
+\end{table}
+
+Three of them you will meet most in your own project. \texttt{places}: where data rests is decided where the program starts, in your script, CLI or notebook. A function that reads or writes a file takes the path as a parameter; the script builds it (\texttt{Path("data") / "raw.csv"}) and hands it in. That is why the typed sunspot program names its CSV and its figure on the command, and the sloppy one doesn't. \texttt{changes}: a function that changes a DataFrame it was handed has an effect its caller cannot see, and in Python no signature can say so. Either the object changes itself through a method of its own, or the function leaves its input alone and hands back a new value, as \texttt{sorted(xs)} does next to \texttt{xs.sort()}. And \texttt{choices}: when the same choice is tested in several places (\texttt{mode == "weekly"} here, \texttt{mode in \{"weekly", "daily"\}} there), every new case is a change in all of them. Make the choice once, in a place with a name, for instance a dictionary from each case to what it means. Each finding ends in a question, and the answer is yours.
 
 \subsection{Working with your agent on the same picture}
 \label{sec:atlas-agent}
