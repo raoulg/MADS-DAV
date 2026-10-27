@@ -1157,6 +1157,52 @@ ax.set_xlabel(
 )
 save(fig, "race")
 
+# two routes from the same sessions: f labels them 0/1 by regex (the slide's "topic a": the
+# session mentions a phone), g embeds them; the picture takes its positions from g (t-SNE)
+# and its colours from f
+TOPIC_A = r"(?i)\b(?:phone|android|iphone|nexus|ubuntu touch|sms)\b"
+all_units = merge_messages(uk, ["author", "session_id"])
+routed = (
+    all_units[all_units.n_messages >= 5]
+    .sample(n=3000, random_state=42)
+    .reset_index(drop=True)
+)
+phone = routed.message.str.contains(TOPIC_A).to_numpy(dtype=bool)
+route_g = embed(routed.message)
+routed_2d = TSNE(
+    n_components=2, random_state=42, init="pca", metric="cosine"
+).fit_transform(route_g)
+
+
+def neighbour_also(points, mask, metric="euclidean"):
+    """Share of the masked points whose nearest other point is masked too."""
+    if metric == "cosine":
+        unit = points / np.linalg.norm(points, axis=1, keepdims=True)
+        distance = 1 - unit[mask] @ unit.T
+    else:
+        distance = np.linalg.norm(points[mask][:, None] - points[None], axis=-1)
+    distance[np.arange(mask.sum()), np.flatnonzero(mask)] = np.inf
+    return float(mask[distance.argmin(axis=1)].mean())
+
+
+print(
+    f"routes: {phone.mean():.1%} of 3,000 sessions mention a phone; nearest neighbour also "
+    f"labelled: picture {neighbour_also(routed_2d, phone):.0%}, "
+    f"384 dims {neighbour_also(route_g, phone, 'cosine'):.0%}"
+)
+for i in list(np.flatnonzero(phone)[:2]) + list(np.flatnonzero(~phone)[:2]):
+    print(
+        f"  row {i}: topic a {int(phone[i])}, vector "
+        f"{np.round(route_g[i, :3], 2).tolist()} … {route_g[i, -1]:.2f}"
+    )
+fig, ax = plt.subplots(figsize=(7.2, 5.6))
+ax.scatter(
+    routed_2d[~phone, 0], routed_2d[~phone, 1], color=GREY_FAINT, s=7, linewidths=0
+)
+ax.scatter(routed_2d[phone, 0], routed_2d[phone, 1], color=SECOND, s=12, linewidths=0)
+bare(ax)
+save(fig, "routes")
+
 sentiment_model = hf_pipeline(  # ty: ignore[no-matching-overload]
     model="lxyuan/distilbert-base-multilingual-cased-sentiments-student",
     top_k=None,
