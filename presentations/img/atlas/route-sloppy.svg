@@ -1,23 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 745 192" width="745" height="192"><defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 196" width="700" height="196"><defs>
 <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#5A544D"/></marker>
-<marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#2B8A7E"/></marker>
+<marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#C43A14"/></marker>
 </defs><style>
 .pill{fill:#FFFFFF;stroke:#5A544D;stroke-width:1.2}
-.pill.dl{stroke:#2B8A7E;stroke-width:1.8}
-.pill.save{stroke:#1D5A73;stroke-width:1.8}
 .place{fill:#F7EDE3;stroke:#B26A00;stroke-width:1.1}
-.val{fill:#FFFFFF;stroke:#D6CFC6;stroke-width:1;stroke-dasharray:3 2}
-.bar{stroke-width:4}
+.val{fill:#E8EEF1;stroke:#1D5A73;stroke-width:1.1}
 .globe{fill:#F1EFE3;stroke:#8A7A2A;stroke-width:1.1}
 .proc{fill:#E7F0E9;stroke:#5E9A6C;stroke-width:1.1}
-.web{fill:#E6EFF3;stroke:#5B8FA6;stroke-width:1.1}
-.screen{fill:#E7EBFA;stroke:#5A72C8;stroke-width:1.1}
-.frame{fill:#EFEBE5;stroke:#9A9187;stroke-width:1.2}
-.ghost{fill:none;stroke:#5A544D;stroke-width:1.1;stroke-dasharray:4 3}
 text{fill:#111111;font-family:'JetBrains Mono',Menlo,monospace;font-size:11.5px}
 text.s{fill:#857D73;font-family:Helvetica,sans-serif;font-size:10.5px}
-.ln{stroke:#7A736B;stroke-width:1.3;fill:none;marker-end:url(#ah)}
-.ln.g{stroke:#2B8A7E;marker-end:url(#ahg)}
-.ln.dot{stroke:#2B8A7E;stroke-dasharray:1.5 3;marker-end:url(#ahg)}
+text.bad{fill:#C43A14;font-family:Helvetica,sans-serif;font-size:11.5px}
+text.ok{fill:#2F7D4F;font-family:Helvetica,sans-serif;font-size:11.5px}
+.ln{stroke:#5A544D;stroke-width:1.4;fill:none;marker-end:url(#ah)}
+.ln.badl{stroke:#C43A14;marker-end:url(#ahb)}
 .dotq{fill:#C43A14}
-</style><rect class="frame" x="186" y="6" width="334" height="180" rx="2"/><text x="196" y="24">▾ sunspots</text><rect class="proc" x="4" y="40" width="160" height="24" rx="2"/><text x="13" y="56.0">$ python -m sunspots</text><rect class="web" x="34" y="110" width="130" height="24" rx="2"/><text x="43" y="126.0">Web(www.sidc.be)</text><rect class="pill" x="200" y="40" width="80" height="24" rx="12"/><text x="209" y="56.0">sunspots</text><rect class="pill" x="200" y="110" width="80" height="24" rx="12"/><text x="209" y="126.0">▸ get_data</text><circle class="dotq" cx="276" cy="112" r="4"/><rect class="globe" x="298" y="110" width="178" height="24" rx="2"/><text x="307" y="126.0">{·} Global(sunspots.df)</text><rect class="pill" x="360" y="46" width="140" height="24" rx="12"/><text x="369" y="62.0">▸ clean, smooth</text><circle class="dotq" cx="496" cy="48" r="4"/><rect class="pill" x="440" y="152" width="56" height="24" rx="12"/><text x="449" y="168.0">plot</text><circle class="dotq" cx="492" cy="154" r="4"/><rect class="place" x="540" y="12" width="200" height="24" rx="2"/><text x="549" y="28.0">File(data/raw/sunspots.csv)</text><rect class="screen" x="540" y="72" width="90" height="24" rx="2"/><text x="549" y="88.0">Figure</text><rect class="place" x="540" y="146" width="200" height="24" rx="2"/><text x="549" y="162.0">File(figures/sunspots.png)</text><path class="ln" d="M164 52 H198"/><path class="ln" d="M164 122 H198"/><path class="ln" d="M280 122 H296"/><path class="ln" d="M280 116 C290 116 290 24 300 24 H538"/><path class="ln" d="M380 110 C380 90 372 82 372 72"/><path class="ln" d="M410 70 C410 86 404 96 404 108"/><text class="s" x="350" y="94">×2</text><text class="s" x="414" y="94">×2</text><path class="ln" d="M440 134 C450 140 452 146 458 150"/><path class="ln" d="M496 160 C515 160 515 84 538 84"/><path class="ln" d="M496 166 C515 166 520 158 538 158"/></svg>
+</style><rect class="proc" x="4" y="8" width="150" height="24" rx="3"/><text x="13" y="24">$ python -m sunspots</text><rect class="pill" x="186" y="8" width="80" height="24" rx="12"/><text x="195" y="24">sunspots</text><path class="ln" d="M154 20 H184"/><text class="bad" x="282" y="24">and then?</text><rect class="place" x="4" y="64" width="50" height="24" rx="3"/><text x="13" y="80">Web</text><rect class="pill" x="86" y="64" width="90" height="24" rx="12"/><text x="95" y="80">get_data</text><circle class="dotq" cx="172" cy="66" r="4"/><rect class="place" x="208" y="64" width="96" height="24" rx="3"/><text x="217" y="80">raw.csv</text><path class="ln" d="M54 76 H84"/><path class="ln" d="M176 76 H206"/><text class="bad" x="316" y="80">input for what?</text><rect class="globe" x="208" y="120" width="120" height="24" rx="3"/><text x="217" y="136">global df</text><path class="ln badl" d="M131 88 C131 120 160 132 206 132"/><rect class="pill" x="380" y="104" width="120" height="24" rx="12"/><text x="389" y="120">clean, smooth</text><circle class="dotq" cx="496" cy="106" r="4"/><path class="ln badl" d="M328 126 C350 126 352 116 378 116"/><path class="ln badl" d="M378 122 C352 122 350 136 330 136"/><text class="bad" x="512" y="120">is df smoothed yet?</text><rect class="pill" x="380" y="160" width="56" height="24" rx="12"/><text x="389" y="176">plot</text><circle class="dotq" cx="432" cy="162" r="4"/><path class="ln badl" d="M328 140 C350 140 352 172 378 172"/><rect class="place" x="470" y="160" width="116" height="24" rx="3"/><text x="479" y="176">sunspots.png</text><path class="ln" d="M436 172 H468"/><text class="bad" x="600" y="176">from what?</text></svg>

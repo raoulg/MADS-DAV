@@ -1276,19 +1276,19 @@ There is a second problem: the output does not tell you whether the code was goo
 \label{fig:atlas-sunspots}
 \end{figure}
 
-What ``the way the lines are connected'' means is easiest to see. Figures~\ref{fig:atlas-sloppy} and~\ref{fig:atlas-clean} are the two programs as atlas draws them. Don't read the labels yet; just look. Which one would you rather change next month? Section~\ref{sec:atlas-draws} explains how to read them.
+What ``the way the lines are connected'' means is easiest to see. Figures~\ref{fig:atlas-sloppy} and~\ref{fig:atlas-clean} are the two programs as pictures of their structure, the way atlas draws code. Before you read a label, just look: one falls apart into pieces, the other runs from start to finish. Which one would you rather change next month? Section~\ref{sec:atlas-draws} explains how to read them.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{atlas/route-sloppy.pdf}
-\caption{The sloppy script, as atlas draws it. A red dot is a question atlas asks (section~\ref{sec:atlas-draws}).}
+\caption{The sloppy script: loose fragments, each leaving a question open. A red dot is a question atlas asks (section~\ref{sec:atlas-draws}). Simplified from atlas's picture, to show the principle.}
 \label{fig:atlas-sloppy}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{atlas/route-clean.pdf}
-\caption{The typed program, as atlas draws it. Atlas lays the route out in one long row; here it is folded into three, so the labels stay readable.}
+\makebox[\textwidth][c]{\includegraphics[width=1.15\textwidth]{atlas/route-clean.pdf}}
+\caption{The typed program: one flow, from the command to the figure. Simplified from atlas's picture, to show the principle.}
 \label{fig:atlas-clean}
 \end{figure}
 
@@ -1355,9 +1355,11 @@ Atlas\footnote{\url{https://github.com/raoulg/atlas}. The tour at \url{https://r
 Why not simply ask your agent to draw a diagram of your code? I tried that. Claude made a beautiful HTML page with a flowchart that looked exactly right. Then I read the code, and the diagram turned out to show what I hoped the code did, not what it did: it had made something to make me happy. An LLM is a fuzzy calculator: very powerful, but it doesn't give the same answer twice, and it can invent. A picture you use to check code must not invent anything. Atlas therefore contains no language model at all. It reads the code, follows the same rules every time, and draws what is there. The same code always gives the same picture.
 
 \subsubsection{The same figure from two very different programs}
-Now read the two sunspot programs of figures~\ref{fig:atlas-sloppy} and~\ref{fig:atlas-clean}. Both reach the same places: the web, the raw CSV, the figure. Inside they part. In the sloppy script (figure~\ref{fig:atlas-sloppy}) every step reads and changes one global, \texttt{Global(sunspots.df)}, and nothing is handed from step to step. The order in which things must happen is in nobody's signature: you have to know that \texttt{get\_data} runs before \texttt{clean} and \texttt{clean} before \texttt{smooth}, and two of the steps pick their own files. That is the spaghetti of figure~\ref{fig:atlas-shapes}, in a script of a few dozen lines.
+Now read the two sunspot programs of figures~\ref{fig:atlas-sloppy} and~\ref{fig:atlas-clean}. Both reach the same places: the web, the raw CSV, the figure. The difference is what the picture can tell you about the way between them.
 
-In the typed program (figure~\ref{fig:atlas-clean}) you can read the story off the picture. \texttt{download} runs only when there is no raw CSV yet; the CSV stands between \texttt{download} and \texttt{load}; \texttt{load} gives a DataFrame; \texttt{smooth} takes it, together with the settings, and gives a DataFrame with a smoothed column; \texttt{Trend.save} draws that frame into a file. And the command names every file, so you can see where the data comes from and where the figure goes without opening a single function. Same output, same libraries. The difference is entirely in the connections, and the picture shows it in a second.
+The sloppy script (figure~\ref{fig:atlas-sloppy}) falls apart into fragments, and each one leaves a question open. The command starts \texttt{sunspots}, and the picture stops there: what happens next is not in any arrow. \texttt{get\_data} writes \texttt{raw.csv}, but nothing reads it, so you can't tell what it is input for. Then every step reads and changes one global DataFrame: \texttt{clean, smooth} takes it and puts it back, \texttt{plot} takes it too. Is the frame \texttt{plot} draws already smoothed? The picture can't say, because there is no order: you only know if you know that the steps happen to be called in the right sequence. That is the spaghetti of figure~\ref{fig:atlas-shapes}, in a script of a few dozen lines.
+
+The typed program (figure~\ref{fig:atlas-clean}) is one process with a head and a tail, and you can read its story off the picture. The command starts it. \texttt{download} fetches the data into \texttt{raw.csv}, \texttt{load} turns that into a DataFrame, \texttt{smooth} turns that into a smoothed one, using the number of months from the settings. In parallel, the settings make a \texttt{Trend}, the object that knows how to draw. The two lanes join at \texttt{save}, which draws the smoothed frame into \texttt{sunspots.png}. Every question the first picture left open is answered by an arrow: what the CSV is for, which frame is plotted, in what order things happen. Same output, same libraries. The difference is entirely in the connections, and the picture shows it in a second.
 
 \subsubsection{A red dot is a question}
 Some boxes carry a red dot. A dot is a question atlas asks the author: something in the code does not follow one of the eleven design principles atlas checks (table~\ref{tab:atlas-principles}). A step reads and changes a global; a function reads a file whose path it chose itself, so nobody calling it can tell where its data comes from; a function's signature doesn't say what it gives. \texttt{atlas check} lists the same questions as text, each with the principle, the place in the code, what atlas saw, and a question for you.
@@ -1457,7 +1459,7 @@ On top of this mathematics, \texttt{atlas check} asks eleven questions of your c
 \label{tab:atlas-principles}
 \end{table}
 
-Three of them you will meet most in your own project. \texttt{places}: where data rests is decided where the program starts, in your script, CLI or notebook. A function that reads or writes a file takes the path as a parameter; the script builds it (\texttt{Path("data") / "raw.csv"}) and hands it in. That is why the typed sunspot program names its CSV and its figure on the command, and the sloppy one doesn't. \texttt{changes}: a function that changes a DataFrame it was handed has an effect its caller cannot see, and in Python no signature can say so. Either the object changes itself through a method of its own, or the function leaves its input alone and hands back a new value, as \texttt{sorted(xs)} does next to \texttt{xs.sort()}. And \texttt{choices}: when the same choice is tested in several places (\texttt{mode == "weekly"} here, \texttt{mode in \{"weekly", "daily"\}} there), every new case is a change in all of them. Make the choice once, in a place with a name, for instance a dictionary from each case to what it means. Each finding ends in a question, and the answer is yours.
+Three of them you will meet most in your own project. \texttt{places}: where data rests is decided where the program starts, in your script, CLI or notebook. A function that reads or writes a file takes the path as a parameter; the script builds it (\texttt{Path("data") / "raw.csv"}) and hands it in. That is why the typed sunspot program takes its CSV and its figure as options of its command (\texttt{-{}-raw}, \texttt{-{}-figure}), while in the sloppy one \texttt{get\_data} and \texttt{plot} choose their own files. \texttt{changes}: a function that changes a DataFrame it was handed has an effect its caller cannot see, and in Python no signature can say so. Either the object changes itself through a method of its own, or the function leaves its input alone and hands back a new value, as \texttt{sorted(xs)} does next to \texttt{xs.sort()}. And \texttt{choices}: when the same choice is tested in several places (\texttt{mode == "weekly"} here, \texttt{mode in \{"weekly", "daily"\}} there), every new case is a change in all of them. Make the choice once, in a place with a name, for instance a dictionary from each case to what it means. Each finding ends in a question, and the answer is yours.
 
 \subsection{Working with your agent on the same picture}
 \label{sec:atlas-agent}
