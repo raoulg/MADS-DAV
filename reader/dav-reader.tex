@@ -25,6 +25,8 @@
 \usepackage{caption}
 \usepackage{float}
 \usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, calc}
 
 % Figures are the ones from the lesson decks.
 \graphicspath{{../presentations/img/}}
@@ -71,7 +73,7 @@ This reader accompanies the course Data Analysis \& Visualisation. The slides of
 
 The course is not a statistics course, and nobody has to become a statistician. What I want you to learn is to \emph{reason} about data: to ask how the numbers in front of you came about, which model of that process makes sense, and what you are allowed to conclude from it. Most mistakes I see in data analysis are not mistakes in the code or in the formulas. They are mistakes in thinking: a model that was chosen without noticing it was a choice, a pattern that was found by looking for it, a title that claims more than the data can carry. A good visualisation is the end of that reasoning, not a replacement for it.
 
-The course runs from visualisation principles and comparing categories, through time, distributions and modelling, to high-dimensional data and dashboards. Each lesson gets its own section in this reader, and each section follows the deck of that lesson: a subsection per question on the agenda, and a subsubsection per slide with real data, under the title of that slide. You can read the two side by side. Each question ends with the same recap as the deck, ``again, concretely''. The sections are written in the order I need them, so not every lesson is in here yet.
+The course runs from visualisation principles and comparing categories, through time, distributions and modelling, to high-dimensional data and dashboards. Each lesson gets its own section in this reader, and a topic that runs through the whole course, such as reading your own code with atlas, gets a section of its own. Each lesson's section follows the deck of that lesson: a subsection per question on the agenda, and a subsubsection per slide with real data, under the title of that slide. You can read the two side by side. Each question ends with the same recap as the deck, ``again, concretely''. The sections are written in the order I need them, so not every lesson is in here yet.
 \newpage
 
 \section{Lesson 4: Distributions}
@@ -963,7 +965,7 @@ Atlas, a tool I wrote for this course\footnote{\url{https://github.com/raoulg/at
 \label{fig:atlas}
 \end{figure}
 
-The idea behind atlas is that consistent, logical code gives a consistent, simple picture. The same plot can be produced by tidy code and by messy code, and the pictures will look very different: global DataFrames that get written and read somewhere along the way, steps whose order you can no longer see. A linter doesn't notice that: if you make three plots that are really one flow, only you know it should look like one flow. When the picture looks wrong, the code usually is, and the red marks show where atlas misses information: unclear inputs, unclear outputs. It works the same for Python and Rust, and you can give the picture to Claude to discuss what to change. In the final assignment you use it to show how your own code works: run \texttt{atlas view} in your repository, pick your entry point, and be ready to explain the picture.
+The idea behind atlas is that consistent, logical code gives a consistent, simple picture. The same plot can be produced by tidy code and by messy code, and the pictures will look very different: global DataFrames that get written and read somewhere along the way, steps whose order you can no longer see. A linter doesn't notice that: if you make three plots that are really one flow, only you know it should look like one flow. When the picture looks wrong, the code usually is, and the red marks show where atlas misses information: unclear inputs, unclear outputs. It works the same for Python and Rust, and you can give the picture to Claude to discuss what to change. In the final assignment you use it to show how your own code works: run \texttt{atlas view} in your repository, pick your entry point, and be ready to explain the picture. Section~\ref{sec:atlas} says why a picture of your code helps, and how to read one.
 
 \againconcretely
 One line, then one switch. The line from before vaccination kept its two numbers; the switch added two more and found the turn eight weeks after the first vaccination, without being told. Look, think, add one step or one term, then read the residual. Each piece of reasoning has a place: the pipeline, or the formula. Stop when what is left looks like chance, and say what the model cannot tell you: here, why the ratio turned.
@@ -1229,5 +1231,148 @@ Can you recognise someone by how they type? & These eight people, yes. Large dat
 \end{table}
 
 Notebooks 05.1 to 05.5 work through the questions: 05.1 the line as a claim, the hunt and the three legs; 05.2 correlation and Simpson's paradox; 05.3 the COVID model as a question you answer yourself, and 05.4 the worked answer and the script; 05.5 how people type. In your own chat: pick a habit you can write as a regex, measure it per person, and report $n$ at the level of your claim.
+\newpage
+
+\section{Reading code with atlas}
+\label{sec:atlas}
+This course asks two things of your code. It has to make the plots in your report, and you have to be able to explain how it does that: in the final assignment you show me a picture of your code and walk me through it. This section explains why I ask for a picture and not for the code itself, and what atlas, the tool that draws the picture, shows you. The argument is the same one this course makes about data: a good visualisation lets you see in a second what a table of numbers hides, and code is no different.
+
+% ─────────────────────────────────────────────
+\subsection{The problem with reading a lot of code}
+\label{sec:atlas-reading}
+Until recently, writing code was the slow part. Reading it kept up, because a person can only write so much in a day. With a coding agent that balance is gone. An agent writes a function in seconds, a feature in minutes, and several agents can work on several projects at once. Somebody still has to look at all of it and decide whether it is any good: you, for your own project; a senior developer, for a team (figure~\ref{fig:atlas-agents}). Writing has become cheap. Reading has not.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{atlas/agents.png}
+\caption{Many agents, a few projects, one person who has to oversee all of it.}
+\label{fig:atlas-agents}
+\end{figure}
+
+Put the times next to each other (figure~\ref{fig:atlas-timeline}). Reading one function carefully takes about a minute. Reading one pull request, a single proposed change, takes the better part of an hour. Reading the $179$ commits an agent can produce in a project takes a day, and by then there are more. And all of that only tells you what each piece does. What you actually want to know is something no single line tells you: how the pieces fit together. To see that from the code, you have to read it all and build the structure in your head, one line at a time.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=2.3cm, every node/.style={font=\small}]
+  % log10 seconds: 0.1 s = -1, 1 s = 0, 10 s = 1, 1 min = 1.78, 10 min = 2.78, 1 h = 3.56, 1 day = 4.94
+  \draw[-{Stealth}] (-1.1,0) -- (5.2,0);
+  \foreach \x/\l in {-1/{0.1 s}, 0/{1 s}, 1/{10 s}, 1.78/{1 min}, 2.78/{10 min}, 3.56/{1 hour}, 4.94/{1 day}}
+    \draw (\x,0.1) -- (\x,-0.1) node[below] {\texttt{\l}};
+  \fill[blue!50!black] (-0.6,0) circle (0.11) node[above=4pt, align=center] {preattentive\\processing};
+  \fill[red!70!orange] (1.6,0) circle (0.11) node[above=4pt, align=center] {reading one\\function};
+  \fill[red!70!orange] (3.3,0) circle (0.11) node[above=4pt, align=center] {reading one\\pull request};
+  \fill[red!70!orange] (4.9,0) circle (0.11) node[above=4pt, align=center] {reading\\179 commits};
+\end{tikzpicture}
+\caption{How long it takes to see something, against how long it takes to read it. The axis is logarithmic: every tick is ten times longer.}
+\label{fig:atlas-timeline}
+\end{figure}
+
+There is a second problem: the output does not tell you whether the code was good. Take a program that fetches the monthly sunspot counts since 1749 from the web, keeps them as a CSV file, takes the mean over thirteen months and draws both (figure~\ref{fig:atlas-sunspots}). I wrote two programs that make exactly this figure: one a sloppy script, one typed and tidy. The figure cannot tell them apart. Neither can your tests: they check that the figure comes out, not how. And neither can a linter: ruff and ty look at lines and types, and every line of the sloppy script can be fine on its own. What is wrong with it is the way the lines are connected.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{atlas/sunspots.png}
+\caption{The monthly sunspot number since 1749, with its 13-month mean. Two very different programs make exactly this figure.}
+\label{fig:atlas-sunspots}
+\end{figure}
+
+\subsubsection{Bad code is a shape}
+What makes code hard to maintain is rarely one bad line. It is a shape: the way the pieces depend on each other. Figure~\ref{fig:atlas-shapes} shows three.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[every node/.style={font=\small}]
+  % house of cards
+  \begin{scope}[xshift=0cm]
+    \foreach \x in {0,1,2} {\draw[red!70!orange, thick] (\x*0.7,0) -- (\x*0.7+0.3,0.9) -- (\x*0.7+0.6,0);}
+    \draw[thick] (-0.1,0.95) -- (2.1,0.95);
+    \foreach \x in {0,1} {\draw[thick] (0.35+\x*0.7,1.0) -- (0.35+\x*0.7+0.3,1.9) -- (0.35+\x*0.7+0.6,1.0);}
+    \draw[thick] (0.25,1.95) -- (1.75,1.95);
+    \draw[thick] (0.7,2.0) -- (1.0,2.9) -- (1.3,2.0);
+    \node at (1.0,-0.6) {house of cards};
+  \end{scope}
+  % spaghetti
+  \begin{scope}[xshift=4.6cm]
+    \foreach \i/\x/\y in {1/0/0.2, 2/1.6/0.1, 3/0.4/2.6, 4/1.9/2.4, 5/0.9/1.3, 6/0.1/1.6, 7/1.7/1.4, 8/1.1/0.4, 9/0.7/2.0, 10/1.4/2.8}
+      \coordinate (s\i) at (\x,\y);
+    \foreach \a/\b in {1/4,1/9,2/3,2/6,3/7,4/5,5/10,6/8,7/1,8/3,9/2,10/6,5/1,4/8,3/10,7/9}
+      \draw[red!70!orange, thin] (s\a) to[bend left=35] (s\b);
+    \foreach \i in {1,...,10} \draw[red!70!orange, fill=white] ($(s\i)+(-0.14,-0.09)$) rectangle ($(s\i)+(0.14,0.09)$);
+    \node at (1.0,-0.6) {spaghetti};
+  \end{scope}
+  % maintainable
+  \begin{scope}[xshift=8.8cm]
+    \foreach \n/\p in {a/{(0,2.0)}, b/{(0,0.8)}, c/{(1.3,2.6)}, d/{(1.3,1.4)}, e/{(1.3,0.2)}, f/{(2.6,1.4)}}
+      \node[draw=blue!50!black, thick, minimum width=0.8cm, minimum height=0.45cm] (\n) at \p {};
+    \foreach \a/\b in {a/c,a/d,b/d,b/e,c/f,d/f,e/f}
+      \draw[-{Stealth}] (\a) -- (\b);
+    \node at (1.3,-0.6) {maintainable};
+  \end{scope}
+\end{tikzpicture}
+\caption{Three shapes code can have.}
+\label{fig:atlas-shapes}
+\end{figure}
+
+A \emph{house of cards} stands, until you touch it: every layer rests on the one below, and changing a card at the bottom brings everything above it down. \emph{Spaghetti} is code where everything reads and changes everything else, so that nobody can say what a change in one place does elsewhere. \emph{Maintainable} code has a direction: data comes in, goes through named steps that each take something and give something, and comes out. You can replace one step without touching the others. Notice that none of these is a property of a line. They are properties of the connections, and connections are exactly what you lose when you read code line by line.
+
+\subsection{Why a picture works better}
+\label{sec:atlas-seeing}
+Look at figure~\ref{fig:atlas-preattentive}. You found the red square before you had decided to look for it. That is \emph{preattentive processing}, which we used in lesson 5 to spot the weekly cycle in the COVID data: in the first fraction of a second, before you read anything, your visual system has already picked out what stands out. It does that for the whole field at once, so it takes the same time with $160$ squares as with $10$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{atlas/preattentive.png}
+\caption{One square is not like the others.}
+\label{fig:atlas-preattentive}
+\end{figure}
+
+Reading works the other way. You read in series, one word after another, and the time grows with the amount of text: twice the code, twice the reading. Seeing works in parallel. That is the difference between the blue dot and the red dots in figure~\ref{fig:atlas-timeline}, and it is the whole reason this course exists: a good plot shows in half a second what a table of numbers hides. So if the structure of your code is what you want to judge, turn the structure into a picture, and let your eyes do what they are good at: spotting the box that does not belong, the arrow that goes back, the place everything points to.
+
+% ─────────────────────────────────────────────
+\subsection{What atlas draws}
+\label{sec:atlas-draws}
+Atlas\footnote{\url{https://github.com/raoulg/atlas}. The tour at \url{https://raoulg.github.io/atlas/} shows every step on a real example.} reads your code and draws it as two kinds of thing. \emph{Places} are where data rests: a value in memory (a DataFrame, a \texttt{Settings} object), a file on disk, a table in a database, a page on the web, a program that runs, the screen, or a global variable that a module keeps. \emph{Functions} are what carries data from one place to the next. A \emph{route} is what one entry point does, a command you run for instance, drawn from left to right: what it finds on the left, what it leaves on the right, and the functions in between, in the order they run.
+
+Under the picture is a small piece of mathematics. The places are the objects of a category, the functions are its arrows, and composing arrows is calling one function after another; a route is the composite from an entry point to the places it reaches. One idea from that mathematics matters for how you read the picture: what a function does to the world belongs to the function. A file it writes is as much a part of what it gives as a value it returns, and a file it reads is as much a part of what it takes as a parameter. A function that quietly writes a file, or reads a global, shows that on the picture, even though its signature doesn't.
+
+\subsubsection{The same figure from two very different programs}
+Here are the two sunspot programs, as atlas draws them.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{atlas/python-sloppy.png}
+\caption{The sloppy script, drawn by atlas.}
+\label{fig:atlas-sloppy}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\rotatebox{90}{\includegraphics[width=0.9\textheight]{atlas/python-clean.png}}
+\caption{The typed program, drawn by atlas. Turned a quarter, because the route is long: read it from bottom to top.}
+\label{fig:atlas-clean}
+\end{figure}
+
+Both reach the same places: the web, the raw CSV, the figure. Inside they part. In the sloppy script (figure~\ref{fig:atlas-sloppy}) every step reads and changes one global, \texttt{Global(sunspots.df)}, and nothing is handed from step to step. The order in which things must happen is in nobody's signature: you have to know that \texttt{get\_data} runs before \texttt{clean} and \texttt{clean} before \texttt{smooth}, and two of the steps pick their own files. That is the spaghetti of figure~\ref{fig:atlas-shapes}, in a script of a few dozen lines.
+
+In the typed program (figure~\ref{fig:atlas-clean}) you can read the story off the picture. \texttt{download} runs only when there is no raw CSV yet; the CSV stands between \texttt{download} and \texttt{load}; \texttt{load} gives a DataFrame; \texttt{smooth} takes it, together with the settings, and gives a DataFrame with a smoothed column; \texttt{Trend.save} draws that frame into a file. And the command names every file, so you can see where the data comes from and where the figure goes without opening a single function. Same output, same libraries. The difference is entirely in the connections, and the picture shows it in a second.
+
+\subsubsection{A red dot is a question}
+Some boxes carry a red dot. A dot is a question atlas asks the author: something in the code does not follow one of the design principles atlas checks. A step reads and changes a global; a function reads a file whose path it chose itself, so nobody calling it can tell where its data comes from; a function's signature doesn't say what it gives. \texttt{atlas check} lists the same questions as text, each with the place in the code, what atlas saw, and a question for you.
+
+A red dot is not a verdict. Atlas coaches; it doesn't fix. Sometimes the answer is to change the code, and the dot disappears. Sometimes the code is right as it is, and then you write that decision down beside the code, with your reason. What I am interested in is that you know which it is, and why. That is the same thing I ask of every number in your report.
+
+Atlas is also not a linter. ruff and ty own the level of lines: style, an unused import, a type that doesn't match. Atlas owns the level above: which steps there are, what travels between them, where data rests. If you make three plots that are really three separate things, the picture should show three separate things; if they come from one preprocessing step, it should show one flow. A linter cannot know which one you meant. Only you can.
+
+\subsection{Working with your agent on the same picture}
+\label{sec:atlas-agent}
+Your coding agent lives in text, and you are much faster with images. Atlas gives the two of you the same picture. Register it once with your agent (\texttt{claude mcp add -{}-scope user atlas -{}- atlas mcp} for Claude Code), run \texttt{atlas serve} in your repository and open the page it prints. Then you can ask ``where does the smoothing happen?'' and the agent points at the box on your page, instead of describing it. You can write a note on a box (``what happens if the data on the web changes?''), and the agent reads it and answers on the box. And when you ask for a change, the agent can draw it first, beside the code as it is, so you see what it would add before a single file changes. You say yes to a picture, not to a paragraph of text.
+
+This matters for the same reason as everything above. You will write much of your code with an agent, and the danger of that is a fine outside and a mess inside: the plots come out, and nobody, you included, knows how. Looking at the picture together is a way to keep the inside something you understand.
+
+\subsection{Atlas in your final assignment}
+\label{sec:atlas-assignment}
+Install atlas from \url{https://github.com/raoulg/atlas}; there is an install script for macOS and Linux and one for Windows. In your repository run \texttt{atlas view}, pick the entry point that makes your plots in the dropdown, and open the steps you want to show. Atlas writes one HTML file and keeps your code on your own machine.
+
+In the assessment I will sit next to you and ask you to explain that picture: where your data comes from, which steps it goes through, where each plot is made, and what the red dots ask. You may make your own diagram as well; I will still put atlas next to it, because atlas draws the code you actually wrote, and a diagram can be beautiful and have nothing to do with the code. A tidy picture is easy to explain. If yours looks messy, that is not a failure; it is the question to work on: what would you change in your code so that the picture tells the story you meant? Just as with a model of your data, the aim is not a perfect picture. It is a picture you can explain.
 
 \end{document}
