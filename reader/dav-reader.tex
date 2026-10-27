@@ -531,5 +531,703 @@ In the second half of the lesson we discussed the distribution plots you made of
 \textbf{Know who you make it for.} Transparent histograms behind fitted lines are fine for a trained reader and noise for a business audience. That is a choice, not a matter of right or wrong.
 
 \textbf{A null result needs tension.} Sometimes you find that nothing changed. That is interesting only if there was a strong expectation that something would. If nobody expected an effect, finding none is not a story; dig deeper.
+\newpage
+
+\section{Lesson 5: Modelling relationships}
+\label{sec:lesson5}
+The previous lessons each added a way of looking at data: comparing categories, following something over time, smoothing out a trend, describing randomness with a distribution. This lesson puts them together. A model of a relationship is a small formula with two sides: the number of people who die equals the number of people who test positive, times some factor. If you made your plots well, you should be able to write what they show as a formula like that. And every earlier lesson can be a building block in it: a category, a time effect, a smoothing step, a distribution for the part you cannot explain.
+
+The lesson is organised around six questions:
+
+\begin{enumerate}
+\item \textbf{What} is a model? A simplification you choose. Never the whole truth, and never neutral.
+\item \textbf{Why} keep a model simple? A computer can fit anything. People can only understand simple shapes.
+\item \textbf{How} do you build a model? Look at the data, think about the world, add one thing.
+\item \textbf{When} should you believe a pattern? If you look at enough things, you always find something.
+\item What can a \textbf{correlation} hide? A variable you left out can reverse a correlation, or create one.
+\item Can you \textbf{recognise} someone by how they type? A model that works can still be right for the wrong reason.
+\end{enumerate}
+
+The first two are about models in general, and about two ideas that almost every student brings in without saying them: that a model is true, and that a complex model is better than a simple one. The third is the heart of the lesson: the COVID model from the end of lesson 4, built step by step. The last three are about believing what you find.
+
+% ─────────────────────────────────────────────
+\subsection{What is a model?}
+\label{sec:what-is-a-model}
+A model is like a map: useful because it leaves things out. If you want to navigate, you don't use an aerial photograph. It has all the detail, and that is exactly what makes it hard to use. A map with a few colours and lines is better, because someone decided what to leave out\footnote{``The map is not the territory'' is Alfred Korzybski's phrase.}. A map of Utrecht that showed every stone would be as big as Utrecht. Modelling is the art of leaving things out, and that has three consequences.
+
+\begin{itemize}
+\item \textbf{A model is not true.} It is always an approximation, and there is always some distance between the model and the world. What you want is that the distance doesn't matter for what you use it for. Newton's laws describe how thrown objects move, and they work perfectly for everything you will ever throw. Near something very heavy, or at speeds close to the speed of light, they break down. Usually nobody cares, but your phone's navigation does: it times signals from satellites, and if it ignored the bending of time and space that Einstein described, you would not arrive where you wanted to go. So there you need the better model. Is Einstein's model then true? No; it is a better approximation, and it too breaks down in special cases. That is fine. It is still useful.
+\item \textbf{A model is not objective.} This is the misuse of models that bothers me most: ``the data says so''. The data says nothing. You chose the shape, the variables and the slice of data, and someone else could choose differently with the same data. Leaving out the choices you made is lying by omission: nothing you said was false, but the other person no longer has a good map of what you did.
+\item \textbf{A model is useful.} A good simplification shows you something you could not see in the raw numbers. You may treat discrete data as continuous and fit a normal distribution, knowing that it is not strictly right, as long as you can defend why. A Poisson distribution is not ``true'' either. It is also an approximation.
+\end{itemize}
+
+\subsubsection{Leonardo's earth: not true, still useful}
+In his notebook on water and the earth, written in the early 1500s, Leonardo da Vinci drew the earth as a circle and a triangle: the circles are the oceans, the triangle the mountains and land masses\footnote{Leonardo da Vinci, \textit{Codex Leicester}, folio 35v, a detail.}. He knew very well that water and mountains look different. He drew it because a geometric shape lets you reason about something too big and too complicated to see whole.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{lesson5/leonardo.png}
+\caption{Leonardo's geometric model of the earth, from the Codex Leicester.}
+\label{fig:leonardo}
+\end{figure}
+
+I find it a wonderful picture, even with everything we know now. It makes me see the earth as a drop of water floating through space, with the mountains as stones drifting in it. What is that useful for? I'm not sure; perhaps for thinking about the place of the earth in the universe. But it shows something new, even though its maker knew it wasn't true. Sometimes it is more interesting to ask \emph{what does the model show me} than to strive for the absolute truth.
+
+\subsubsection{Three lines through the same cars}
+The same point with data. Figure~\ref{fig:mpg} shows $398$ cars, their weight against their fuel economy in miles per gallon\footnote{The Auto MPG dataset from the UCI Machine Learning Repository.}. Heavier cars use more fuel; the question is what kind of relationship this is, and each of the three lines is a different claim about that.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/mpg_claims.png}
+\caption{398 cars, weight against fuel economy. A straight line, a line with a square in it, and lowess.}
+\label{fig:mpg}
+\end{figure}
+
+The straight line says every extra pound costs the same. It is not a bad model: $R^2 = 0.69$, and the p-value is around $10^{-103}$. Both numbers are true, and neither tells you that the line has the wrong shape. The picture tells you immediately: the line sits below the lightest and the heaviest cars and above the ones in the middle. It is averaging a curve. Give the model one extra parameter, a term with a square in it, and it can follow the bend. Python then works out how much bend the data needs. On the right, \emph{lowess} draws what the data shows without any formula: a kind of moving average that turns the points into a line. It finds the same bend without being told there is one, but it is not really a model: it has no parameters you can read, and it doesn't predict. Use lowess to look; once you know the shape, choose a formula.
+
+Which of the three is the true one? None. They are three claims, and you pick the one you can defend. If you are choosing a car, ``heavier cars use more fuel'' is all the model you need in your head; nobody needs a quadratic to buy a car. Different goals, different models.
+
+\againconcretely
+The map is not the territory. A model is a simplification you choose: the shape, the variables, the slice of data. So it is not true and not objective, and its value often lies precisely in what it leaves out. Students often hand in a model as if the data produced it. It did not: you made the choices. That is not a weakness; it is the job. The weakness is not knowing that you chose. And if you choose anyway, why choose something simple? That is the next question.
+
+% ─────────────────────────────────────────────
+\subsection{Why keep a model simple?}
+\label{sec:why-simple}
+The usual reflex is: why bother with simple models, when deep learning can learn anything from data? It is true that a computer with enough data can find very complex patterns, and for prediction that is often what you want. But people can only understand simple ones; there is a bandwidth to what we can follow. A deep learning model can have millions of parameters. It may predict well, but we can only understand what comes out of it, not what happens inside.
+
+That matters more than it sounds. In my work for the province of Utrecht, imagine a brilliant system, even a flawless one, that says: build a roundabout there. Why? Trust me. That is not accepted, and it shouldn't be. People want to know why. A specialist who cannot explain everything can still give a metaphor or a story that makes it click, and then people are willing to stand behind the decision. People take responsibility for something only when they can understand, follow or trust it, and a model cannot take responsibility. If the roundabout turns out to be a mistake and you ask who is responsible, the answer cannot be ``nobody''.
+
+Simple models are useful for three reasons. They give \emph{insight}: four simple shapes cover a surprising amount of the world, and each of them tells a story. They are \emph{restricted}: a model that can fit everything tells you nothing, while a simple model can fail, so when it fits, that means something. And precisely because a simple model is limited, it is most interesting where it fails. Every time a simple model goes wrong, you learn something: you think about what is happening there, model it, and look at what is left. That leftover, the residual, is only visible because the model is not flexible enough to swallow it.
+
+\subsubsection{Four shapes worth knowing by name}
+The four horsemen of modelling are the line, the sine, the exponential and the logistic. You don't need to know their formulas by heart; you need to recognise them by sight and know when to use them, because each of them is a sentence.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/horsemen.png}
+\caption{The four shapes: linear, sine, exponential and logistic.}
+\label{fig:horsemen}
+\end{figure}
+
+\begin{itemize}
+\item \textbf{Linear} says \emph{proportional}: twice as much in, twice as much out. Price per kilo, or deaths per positive test: if a thousand people test positive and the factor is $0.01$, ten of them die.
+\item \textbf{Sine} says \emph{it repeats}: the same pattern on a fixed rhythm, every day, week or season. Usually a sine is about time.
+\item \textbf{Exponential} says \emph{it compounds}: every step multiplies by the same factor, so it grows faster and faster. Interest, or the start of an epidemic.
+\item \textbf{Logistic} says \emph{it turns}: it grows like an exponential at first, then slows down and levels off at a ceiling. Turned around, it is a switch from one level to another.
+\end{itemize}
+
+My estimate is that these four, and sums and products of them, cover about $80\%$ of what you meet in data when you model it simply. The COVID model under question three uses three of them.
+
+\subsubsection{Nothing in nature grows exponentially for long}
+The old riddle: duckweed on a pond doubles every day and covers the whole pond on day $30$. On which day was it half covered? Day $29$, because the last doubling covers the second half. That is why exponential growth surprises people: for a long time almost nothing seems to happen, and then everything happens at once.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/pond.png}
+\caption{Duckweed that doubles every two days, as an exponential and as a logistic. An illustration, not measured data.}
+\label{fig:pond}
+\end{figure}
+
+A real pond adds what the riddle leaves out: the pond is only so big. In figure~\ref{fig:pond} the duckweed starts on $0.4\%$ of the pond and doubles every two days while there is room. The exponential keeps doubling and covers twice the pond on day $18$, which cannot happen. The logistic has the same start and the same doubling, and slows down as the free water runs out: half covered on day $16$, nearly full by day $25$. Natural systems never grow exponentially for long, because something always runs out: room, food, light, or for an epidemic, the people it can still infect. Markets don't keep growing either, however much shareholders want them to. The dangerous part is that in the first stretch of the curve you cannot see the difference between the two. If you extrapolate an exponential, think about where the edge of the pond is.
+
+\subsubsection{A line plus a sine: four numbers, 93\% explained}
+Monthly airline passengers from 1949 to 1960 combine two of the shapes: a line for the trend, and a sine for the summer holidays. A straight line in time, about $2{,}650$ more passengers every month, explains $85\%$ of the variation. Add a sine that repeats every twelve months, which costs two extra numbers (its amplitude and its phase), and that rises to $93\%$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/airline.png}
+\caption{Airline passengers, 1949--1960: a line, and a line plus a sine.}
+\label{fig:airline}
+\end{figure}
+
+Four numbers in total, and you can say each of them out loud: how much the trend grows per month, how big the summer peak is, and when in the year it falls. That is a summary of a phenomenon in a few parameters you can interpret. And what is left over is honest and readable: the real summer swing gets wider as the trend grows, while a sine added on top of a line keeps the same width. You can only see that because the model is simple enough to read. How would you let the swing grow? Ask yourself which number in the formula of the sine sets its height, and what that height should depend on. This is an exercise in notebook 05.4 (section 5.4.3, ``a wave that grows''), so I leave it to you.
+
+\subsubsection{A better fit is good, until you fit the noise}
+Of course you want a model that fits better; that is what fitting is for. The problem is going too far. Every dataset is one sample, with its own accidents in it, and a model flexible enough to follow every point follows the accidents too: it models the noise. Lesson 4 gave the alternative. Noise is a factor in its own right, and you can model it: give it its own term, $\varepsilon$, say which distribution you expect, and check the residual against it.
+$$y = f(x) + \varepsilon$$
+The model then doesn't need to go through every point. As long as the data stays within the bandwidth of $\varepsilon$, it is a good description that respects the uncertainty.
+
+The second point is about the goal. Sometimes the goal is prediction, and then a complex model is fine: nobody needs to read the weights of a neural network. But often the goal is people: a plot, a formula, a number with a sentence that someone else has to understand, check and act on. That artefact may well have been produced with the help of a complex model, but it still has to be understandable, because what people don't understand, they cannot work with. Fit the pattern, give the noise its own term, and hand over something people can understand.
+
+\subsubsection{A model that can fit anything tells you nothing}
+Twelve cars from the same dataset, spread over the weights (figure~\ref{fig:flexible}, top). A straight line fits reasonably: $R^2 = 0.72$. A polynomial of degree $11$ has twelve parameters for twelve points, so it goes through every single one: $R^2 = 1.00$, a perfect score. This is the result that tempts students: look, machine learning, a perfect fit.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/flexible.png}
+\caption{Top: twelve real cars. Bottom: the same cars with the fuel economy shuffled.}
+\label{fig:flexible}
+\end{figure}
+
+Now shuffle the fuel economy values between the cars (bottom row). There is no relationship left; any pattern is chance, and a good model should break. The line does: $R^2 = 0.05$. Over $200$ shuffles its median is $0.05$, and $95\%$ of the shuffles stay below $0.28$. The polynomial scores a perfect $1.00$ again, on nonsense. You might think it is just so good that it always finds the pattern. It isn't; it is too flexible. A model that scores perfectly on real data and on nonsense cannot tell them apart, so its score is worthless. There is a paradox in this: because the line can fail, its $0.72$ tells you something about cars. This is the same shuffle as in lesson 4: ask what you would see if there were nothing there.
+
+\subsubsection{Too simple, about right, too flexible}
+Now test the three kinds of model on the $386$ cars they never saw, in the same weight range (figure~\ref{fig:newdata}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/new_data.png}
+\caption{The same twelve cars, and 386 cars the models never saw.}
+\label{fig:newdata}
+\end{figure}
+
+\begin{itemize}
+\item \textbf{Too simple} (\emph{underfitting}): one number, the mean, for every car. It is about $10$ mpg off on its own twelve cars and about $8$ on the others. Bad everywhere, but at least honestly bad: it misses the pattern.
+\item \textbf{About right}: a line, about $5$ mpg off on both. It is a bit wrong on its own cars and about as wrong on cars it has never seen. It learned something that carries over.
+\item \textbf{Too flexible} (\emph{overfitting}): the polynomial is $0$ mpg off on its own twelve cars and on average more than $4{,}000$ mpg off on the others, because between the points it swings wherever it likes. It learned the twelve cars, not cars.
+\end{itemize}
+
+The tell-tale sign of overfitting is exactly this gap: very good on the data it saw, bad on new data. The trap is to look at the zero and think: look how good I am. You want a model that is about as wrong on new data as on old. Lesson 6 gives this its own machinery, with train and test sets; for now the intuition is enough.
+
+\subsubsection{If you can't explain a number, don't report it}
+This is a real report, handed in at another university of applied sciences, by a student who had worked on it for three months. The task was to predict the power draw of an engine. At the defence, two teachers and a half-hour presentation, the student showed six slides of MAPE formulas, all generated, and this table:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Model} & \textbf{MAPE} & \textbf{MAE} & \textbf{RMSE} \\
+\midrule
+Random Forest & $4.78 \times 10^{13}$ & 0.89 & 2.5 \\
+XGBoost & $5.48 \times 10^{13}$ & 0.53 & 1.3 \\
+KNN regressor & $6.48 \times 10^{13}$ & 1.46 & 3.74 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+and the conclusion: ``These results suggest that the model is a robust and reliable tool for predicting power draw of the engine''. MAPE is the \emph{mean absolute percentage error}: on average, how many percent the prediction is off. A MAPE of $10^{13}$ means the model is off by ten trillion percent. If you understand what MAPE is, you cannot let that pass. So I asked: suppose I pay your salary with a model that has this MAPE. Are you worried? The student didn't really know. It means I might pay you one euro or ten billion euros, and I can't tell you which. Only then did it begin to dawn. The student failed.
+
+The MAE column is no better. An MAE of $1.46$ means nothing until you compare it with a baseline error, for instance the error of always predicting the average. If that baseline is $0.001$, then $1.46$ is bizarrely high; if it is $100$, the model is excellent. Without the baseline nobody, the student included, can say whether the model is any good. (Why can MAPE reach $10^{13}$? It divides each error by the true value, so true values at or near zero blow it up. The student could not say that, and that is the point.)
+
+In class someone asked whether there might have been an explanation for the number. Perhaps; but that is beside the point. The problem was that the student could not explain what was worrying about it, and the defence is far too late to discover that. If you present an employer with a robust model that is off by ten trillion percent and you don't see the problem, they will stop trusting the rest of your work too. It is like looking in your rear-view mirror on the motorway and seeing chunks of rubber flying and a shower of sparks behind you, because you are driving on the metal of your wheels, and concluding that your car might need some attention. That is not a maintenance issue. You stop. If you don't notice, you are a danger on the road.
+
+So: use the tools, including an LLM, but every number on your slides is one you must be able to explain and defend. A number you can't explain is not a result.
+
+\paragraph{When the simple model is the solution.}
+A case from practice. At the start of the pandemic, the sales of Strepsils throat lozenges shot up and everything sold out. A complex sales model went completely off the rails trying to fit that peak. What worked was the opposite: a simple model with five or six sine waves for the rhythm of the year, which by construction could not follow the peak. The difference between that simple model and what actually happened we called the \emph{panic factor}: one parameter, fixed at zero up to the point where the simple model stopped working, and free after that. The model then had to put the whole COVID effect into that single parameter, so the effect was captured in one place. We then modelled three scenarios for the panic, that it would fade, disappear or stabilise, and gave the manager a knob to choose between them. That only worked because the model stayed simple enough to explain.
+
+Is that an argument that simple models are usually right? Usually, yes; it is a trade-off. Simple models leave more on the table, but their inflexibility makes them reliable. There is also the opposite reflex: people so afraid of anything that cannot be explained that they stay simpler than necessary and reduce everything to a decision tree. In healthcare, for example, very complex models are used, because you can put far more information into them than any person can hold. That can be the right choice.
+
+\againconcretely
+A simple model can fail, and that is a signal you can use. Complex models find complex patterns, but you can't read them. Four shapes, each a sentence; a flexible model is not closer to the truth, it is closer to the noise; and a number you cannot explain does not belong in a report, however it was produced. Start simple. Add a term only when what is left over has a shape you recognise. If a model fails, that can be a very interesting signal about reality.
+
+% ─────────────────────────────────────────────
+\subsection{How do you build a model?}
+\label{sec:building}
+Every step goes the same way. You \emph{look}: plot the data and notice what is strange, such as noise, a delay or a difference in size. You \emph{think}: use what you know about the world, which is often not in the data at all. How does a disease progress? How does reporting work? When did the vaccine come? In your own chat this is knowledge like ``aunt Connie was single and bored that winter''. And you \emph{add}: turn each piece of reasoning into one step in the pipeline, or one term in the model. Then you look again.
+
+The data are the public Dutch COVID figures: positive tests and deaths per day, from October 2020 to June 2021. The model in the end is small, but the way there is the lesson. Notebooks 05.3 and 05.4 follow the same path, and \texttt{scripts/covid\_pipeline.py} holds the whole loop as a script.
+
+\subsubsection{\texorpdfstring{Step 0 · A running total. How many died per day?}{Step 0: A running total. How many died per day?}}
+The data as it arrives. The Dutch figures give deaths as a running total: everyone who has died of COVID since February 2020, $6{,}419$ on 1 October 2020 and $17{,}632$ on 1 June 2021. That line can only go up, and the number that matters is hidden in how steep it is.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/covid_total.png}
+\caption{The deaths as delivered: a running total.}
+\label{fig:covid-total}
+\end{figure}
+
+How do you get the deaths per day out of this? Take the difference with the day before: deaths today $=$ total today $-$ total yesterday. In pandas that is \texttt{diff}, and in the pipeline it is the first step:
+\begin{center}
+\texttt{pipeline.add(DiffValues, column="deaths")}
+\end{center}
+
+\subsubsection{Preattentive processing: what do you see?}
+In the first fraction of a second, before anyone reads an axis or a number, your visual system has already picked out what stands out: repetition, contrast, a pattern that keeps coming back. So look at the numbers exactly as reported, and ask yourself what you see before reading on.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/covid_raw.png}
+\caption{Positive tests and deaths per day, as reported.}
+\label{fig:covid-raw}
+\end{figure}
+
+What jumps out first is the \emph{weekly cycle}, strongest in the deaths. On average about $25$ deaths are reported on Sundays and Mondays, and $67$ on Tuesdays. In class, the first explanations were the waves and the vaccine; those are the model, and we will come to them. The weekly rhythm is something else: people do not die less on Sundays. Registration waits for the weekend to end and catches up afterwards.
+
+\subsubsection{\texorpdfstring{Step 1 · Too much noise: average over a week}{Step 1: Too much noise: average over a week}}
+Should you remove the weekly cycle? That is a decision, and it depends on what you want to model. Here we are not interested in it: it tells us more about society than about the disease. Knowing that, the fix is obvious: average over seven days, so that every average contains each weekday exactly once.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/covid_smooth.png}
+\caption{Grey: the numbers as reported each day. Petrol: the average over the last seven days.}
+\label{fig:covid-smooth}
+\end{figure}
+
+The weekly rhythm cancels out, and the course of the epidemic is left.
+\begin{center}
+\texttt{pipeline.add(RollingAvg, column="positivetests", window=7)}
+\end{center}
+and the same for the deaths.
+
+\subsubsection{\texorpdfstring{Step 2 · Deaths come about two weeks after a positive test}{Step 2: Deaths come about two weeks after a positive test}}
+With the weekly noise gone, something else becomes visible: the peaks in deaths come after the peaks in tests. You don't die on the day you test positive. Infection, illness, hospital, death: that usually takes about two weeks. That is knowledge from outside the data, from the medical literature (and at the time, from the news). So the deaths recorded fourteen days from now are the deaths of today's positive tests, and a model should pair them that way.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/covid_lag.png}
+\caption{Left: tests peak, deaths follow. Right: the correlation between tests and deaths for every shift from 0 to 28 days, before vaccination.}
+\label{fig:covid-lag}
+\end{figure}
+
+The left panel shows it with the naked eye: the deaths peak $9$ days after the tests in November, and $19$ days after them in January. Why the difference? In class we came up with several explanations: more testing discipline when people are worried, so infections are caught earlier; the most vulnerable people being infected and dying first; the holidays, when fewer people die and patients are kept alive until after New Year. We don't know. The right panel checks the two weeks: shift the deaths back by $0, 1, 2, \ldots, 28$ whole days and compute the correlation with the tests for each shift. The best shifts are around $14$ to $16$ days. The data agrees.
+
+Why keep $14$, and not take $16$, which fits a little better? Because I don't know the mechanism behind $16$. It could be chance, Christmas, or any of the explanations above. If I tune the shift to this data, I artificially improve my model now and risk a worse fit in the future: I would be fitting noise. Note the order: the $14$ came from the literature, and the data confirmed it. Searching the data for the best lag and using that would be searching again, like the search for the switch day in lesson 4. If you want $15.6$ days, find it in the literature, or in data from other countries.
+
+In the pipeline this is a shift of the deaths column, and it is also where the model starts:
+\begin{center}
+\texttt{pipeline.add(ShiftValues, column="deaths", period=-14)}
+\end{center}
+$$\text{deaths}(t) = a \cdot \text{tests}(t - 14).$$
+What is $a$? ``The coefficient of the line'' is the mathematical answer. In normal language: if a hundred people test positive, $a$ is the share of them that dies two weeks later. Every term in a model should have an answer like that.
+
+\subsubsection{\texorpdfstring{Step 3 · Tens against thousands: compare with z-scores}{Step 3: Tens against thousands: compare with z-scores}}
+You want to see whether the two series have the same shape, but they live on different scales: thousands of positive tests a day, tens of deaths. On one axis the deaths are a flat line at the bottom.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/covid_scale.png}
+\caption{Left: tests and deaths on one axis. Right: both as z-scores, the deaths shifted two weeks back.}
+\label{fig:covid-scale}
+\end{figure}
+
+A \emph{z-score} puts every series on the same scale: subtract its own mean and divide by its own standard deviation,
+$$z = \frac{x - \text{mean}}{\text{sd}}.$$
+Zero is an average day for that series; plus two is a very unusual one. In November there were two standard deviations more positive tests than average, and one and a half standard deviations more deaths. As z-scores, the deaths two weeks later follow the shape of the tests. You know z-scores already; the point here is why you use one: to compare shapes, not sizes.
+\begin{center}
+\texttt{pipeline.add(ZScaler, column="positivetests", rename=True)}
+\end{center}
+Be careful not to put the z-scores into the model. You could, but then $a$ would no longer be a share of people who die; it would become something like $0.8$, meaning nothing you can say out loud, and you would have to calculate back. The z-scores are for looking; the model uses the counts.
+
+\subsubsection{\texorpdfstring{Step 4 · Add what you know: vaccination started on 6 January}{Step 4: Add what you know: vaccination started on 6 January}}
+Over the whole window the picture changes. Until January the two curves move together; from February they part. The tests rise again in spring, the deaths keep falling.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/covid_event.png}
+\caption{The whole window as z-scores, with the first vaccination in the Netherlands.}
+\label{fig:covid-event}
+\end{figure}
+
+The data doesn't say why; it has no column for it. You know something it doesn't: the first vaccination in the Netherlands was given on 6 January 2021. I didn't get that date from the data but from the news. People who are vaccinated still get infected; they just die much less often. (Could it be false positive tests? Possibly, but tests are fairly reliable, and you would also have to explain why they gave few false positives before January and many after.)
+
+The date does two things. It tells us where the relationship between tests and deaths is likely to hold, before vaccination, so that is where we fit the first model. And it gives us a guess for where something might change. The pipeline's \texttt{SelectDataRange} makes the same kind of decision for the whole study: which months to look at, here 1 October 2020 to 1 June 2021.
+
+\subsubsection{Add b: the deaths the tests don't explain}
+A line is $a \cdot x + b$. Instead of adding a $b$ because lines have one, ask what it would mean here. Fit the model from step 2 on the $85$ days before vaccination, and the line has to go through zero: $a = 0.0090$, the dashed line in figure~\ref{fig:covid-fit}. Now add a constant:
+$$\text{deaths}(t) = a \cdot \text{tests}(t - 14) + b.$$
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{lesson5/covid_fit.png}
+\caption{The 85 days before vaccination, with and without $b$.}
+\label{fig:covid-fit}
+\end{figure}
+
+The fit puts $a$ at $0.0065$: of every hundred positive tests, $0.65$ end in death two weeks later. And $b$ at about $20$ deaths a day, even at zero positive tests. Those are deaths that happen whatever the number of tests: people who were never tested, or people who die \emph{with} COVID rather than \emph{of} it, because they were positive and old. With $b$ the line is closer to the points: the mean squared error drops from $127$ to $99$. And $b$ gives the model room for deaths that stay when $a$ changes, which we will need shortly. One caution: no day in this window had fewer than about $4{,}800$ positive tests, so $b$ is where the line meets zero tests, an extrapolation. Read it as the deaths the tests don't account for, not as a measured count.
+
+\subsubsection{\texorpdfstring{Step 5 · Say how wrong the model is allowed to be}{Step 5: Say how wrong the model is allowed to be}}
+The last term is the noise:
+$$\text{deaths}(t) = a \cdot \text{tests}(t - 14) + b + \varepsilon, \qquad \varepsilon \sim \mathcal{N}(0, \sigma).$$
+Writing down $\varepsilon$ is a claim: everything the line doesn't explain (lockdowns, demonstrations, Christmas, new variants, people having coffee together anyway) is treated as chance, normally distributed around zero. Here $\sigma$ is about $10$ deaths a day. That is modelling the uncertainty: the model says not only what it expects, but how far off it is allowed to be.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{lesson5/covid_band.png}
+\caption{The model with a band of $\pm 2\sigma$, October 2020 to 5 January 2021.}
+\label{fig:covid-band}
+\end{figure}
+
+How do you find $\varepsilon$? You know the deaths and the tests; you don't know $a$, $b$ or $\varepsilon$. But you can fit $a$ and $b$, and then what is left is $\varepsilon$:
+$$\varepsilon = \text{deaths}(t) - \big(a \cdot \text{tests}(t - 14) + b\big).$$
+That is the residual from lesson 4. Plus or minus two $\sigma$ should hold about $95\%$ of the days; it holds $98\%$ of the $85$ days before vaccination. And because $\varepsilon$ is a claim, it can be checked: if the errors stop looking like chance, the model is missing something. goad's \texttt{DistributionFitter} is the tool for that check. You could argue that the bump around Christmas is not chance; then add Christmas to the model. Treating it as noise is a choice, and it is a choice you make out loud.
+
+\subsubsection{Every step of reasoning becomes a line of code}
+This is the part to remember. Every piece of reasoning from the last five steps ended up in one of two places: the pipeline that prepares the data, or the formula of the model.
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\textbf{Pipeline step} & \textbf{The reasoning behind it} \\
+\midrule
+\texttt{DiffValues} & A running total of deaths; you want deaths per day. \\
+\texttt{ShiftValues(-14)} & Deaths come about two weeks after a test: the literature. \\
+\texttt{SelectDataRange} & The months you want to study. \\
+\texttt{RollingAvg(7)} & Weekends are society, not disease. \\
+\texttt{ZScaler} & Tens against thousands: compare the shapes. \\
+\bottomrule
+\end{tabularx}
+\caption{The pipeline, \texttt{CovidDataProcessor}, and the reasoning behind each step.}
+\label{tab:covid-pipeline}
+\end{table}
+
+In the model, $\text{tests}(t - 14)$ is the same two weeks as \texttt{ShiftValues(-14)}, now in the formula. The parameters $a$ and $b$ are fitted on the days before 6 January, a date from outside the data. And $\varepsilon$ says that what the line can't explain is chance, which is itself a claim the residual can check. A \texttt{DataConfig} holds the $14$, the $7$ and the window, so every decision has one place where it lives. Nothing here came out of the data by itself. Each step is a decision you can explain and point at, and that is why a pipeline is built from named steps instead of one long chain of pandas.
+
+\subsubsection{Previous lesson: the residual shows what the line misses}
+Now take the line exactly as fitted before vaccination, with the same $a$ and $b$, and run it over every day up to June. Nothing in it knows what month it is.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/covid_residual.png}
+\caption{Left: the line from before 6 January, over all 232 days. Right: the residual.}
+\label{fig:covid-residual}
+\end{figure}
+
+Until January the deaths stay inside the band. From February they drop below it and never come back: $60\%$ of the days after 6 January fall below the band. Even what we modelled as noise no longer covers it. The residual is below zero from 16 February to the end, at its worst about fifty deaths a day. Up to January you could still say: sometimes a bit higher, sometimes a bit lower, all chance. After that it is no longer chance. The errors have a shape, a long run in one direction. One fixed share of tests ending in death no longer works. Something changed the ratio, and the residual says roughly when. How do you put that into the model?
+
+\subsubsection{How do you model a vaccine? Look at the ratio}
+Not with a separate line per month, and not with a polynomial in time that bends until the residual is flat; that would match the picture and explain nothing. This is the moment many students say: my linear model and my random forest don't work, so now I'll try deep learning. Don't throw the next model at it. Think about what a vaccine does: it changes the share of positive tests that ends in death. So plot that share.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/covid_ratio.png}
+\caption{Deaths two weeks later per 100 positive tests.}
+\label{fig:covid-ratio}
+\end{figure}
+
+Through the winter about one death per hundred positive tests, between $0.8$ and $1$, with a bump in early February. Then it falls steeply, to $0.3$ in April and $0.2$ in May. A vaccine doesn't work on one day. The Dutch rollout started on 6 January with care-home residents and the people caring for them, and worked down the age groups from the oldest, through February and March. Slowly at first, then everybody wanted their turn, and at the end a long tail of people who came late or hesitated. Once the most vulnerable groups are protected, the ratio settles lower.
+
+One level, a turn over some weeks, a lower level. Which of the four shapes is that? A logistic, turned downward. Why would the model for duckweed on a pond fit vaccination? Because both grow until they run into a limit: the pond is full, or the vulnerable people have had their turn.
+
+\subsubsection{A logistic switch has two knobs: when and how fast}
+The vaccine gets a term of its own, a \emph{switch} $s(t)$:
+$$\text{deaths}(t) = a \cdot \text{tests}(t - 14) \cdot s(t) + b + \varepsilon, \qquad s(t) = \frac{1}{1 + e^{-k (t - x_0)}}.$$
+Turned downward, the switch starts at $1$: of every positive test, the old share ends in death. Multiplying by one does nothing, so before vaccination this is the same model as before. It ends at $0$: a positive test no longer leads to death. Halfway, at $0.5$, half of the deaths the tests would predict happen.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/switch_knobs.png}
+\caption{Left: the same $x_0$ with a steeper and a flatter $k$. Right: the same $k$ with $x_0$ earlier and later.}
+\label{fig:switch-knobs}
+\end{figure}
+
+The switch has two knobs. $x_0$ sets \emph{when}: the day the switch is halfway; it slides the curve left and right. $k$ sets \emph{how fast}: a large $k$ turns in days, a small $k$ over months. We don't know either of them, and that is exactly what we want the fit to tell us: here is the formula, here is the data, find out how steep the turn is and where it lies.
+
+Notice where the switch sits. It multiplies only the tests term. When it reaches $0$, what remains is $b$ and the noise: deaths that have nothing to do with positive tests. That is the claim of the model: vaccination breaks the link between testing positive and dying; it does not make other deaths disappear. That is not exactly how the disease works, of course. Even vaccinated people sometimes die of COVID, so you could argue the switch should not go all the way to zero. You can keep refining; at some point that is a job at the RIVM, the Dutch public health institute.
+
+\subsubsection{The switch, fitted: the date falls out of the fit}
+Four numbers, fitted together: $a$ and $b$ from the line, $k$ and $x_0$ from the switch. The only help the optimiser got was a starting value for $x_0$, about a month after the first vaccination, and bounds that say what each parameter may mean.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/covid_switch.png}
+\caption{The model with the switch, over all 232 days.}
+\label{fig:covid-switch}
+\end{figure}
+
+The fit puts the turn halfway on 3 March 2021, eight weeks after the first vaccination. The turn is fairly quick: the switch is still at $0.99$ on 1 February, $0.58$ on 1 March, and close to $0$ by 1 April. And $a = 0.0071$ and $b = 18$, close to the line fitted before vaccination ($0.0065$ and $20$): the switch doesn't have to bend the line, it only takes the tests term away. The mean squared error drops from $800$ for the line alone to $66$.
+
+Look at what we combined. A time series, with a factor that changes over time. A linear relation between two variables. Something like categories: people who die after a positive test, and people who die anyway. Noise from lesson 4. And a logistic from this lesson. This is not deep learning. It is every lesson so far in one formula, with four numbers you can say out loud.
+
+\subsubsection{The residual looks like chance again}
+Is the model done? Apply the bar from lesson 4: no long structure over time, and a distribution the data cannot pin down.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/covid_after.png}
+\caption{Left: the residual of the model with the switch. Right: its distribution, with the three best families.}
+\label{fig:covid-after}
+\end{figure}
+
+The long negative run after vaccination is gone; what is left are waves of a few weeks around zero, probably lockdowns and holidays. Weibull, beta and normal fit the errors almost equally well, within about one log-likelihood point of each other, and none is rejected by the KS test. The data can't tell them apart: that is what chance looks like. From May the residual drifts below zero again: the model now says there are $b = 18$ deaths a day, and fewer happen. That is the next thing a serious model would treat. How could $b$ be better modelled, if you think of the four shapes? Perhaps as a season: more people die of flu in December than in June (although in June some die of heat).
+
+Then the honest part. The model has a switch on the calendar, not a term for vaccination. The end of the winter wave, a change in who was being tested (at some point people stopped getting tested) and the order in which age groups were vaccinated all sit on the same calendar, and each could produce a switch that fits. The fit shows that the ratio turned, and when. Why it turned is a separate claim. Defending it needs other evidence: vaccination coverage by age group against deaths by age group, or the same fit on a country whose rollout started on a different date. That would also average out the effect of the Dutch lockdowns. And this happened once: there is no second pandemic to test the model on.
+
+\paragraph{When do you stop?}
+That depends on your goal. In lesson 4 we saw that a mechanism that is right $51\%$ of the time on a fifty-fifty bet can make you rich. If you predict whether someone is ill and send them home, a wrong prediction can cost a life, and you need a very different standard. That is why a hospital asks your date of birth eight times before an operation: a very simple test, repeated until it is almost impossible to cut into the wrong patient. Predicting the future is a profession of its own, and a well-paid one. During the pandemic the RIVM ran large Bayesian models with assumptions about everything: what share of people keep a distance, how honest they are when asked, how many keep to the rules at Christmas. At some point the uncertainties multiplied so much that they said they could not predict more than two weeks ahead. That is what honest modelling looks like: you are better than guessing, and you say what you don't know.
+
+I don't expect your own model to become this elaborate. What I wanted to show is the process: you take a step, something is left over, you investigate it, you model it, and something is left over again. And then you stop when what is left looks like real noise.
+
+\subsubsection{The whole loop as a map, drawn by atlas}
+The loop we just built also lives in \texttt{scripts/covid\_pipeline.py}: six small functions and a \texttt{main} that runs them in order.
+
+\begin{verbatim}
+def main() -> None:
+    data = preprocess()
+    plot_zscores(data)
+    data = fit_model(data)
+    plot_model(data)
+    plot_residual(data)
+    plot_residual_distribution(data)
+    logger.success("All done.")
+\end{verbatim}
+
+Atlas, a tool I wrote for this course\footnote{\url{https://github.com/raoulg/atlas}, with an install script for macOS, Linux and Windows.}, draws what that code does (figure~\ref{fig:atlas}). It doesn't show files and folders; it shows where data rests and the functions that carry it from one place to the next, in the order they run. Read it from left to right: the command starts the script, \texttt{preprocess} makes a DataFrame (the goad pipeline from table~\ref{tab:covid-pipeline}), \texttt{fit\_model} turns it into a second DataFrame with the prediction and the residual, and the plotting functions write PNG files. A rounded pill is a function, a box is where data rests: a DataFrame in memory, a file on disk. Click a pill and atlas opens it into its own steps.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/atlas_route.png}
+\caption{\texttt{scripts/covid\_pipeline.py}, drawn by atlas.}
+\label{fig:atlas}
+\end{figure}
+
+The idea behind atlas is that consistent, logical code gives a consistent, simple picture. The same plot can be produced by tidy code and by messy code, and the pictures will look very different: global DataFrames that get written and read somewhere along the way, steps whose order you can no longer see. A linter doesn't notice that: if you make three plots that are really one flow, only you know it should look like one flow. When the picture looks wrong, the code usually is, and the red marks show where atlas misses information: unclear inputs, unclear outputs. It works the same for Python and Rust, and you can give the picture to Claude to discuss what to change. In the final assignment you use it to show how your own code works: run \texttt{atlas view} in your repository, pick your entry point, and be ready to explain the picture.
+
+\againconcretely
+One line, then one switch. The line from before vaccination kept its two numbers; the switch added two more and found the turn eight weeks after the first vaccination, without being told. Look, think, add one step or one term, then read the residual. Each piece of reasoning has a place: the pipeline, or the formula. Stop when what is left looks like chance, and say what the model cannot tell you: here, why the ratio turned.
+
+% ─────────────────────────────────────────────
+\subsection{When should you believe a pattern?}
+\label{sec:believe}
+In lesson 4 you shuffled labels to see how big a difference chance makes for one comparison. Now: what happens when you make many comparisons, and what makes a finding believable at all? The data is the Ubuntu IRC chat channel you know from earlier lessons.
+
+\subsubsection{Fifteen comparisons, one below the line}
+Everyone in \#ubuntu-uk with at least thirty messages, $442$ people, and fifteen numbers per person: message length, links, questions, posting at night, and so on. Each person also has a cohort label, A or B. Test every number between the cohorts with a t-test, and put the fifteen p-values on a log axis with the usual line at $0.05$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/hunt.png}
+\caption{Fifteen measures, cohort A against cohort B. The dashed line is $p = 0.05$.}
+\label{fig:hunt}
+\end{figure}
+
+One clears the line easily: cohort A does $13.5\%$ of its posting between midnight and five in the morning, cohort B $6.7\%$, $p = 0.003$, with more than two hundred people per group. That sounds publishable, and a story arrives at once: night owls, or another time zone. Notice how fast the story came. Now look at how the cohorts were made: with a random permutation. The two groups are the same population, split at random. There is no cohort. Everything in this plot was produced by nothing at all.
+
+\subsubsection{How often do you find something when there is nothing?}
+So measure it instead of being surprised. Shuffle the cohort labels $300$ times and hunt every time over the fifteen measures.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/null_hunts.png}
+\caption{300 hunts over random labels: how many of the fifteen measures cross $0.05$.}
+\label{fig:null-hunts}
+\end{figure}
+
+In $42\%$ of the hunts at least one measure crosses $0.05$; some find two or three. That is the baseline: before asking whether a finding is real, ask how often you would find something if there were nothing to find. If the answer is almost half the time, finding something is not evidence.
+
+The arithmetic is worth knowing. A p-value below $0.05$ means a false alarm one time in twenty per test. ``At least one alarm'' is hard to count; ``no alarm at all'' is one product. Fifteen independent tests all stay quiet
+$$0.95^{15} = 0.46$$
+of the time, so at least one alarm $54\%$. The measured $42\%$ is lower because the measures overlap: mean length, median length and mean number of words are three names for message size. The fifteen behave like about nine independent measures, and $1 - 0.95^{9} = 0.37$.
+
+This is the dice from lesson 4 again. If I say beforehand that you will roll six sixes and you do, that means something. If I let a hundred thousand people roll and one of them rolls six sixes, I should expect it. With few messages and few people, as in your own chats, the chance of a lucky find is large. Ask beforehand: how many things am I testing, and what would I find by chance alone?
+
+\subsubsection{A real pattern predicts people it hasn't seen}
+The strongest defence is to split the data: find the pattern in one part, then predict the other. Here with fresh random cohorts, so again there is nothing to find.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/held_out.png}
+\caption{Left: the hunt in half of the people. Right: the same comparison in the other half.}
+\label{fig:held-out}
+\end{figure}
+
+Hunt over the fifteen measures in half of the people: cohort A writes clearly shorter messages, $p = 0.005$, a difference you would happily report. Then look at the other half, people the hunt never touched: the gap is gone, $p = 0.62$. Over $200$ random splits, the hunt in the first half finds something below $0.05$ in $40\%$ of the splits, and the new people confirm it $2\%$ of the time. A real pattern predicts new data; an accident of the search does not. With enough data you can make this a habit: use $80\%$ of your data to search, as freely as you like, knowing that some of what you find is nonsense, and keep $20\%$ apart to see what survives.
+
+One caution: the held-out part has to consist of new units of the claim. Splitting the same people into an early and a late period is not enough, because the same people carry the same accidents into both periods; in this channel such a time split confirmed random cohort differences about one time in five. And a finding belongs with the search that produced it: say how many things you looked at.
+
+\subsubsection{Three legs make a finding believable}
+If the hunt were the whole story, the conclusion would be that nothing is ever real, which is as bad as believing everything. So what would make you believe a finding? Three legs, and statistics gives you at most one of them.
+
+\begin{enumerate}
+\item \textbf{A model.} A statistical model that fits: enough observations at the level of the claim, an effect bigger than chance. It can be evidence, if used well, but even with $p < 0.05$ it can still be chance.
+\item \textbf{A mechanism.} A reason it would be true, that you could have named before looking. No data gives you this.
+\item \textbf{Replication.} It shows up where you didn't look: another period, another group, another way of measuring.
+\end{enumerate}
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}l X X@{}}
+\toprule
+ & \textbf{Survives testing} & \textbf{Fails testing} \\
+\midrule
+\textbf{Mechanism} & Report it, then look for replication. & ``Plausible, unproven.'' A finished result: say what would settle it. Or the test was wrong. \\
+\textbf{No mechanism} & Don't conclude yet. A fluke, or a variable you haven't named. & Drop it. \\
+\bottomrule
+\end{tabularx}
+\caption{Mechanism against testing.}
+\label{tab:legs}
+\end{table}
+
+The two cells on the diagonal are obvious. The other two are the lesson. A mechanism that fails testing is a finished result if you say what would settle it, and sometimes it means you tested the wrong way; the next example is one. A significant result without a mechanism is not a conclusion but a question: a fluke, or a confounder you haven't named, and the confounder is usually the more interesting finding. A mechanism also has a risk of its own. A surprising claim, against intuition, gets critical eyes. A claim that confirms what people already thought is accepted too quickly, and then the digging stops. The COVID switch, by the way: a model that fits, a mechanism yes, replication not yet.
+
+\subsubsection{The comparison you choose is part of the claim}
+The first claim through the grid: Ubuntu release days are busier. The mechanism is strong. Ubuntu releases on a Thursday, twice a year, on dates fixed in advance by a calendar the chat has no say in, and people in the channel have a reason to show up: have you seen the new version?
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/release.png}
+\caption{Ten release days against a typical Thursday of all five years (dashed), and against the Thursdays around each release.}
+\label{fig:release}
+\end{figure}
+
+The obvious test compares each release day with a typical Thursday. Over all five years, the median Thursday has $264$ messages, and only six of the ten releases beat it: a coin flip, which would kill the claim. It shouldn't, because the channel lost most of its traffic over these years. A typical Thursday in 2013 and one in 2017 are different numbers, and the late releases are compared with a median that mostly comes from the busy early years. The trend is a confounder for the event. Compare each release with the Thursdays within four weeks around it instead: nine of ten are busier, by $1.7$ times on average, and a sign test gives $p = 0.02$. The sign test only asks on which side of typical each day falls, a question ten noisy days can answer. Same data; only ``typical'' changed. A correct mechanism can fail on a badly chosen reference.
+
+\subsubsection{Test at the level of your claim}
+The claim: people write longer messages in the weekend. Per message, the answer looks decisive: weekend messages are $49.2$ characters on average against $48.2$ on weekdays, with $p = 10^{-9}$ over $510{,}833$ messages.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/weekday.png}
+\caption{Left: ten people write 56\% of the weekend messages. Right: weekday minus weekend message length, one number per person.}
+\label{fig:weekday}
+\end{figure}
+
+But a message average is dominated by whoever writes the most. Ten people write $56\%$ of all weekend messages, daftykins alone about $13\%$, and who posts in the weekend is not who posts on weekdays. If every weekend poster wrote exactly as they do on weekdays, the weekend average would already be $48.9$ instead of $48.2$: most of the difference is who is talking, not how people talk. Bill Gates walks into a bar, and on average everyone is a millionaire. Nobody in the bar got richer.
+
+Ask the question at the level of the claim, one number per person, and it splits: $47\%$ write longer in the weekend, $53\%$ on weekdays (perhaps during office hours, out of boredom), paired $p = 0.06$. Outside the small group of heavy posters, there is no effect at all. Report it that way: no general difference between weekday and weekend writing for the $259$ people with enough messages; the per-message difference comes from who posts when. Your claim is about a few people, not about half a million messages.
+
+This is the statistician's nightmare: dig deep enough into your data and you can always find a subgroup that makes your effect disappear, or turn around. That is not a reason not to dig. It is a reason to dig: don't stay at the surface, look for the subgroups, and state your claim at the level where it holds.
+
+\againconcretely
+Spurious correlations should be expected. With enough features and enough observations, you always find something; the right question is not ``did I find something?'' but ``how often would I think I found something if there were nothing?'' Shuffle the labels to measure it. Then the three legs: a model that beats chance at the level of the claim, a mechanism you could have named beforehand, and replication where you didn't look. Applied to the COVID switch: it fits and has a mechanism, but one country on one calendar cannot separate vaccination from everything else that happened that spring.
+
+% ─────────────────────────────────────────────
+\subsection{What can a correlation hide?}
+\label{sec:correlation}
+Pearson's $r$ says how two columns move together, scaled between $-1$ and $1$, and the correlation matrix is the first plot everyone makes. But a correlation on its own is not reliable. It can look strong and mean nothing, or look weak and hide a real relation, and the number alone doesn't tell you which. Two habits help. Always ask which groups are mixed in your data: a subgroup you didn't separate can turn a correlation around. And with many features, use a trick: a regression with a penalty on its weights finds the useful features better than correlations do.
+
+\subsubsection{The same penguins, twice: the line turns around}
+The penguins from lesson 4, $324$ birds with complete measurements. Bill length against bill depth: is a longer bill also a narrower one, or is a big bill usually a thicker one? Think about what you would expect before you look.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/simpson.png}
+\caption{Bill length against bill depth. Left: all penguins at once. Right: one species at a time.}
+\label{fig:simpson}
+\end{figure}
+
+All penguins at once: longer bills are shallower, $r = -0.22$. One species at a time: in every species a longer bill is deeper, $+0.40$ for Adelie, $+0.65$ for Chinstrap and $+0.65$ for Gentoo. Nothing about the birds changed. Gentoos have long, shallow bills and Adelies short, deep ones, which lays the three clouds along a downward diagonal; the pooled line measures the difference between species. This is Simpson's paradox, which lesson 2 met as a table of admissions. As a scatter you can see the mechanism: three clouds, and one line drawn through them. Note how easily this happens: a correlation matrix is computed on the numeric columns only, so species, island and sex are dropped before a single correlation is computed. Look at a few bills and you discover there are three kinds of penguin.
+
+\subsubsection{Seven of fifteen correlations change sign}
+Now all fifteen pairs of measurements, pooled and within species. ``Within species'' means: subtract each species' own mean from both columns, then correlate. That removes the differences between species and keeps the differences inside them.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{lesson5/pairs.png}
+\caption{Fifteen correlations. Red: all penguins together. Petrol: within species.}
+\label{fig:pairs}
+\end{figure}
+
+Seven of fifteen change sign. Almost half of the claims you would make turn around when you go one level deeper. Two are worth pointing at. Nitrogen-15 and body mass: $-0.54$ pooled, a number you would report; within species $+0.03$, nothing. The correlation was not weakened by controlling for species; it was made entirely of species. $\delta^{15}$N rises with what an animal eats, and the species eat differently and happen to differ in size. Bill length and body mass: $+0.59$ pooled and $+0.59$ within. A bigger bird has a bigger bill, in every group. So the lesson is not ``distrust all correlations''.
+
+There are three ways to handle a confounder, in increasing effort: report per group, take off the group mean first, or put the variable in a model. And then the part no method fixes: the confounder has to be in your data. If nobody had recorded the species, every number would be just as wrong, and nothing would tell you.
+
+\subsubsection{A penalty on the weights: what L1 and L2 do}
+The trick I promised. I first used it on a dataset of $150$ people with two kinds of cancer, and for each person $10{,}000$ DNA markers. The question was whether any of the markers says something about the kind of cancer. If you know a little statistics, you know that you will find patterns in $10{,}000$ features, guaranteed, just as in the $300$ hunts over the chat channel. This is the recipe for overfitting, and a correlation matrix will hand you noise. The solution was \emph{regularisation}.
+
+First, how do you measure how wrong a model is? Suppose I am a model guessing your height. I guess $4$ metres for one person, far too high, and $20$ centimetres for the next, far too low. On average my error is close to zero, because the two errors cancel. So you square each error before averaging: both become positive, and big errors count much more than small ones. That is the \emph{mean squared error}:
+$$\text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2,$$
+with $y_i$ the real value and $\hat{y}_i$ the prediction.
+
+A linear regression gives every feature $x_j$ a weight $w_j$, and picks the weights with the smallest error. With $100$ features and $500$ rows it will happily give every feature some weight, also the useless ones. A penalty adds a cost for large weights to the error, and $\alpha$ sets how strict it is:
+$$\text{L1: } \text{MSE} + \alpha \sum_j |w_j| \qquad\qquad \text{L2: } \text{MSE} + \alpha \sum_j w_j^2.$$
+Of two models that predict equally well, the one with the smaller weights wins.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/reg_paths.png}
+\caption{The weights of the same simulated data as the penalty goes from strict (left) to mild (right). Left panel: L1. Right panel: L2.}
+\label{fig:reg-paths}
+\end{figure}
+
+L1 (also called \emph{lasso}) pushes the weights of features that don't help to exactly zero, and as the penalty grows, the useful ones drop out one by one, the least useful first. L2 (\emph{ridge}) shrinks every weight smoothly, but keeps them all; none ever becomes exactly zero. That is why L1 can select features: what survives the penalty is what matters. \emph{Elastic net} mixes the two, and its \texttt{l1\_ratio} says how much is L1: $1$ is pure L1, $0$ pure L2.
+
+Two analogies from class. A meeting with a specialist in the room: on their subject, their vote may count more than the others', but not ten times as much, because then they can overrule the whole group by saying no. How much extra weight still gives good decisions? That is regularisation. Or my daughter of fourteen, going shopping for Sinterklaas presents: give her a budget, and she has to make choices, hopefully relevant ones. Squeeze the budget, and only what matters gets money; the rest goes to zero.
+
+\subsubsection{A penalty on the weights finds the useful features}
+A simulated dataset: $500$ rows and $100$ features, of which ten really matter and ninety are pure noise. Can you find the ten?
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/regularisation.png}
+\caption{Left: the correlation of each feature with the target. Right: the weights of a penalised regression. Petrol: the ten largest weights.}
+\label{fig:regularisation}
+\end{figure}
+
+Plot each feature's correlation with the target, and six stand out; the rest looks like noise, and you can see how noisy it is. Now misuse a linear regression on purpose: the goal is not the model, it is the weights. A grid search over the strictness $\alpha$ and the mix picks pure L1, \texttt{l1\_ratio = 1}. Almost every weight is exactly zero, and the real features pop out. Three of the ten largest weights belong to features that have almost no correlation with the target on their own: a feature can matter in combination with the others while its correlation alone is near zero. The correlation matrix is well known; it is not very reliable. (The grid search is a preview: hyperparameters are next semester's topic.)
+
+\againconcretely
+Pooled, longer bills are shallower. Within every species they are deeper. Same birds, opposite sentence. Before you report a correlation, ask what else is different between the groups you compare. The confounder has to be in your data: species was, and one \texttt{groupby} fixed it. If nobody had recorded it, nothing would tell you. With many features, let a penalised regression do the selecting, and read its weights.
+
+% ─────────────────────────────────────────────
+\subsection{Can you recognise someone by how they type?}
+\label{sec:typing}
+The last question takes one claim all the way through: \emph{people are more identifiable by how they write than by what they write about}. The mechanism is plausible, and it predicts something specific: habits should be stable, while subjects drift. Three warnings go with it. Accuracy only tells you there is something to look at; it is not the finding. The weights tell you what the model learned: a habit, or just a topic. And count the right thing: $218{,}670$ messages, but eight people. For a claim about people, $n$ is eight. A model that works can still be right for the wrong reason; a stopped clock gives the right time twice a day.
+
+\subsubsection{47\% right, but why?}
+A model reads one message from the eight most active people in the channel and guesses who wrote it: tf-idf over all words and a logistic regression. It is right $47\%$ of the time. What is the baseline? Not one in eight, because some people write much more than others. The simplest honest model always guesses the busiest person, and is right $22\%$ of the time. So $47\%$ is twice the baseline: a gate passed, not a destination. Half the messages still go to the wrong person. What did the model learn? That is in its weights.
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule
+\textbf{Person} & \textbf{Words the model leans on} & \textbf{What that is} \\
+\midrule
+ali1234 & n900, pidgin, qml, mythtv & subject matter \\
+MartijnVdS & dimpy, mungbean, neuro & other people's nicknames \\
+zmoylan-pi & ireland, dublin & where he lives \\
+daftykins & 0o, xd, hrmm & typing \\
+popey & dont, didnt, thats & typing: no apostrophes \\
+\bottomrule
+\end{tabularx}
+\caption{The strongest words per person in the one-message model.}
+\label{tab:weights}
+\end{table}
+
+Read them, and they are not all the same kind of thing. Devices and software are a topic. Other people's nicknames are not a writing habit but a social position: who you talk to. Ireland and Dublin are where someone lives. Only the last two are about how someone types. The rest is a topic detector wearing a stylometry costume, and a topic detector fails the moment someone changes the subject, stops talking to Dimpy, or moves house. That is exactly the situation an authorship model is for. When a model works, read its weights and ask what each one really is.
+
+\subsubsection{Three ways to write a smiley, and nobody mixes them}
+So stop using the model to find the fingerprint, and measure the habits directly. Nothing here needs machine learning: five \texttt{RegexFeature} steps and a \texttt{groupby}, the same transform you used in lesson 1 for URLs, now pointed at smileys and apostrophes.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/smileys.png}
+\caption{Smileys with a nose \texttt{:-)}, without \texttt{:)}, and the unicode smiley (U+263A), per person.}
+\label{fig:smileys}
+\end{figure}
+
+Smileys come in three dialects, and nobody mixes them. Two people use the nose almost every time; five never do; there is nobody in between. popey writes the unicode smiley, which nobody else types. Most differences between people are a matter of degree. This one is a choice, made once and kept for years, by people who read each other's messages every day. Apostrophes, capitals, addressing someone by name and posting at night look the same: a couple of people at one extreme, everyone else at the other. There is no typical author in this channel.
+
+\subsubsection{Fifty messages at a time: ten habits do what 17,918 words do}
+If the habits are this decisive, why only $47\%$? Because of the unit of analysis. Three quarters of all messages carry no habit at all: ``ok'', ``thanks'', ``brb''. Nobody can tell from ``ok'' who wrote it, so a model reading one message usually has nothing to go on; $47\%$ is what a strong signal looks like when it is sparse. So stop asking about one message: pool fifty messages per person into a block. That needs a small pipeline step of our own, \texttt{BlockMessages}, because what counts as one row is a decision worth naming.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/blocks.png}
+\caption{Accuracy on held-out messages, for four ways of guessing the author.}
+\label{fig:blocks}
+\end{figure}
+
+Then race two models on the same $4{,}368$ blocks. One knows every word, $17{,}918$ of them, and gets $100\%$. The other knows ten habits and nothing else, and gets $99\%$. The one with no topics, no nicknames and no place names is within a point of the one that knows everything. And its ten weights can be read aloud: MartijnVdS is addressing people, daftykins is noseless smileys at night, foobarry is recognised by never posting at night.
+
+Which is the better model? In class someone defended the big one: test it on a held-out set, a thousand times if you like, and if it scores $100\%$ against $99\%$, take the $100\%$. I don't think a train-test split saves it, because the data changes over time, and the student named the reason themselves: other words, and other people who also mention Ireland one day. Someone who moves or stops talking to Dimpy breaks their own feature, and for Dublin and Ireland that is to be expected, not exceptional. The $17{,}918$ words bring an enormous amount of noise into the model for one extra percent: they score $100\%$ today, and after a year in production the model drifts away, and then the verdict is ``your model doesn't work''. I can't prove that here; it is an intuition. But if we made this bet a hundred times, I would put my money on the ten habits every time, and you would need a lot more analysis to convince me otherwise. Sometimes there is no simple model, and then a complex one is very useful and you accept its noise. When there is a choice between ten features at $99\%$ and $17{,}918$ at $100\%$, take the ten. Another suggestion from the room fits the whole lesson: start with two habits and add them one at a time, instead of starting at the maximum.
+
+\subsubsection{The same eight people, four years later}
+The third leg: does it hold where nobody looked? Fit nothing; measure the same habits in 2013--2014 and again in 2016--2017.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson5/stability.png}
+\caption{Each dot is one person: a habit in 2013--2014 against 2016--2017. On the diagonal means unchanged.}
+\label{fig:stability}
+\end{figure}
+
+Addressing people by name, starting with a capital, message length: the order of the eight hardly changes, with Spearman correlations of $0.93$ to $0.98$ after a four-year gap. If you started $75\%$ of your messages with a capital in 2013, you still do in 2016. Two people became a little more long-winded, and one addresses people less than before, but the habits stay. That is replication, and it explains why ten habits are enough for $99\%$. Asking questions does move (Spearman $0.55$), and drops over time: whether you ask questions depends on whether you have a problem right now. That is not a weakness of the finding. A measure that could say no makes the others believable, because it shows the measurement could have failed.
+
+\againconcretely
+Ten habits recognise eight people, four years apart. But it is eight people. Through the grid of question four, this claim lands in the best cell: a model that fits, a mechanism, replication. How strong is eight out of eight? If staying stable were a coin flip, all eight would stay stable with probability $(1/2)^8 = 1/256$: a fairly strong signal. But $218{,}670$ messages don't make $n$ bigger. The claim is about people, so $n = 8$, and large data does not fix a small $n$: a hundred people with fifty thousand messages would say much more. These habits might be specific to Linux users; children, teenagers and twenty-five-year-olds, or writers in the UK, Ukraine, South Africa or on a Chinese keyboard, might behave differently. The fix is cheap: the habits run on anyone with thirty messages, so recompute the stability for everyone with enough history in both periods. The accuracy was a gate; the weights were the finding. Reported honestly: among the eight most active people, ten habits classify blocks of fifty messages at $99\%$, stable over four years. Others: untested.
+
+% ─────────────────────────────────────────────
+\subsection{The six questions, answered}
+\label{sec:lesson5-summary}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\textbf{Question} & \textbf{Answer} \\
+\midrule
+What is a model? & A simplification you choose. Not true, not objective, useful for what it leaves out. \\
+Why keep a model simple? & You can only understand simple shapes, and a model that fits anything tells you nothing. \\
+How do you build a model? & Look, think, add one step or one term. Then read the residual. \\
+When should you believe a pattern? & When it beats chance, has a mechanism, and shows up where you didn't look. \\
+What can a correlation hide? & The variable you left out. It has to be in your data. \\
+Can you recognise someone by how they type? & These eight people, yes. Large data does not fix a small $n$. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Notebooks 05.1 to 05.5 work through the questions: 05.1 the line as a claim, the hunt and the three legs; 05.2 correlation and Simpson's paradox; 05.3 the COVID model as a question you answer yourself, and 05.4 the worked answer and the script; 05.5 how people type. In your own chat: pick a habit you can write as a regex, measure it per person, and report $n$ at the level of your claim.
 
 \end{document}
