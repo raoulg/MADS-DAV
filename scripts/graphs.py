@@ -60,64 +60,6 @@ class MentionEdges(TransformBase):
         )
 
 
-class HourProfile(TransformBase):
-    """One row per author, 24 columns: when in the day that author speaks.
-
-    Each row sums to one, so a person who sent forty messages is comparable with one who
-    sent four thousand. `normalise` then divides every hour by the channel's own share of
-    traffic in that hour, which is what stops the answer being "everyone sleeps at
-    night": after it, the columns say *unusually* active at this hour, and two people who
-    are both awake at 03:00 are far more alike than two who are both awake at 20:00.
-    """
-
-    def transform(
-        self,
-        data: pd.DataFrame,
-        author: str = "author",
-        hour: str = "hh",
-        normalise: bool = True,
-    ) -> pd.DataFrame:
-        counts = (
-            data.pivot_table(index=author, columns=hour, aggfunc="size", fill_value=0)
-            .reindex(columns=range(24), fill_value=0)
-            .astype(float)
-        )
-        profile = counts.div(counts.sum(axis=1), axis=0)
-        if normalise:
-            channel = counts.sum(axis=0) / counts.to_numpy().sum()
-            profile = profile.div(channel, axis=1)
-        return profile.fillna(0.0)
-
-
-def cosine_edges(profiles: pd.DataFrame, quantile: float = 0.90) -> pd.DataFrame:
-    """Connect the pairs whose profiles point in the most similar direction.
-
-    Cosine ignores length, so this is about *shape* — the hours someone is around, not
-    how much they say. `quantile` is the whole rule: 0.90 keeps the most similar tenth of
-    all pairs, which fixes the edge count and leaves the threshold value to the data.
-    It is a dial on the answer in exactly the way 07.1's response window was, so it
-    belongs in the caption of anything drawn from it.
-    """
-    matrix = profiles.to_numpy(dtype=float)
-    lengths = np.linalg.norm(matrix, axis=1, keepdims=True)
-    unit = matrix / np.maximum(lengths, 1e-12)
-    similarity = unit @ unit.T
-    np.fill_diagonal(similarity, 0.0)
-
-    upper = np.triu_indices_from(similarity, k=1)
-    threshold = float(np.quantile(similarity[upper], quantile))
-    rows, cols = np.where(np.triu(similarity >= threshold, k=1))
-    names = profiles.index.to_numpy()
-    return pd.DataFrame(
-        {
-            "source": names[rows],
-            "target": names[cols],
-            "weight": similarity[rows, cols],
-            "threshold": threshold,
-        }
-    )
-
-
 def to_graph(edges: pd.DataFrame, nodes: list | np.ndarray | None = None) -> nx.Graph:
     """Turn an edge frame into an undirected graph, summing both directions.
 
