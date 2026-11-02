@@ -23,6 +23,7 @@ from scripts.graphs import (
     MentionEdges,
     best_partition,
     giant_component,
+    induced,
     labels,
     rewired,
     to_graph,
@@ -565,7 +566,7 @@ print(
 )
 fig, ax = plt.subplots(figsize=(9, 7.4))
 giant = max(nx.connected_components(together), key=len)
-pos = nx.spring_layout(together.subgraph(giant), seed=7, k=1.4, iterations=500)
+pos = nx.spring_layout(induced(together, giant), seed=7, k=1.4, iterations=500)
 for i, component in enumerate(
     c for c in nx.connected_components(together) if c != giant
 ):
@@ -859,8 +860,7 @@ save(fig, "signflip")
 
 # ---------- 04: one graph, two layouts, and its matrix ----------
 hubs = giant_component(to_graph(MentionEdges()(chat)))
-hubs = hubs.subgraph([n for n in hubs.nodes() if hubs.degree(n) >= 6])
-hubs = giant_component(nx.Graph(hubs))
+hubs = giant_component(induced(hubs, [n for n in hubs if hubs.degree(n) >= 6]))
 hub_degrees = np.array([hubs.degree(n) for n in hubs], dtype=float)
 print(f"hubs graph: {hubs.number_of_nodes()} people, {hubs.number_of_edges()} edges")
 colours = LinearSegmentedColormap.from_list("deg", [ACCENT_LIGHT, ACCENT, SECOND])
@@ -903,7 +903,7 @@ ax.tick_params(length=0)
 save(fig, "trains_matrix")
 
 eight = chat.author.value_counts().head(8).index
-dense = nearby.subgraph(eight)
+dense = induced(nearby, eight)
 print(
     f"eight busiest: {dense.number_of_edges()} of 28 pairs connected; weights "
     f"{min(d['weight'] for *_, d in dense.edges(data=True))}..{max(d['weight'] for *_, d in dense.edges(data=True))}"

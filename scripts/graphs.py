@@ -81,9 +81,25 @@ def to_graph(edges: pd.DataFrame, nodes: list | np.ndarray | None = None) -> nx.
     return graph
 
 
+def induced(graph: nx.Graph, nodes) -> nx.Graph:
+    """The subgraph on `nodes`, as a graph of its own, in the node order of `graph`.
+
+    `graph.subgraph(nodes)` iterates the node set itself when it is small, and a set of
+    strings comes out in a different order every run. Layouts and matrices follow node
+    order, so a figure drawn from it would change from run to run.
+    """
+    keep = set(nodes)
+    sub = graph.__class__()
+    sub.add_nodes_from((n, d) for n, d in graph.nodes(data=True) if n in keep)
+    sub.add_edges_from(
+        (u, v, d) for u, v, d in graph.edges(data=True) if u in keep and v in keep
+    )
+    return sub
+
+
 def giant_component(graph: nx.Graph) -> nx.Graph:
     """The largest connected component, as a graph of its own."""
-    return graph.subgraph(max(nx.connected_components(graph), key=len)).copy()
+    return induced(graph, max(nx.connected_components(graph), key=len))
 
 
 def rewired(graph: nx.Graph, seed: int = 0) -> nx.Graph:
