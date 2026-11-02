@@ -965,7 +965,7 @@ Atlas, a tool I wrote for this course\footnote{\url{https://github.com/raoulg/at
 \label{fig:atlas}
 \end{figure}
 
-The idea behind atlas is that consistent, logical code gives a consistent, simple picture. The same plot can be produced by tidy code and by messy code, and the pictures will look very different: global DataFrames that get written and read somewhere along the way, steps whose order you can no longer see. A linter doesn't notice that: if you make three plots that are really one flow, only you know it should look like one flow. When the picture looks wrong, the code usually is, and the red marks show where atlas misses information: unclear inputs, unclear outputs. It works the same for Python and Rust, and you can give the picture to Claude to discuss what to change. In the final assignment you use it to show how your own code works: run \texttt{atlas view} in your repository, pick your entry point, and be ready to explain the picture. Section~\ref{sec:atlas} says why a picture of your code helps, and how to read one.
+The idea behind atlas is that consistent, logical code gives a consistent, simple picture. The same plot can be produced by tidy code and by messy code, and the pictures will look very different: global DataFrames that get written and read somewhere along the way, steps whose order you can no longer see. A linter doesn't notice that: if you make three plots that are really one flow, only you know it should look like one flow. When the picture looks wrong, the code usually is, and the red marks show where atlas misses information: unclear inputs, unclear outputs. It works the same for Python and Rust, and you can give the picture to Claude to discuss what to change. In the final assignment you use it to show how your own code works: run \texttt{atlas-code view} in your repository, pick your entry point, and be ready to explain the picture. Section~\ref{sec:atlas} says why a picture of your code helps, and how to read one.
 
 \againconcretely
 One line, then one switch. The line from before vaccination kept its two numbers; the switch added two more and found the turn eight weeks after the first vaccination, without being told. Look, think, add one step or one term, then read the residual. Each piece of reasoning has a place: the pipeline, or the formula. Stop when what is left looks like chance, and say what the model cannot tell you: here, why the ratio turned.
@@ -1233,6 +1233,615 @@ Can you recognise someone by how they type? & These eight people, yes. Large dat
 Notebooks 05.1 to 05.5 work through the questions: 05.1 the line as a claim, the hunt and the three legs; 05.2 correlation and Simpson's paradox; 05.3 the COVID model as a question you answer yourself, and 05.4 the worked answer and the script; 05.5 how people type. In your own chat: pick a habit you can write as a regex, measure it per person, and report $n$ at the level of your claim.
 \newpage
 
+\section{Lesson 6: Many dimensions}
+\label{sec:lesson6}
+Until now every dataset had a handful of columns, few enough to plot against each other. This lesson's data does not: a handwritten digit is $784$ numbers, a sentence from a language model $384$, a piece of text counted by its three-letter sequences tens of thousands. Nobody can imagine a space with that many dimensions, and that is exactly the point. The assignment for this week is to take your own data up into such a space, at least twenty dimensions or so, and to bring something back down from it that shows a pattern.
+
+It is probably the most complicated lesson of the course, because we are trying to visualise something that cannot be seen. And the plots people hand in for it look much alike: a cloud of dots on two axes called PC1 and PC2. For one student that plot is excellent, for another it is a fail. The difference is not in the plot. It is in the process around it: what you are actually visualising, and what happened on the way.
+
+The lesson is organised around six questions:
+
+\begin{enumerate}
+\item \textbf{What} does PCA show you? The directions in which your data varies most, in the units you gave it.
+\item \textbf{When} is a flat picture not enough? When the data lies on a curved surface. t-SNE unrolls it, at a price.
+\item \textbf{How} does text become a vector? Count which three-letter sequences it contains. Then check what did the work.
+\item \textbf{Why} use a model somebody else trained? It is expensive to run and cheap to reuse. Pay once, then train on a laptop.
+\item What is \textbf{one row}, when a row is ``haha''? A picture can only show what the rows contain.
+\item Why did \textbf{k-means} find three clusters? Because you asked for three.
+\end{enumerate}
+
+The first two are about looking at data with many columns: PCA and t-SNE are two different tools, and you have to know what each one gives up for the other. The next two are about getting into such a space: by counting, or with a model somebody else trained. The last two are about the mistakes I see most in your plots: a row that is too small to carry what you ask of it, and a clustering method that always finds what you ask for.
+
+% ─────────────────────────────────────────────
+\subsection{What does PCA show you?}
+\label{sec:pca}
+PCA, principal component analysis, is the oldest way to look at data with many columns, and a statistical method with many pitfalls. What goes wrong most often is that people know the reflex (``many dimensions, so PCA''), run it, and then either see nothing and don't know why, or see a pattern that isn't reliable.
+
+PCA works in two steps. First it fits new axes. It looks for a line through the data, the line the points lie closest to, which is also the line with the most spread along it. Then the best line at right angles to it, and so on, until there are exactly as many new axes as you had columns. Fifty columns in, fifty axes out. So PCA on its own is not dimensionality reduction: nothing is lost yet, it is the same data described along different axes, and those axes describe it more efficiently. Only then do you reduce, by dropping the last axes, the ones that carry the least spread. That always loses some information, and PCA tells you exactly how much.
+
+Why does that work at all? Because columns often say the same thing. Temperature and hours of sunshine go up together; humidity and millimetres of rain too. Describing a point along two such axes means turning two knobs at the same time, both by about the same amount. One tilted axis is one knob that does the same. What is left over, the small distance from each point to that axis, is what you give up.
+
+\subsubsection{The line with the most spread loses the least}
+Reducing two columns to one means choosing a line and dropping every point onto it (figure~\ref{fig:pca-line}). Each point splits into two pieces: where it lands along the line, which PCA keeps, and how far it sits from the line, which it throws away. By Pythagoras, the squared distance of a point to the centre equals the squared position along the line plus the squared distance to the line, and the left side does not depend on which line you chose. So summed over all points, more spread along the line means exactly less distance to the line. The line with the most spread is the projection that loses the least. That is the first principal component.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{lesson6/pca_line.png}
+\caption{40 points and one line. Black: every point dropped onto the line. Vermilion: the distance to the line, which is thrown away.}
+\label{fig:pca-line}
+\end{figure}
+
+Nothing here is about labels or groups. PCA only looks at spread.
+
+\subsubsection{PCA finds new axes, and you choose how many to keep}
+The same idea one dimension up, on data built so the answer is known (figure~\ref{fig:pca-sheet}). A hundred points on a curved strip: three columns, but the third is almost a sum of the first two, so every row lies close to one tilted plane. PCA finds three new directions, and none of them is one of the original columns: each is a mixture of all three. That is what people mean by ``PCA finds new axes''.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/pca_sheet.png}
+\caption{Three columns that are really two. Left: the data with PCA's three directions. Middle: the first two directions, seen straight on. Right: the scree plot.}
+\label{fig:pca-sheet}
+\end{figure}
+
+The \emph{scree plot} on the right shows how much of the spread each direction carries: $86$, $13$ and $1$ percent. The first two carry $99\%$, so the flat picture in the middle is a picture of nearly all the data. The third axis does something, but very little; drop it and you lose almost nothing. In the original axes you could not drop any one of them without distorting the data much more.
+
+What does ``$86\%$ of the variance'' mean? In class someone asked whether it means that $86\%$ of the points lie on the first axis. It doesn't. It means that $86\%$ of what differs between the points can be expressed along that direction. Think of describing food. One axis, ``sweet or not'', says something about food, but much food isn't sweet at all, so it describes only part of the variation. With the five basic tastes you can describe a lot more, perhaps $60\%$ of the variation in food, and the rest needs more axes: cinnamon is not just sweet plus spicy. Sometimes the conclusion is that the data really needs all its axes. On the strip it doesn't.
+
+\subsubsection{Change the unit, and the first component changes}
+The first way PCA goes wrong, with the penguins from lesson 2 (figure~\ref{fig:penguin-loadings}). PCA maximises spread, and spread has units. Body mass is measured in grams and varies by about $800$ of them; bill depth varies by $2$ millimetres. So almost all the spread in this table is grams, and the first component is the grams axis: $99.99\%$ of the variance. Not because body mass describes a penguin so well, but because it is in grams. That number in a report looks like a triumph. It is the symptom.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/penguin_loadings.png}
+\caption{333 penguins, four measurements. What the first component is made of, in grams, in kilograms, and standardised.}
+\label{fig:penguin-loadings}
+\end{figure}
+
+The clearest way to see it: divide body mass by a thousand and call it kilograms. Same birds, same information. Now the first component is flipper length. A unit decided the answer. The fix is to \emph{standardise}: subtract each column's mean and divide by its standard deviation, so one unit of every column is one standard deviation of that column. Then the first component reads as a sentence: bill length, flipper and body mass together, so a penguin high on PC1 is a big penguin. The second component, not shown, is bill shape.
+
+\subsubsection{Standardise first, or PCA measures your units}
+It is not only about interpretation: the unscaled version is worse at the job (figure~\ref{fig:penguins-scaled}).
+
+\begin{center}
+\texttt{PCA().fit(StandardScaler().fit\_transform(measurements))}
+\end{center}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/penguins_scaled.png}
+\caption{The penguins on two components, in raw units (left) and standardised (right).}
+\label{fig:penguins-scaled}
+\end{figure}
+
+On the left, Gentoo sits apart because they are heavy, but Adelie and Chinstrap stay mixed: what separates them is bill shape, in millimetres, which the grams drown out. On the right all three species come apart. And look at what the left picture hides. Its two axes carry $99.99\%$ and $0.01\%$ of the variance. Drawn honestly it would be a horizontal line; matplotlib stretched the second axis to fill the panel, so a component of $0.01\%$ looks like half the picture. A projection always fills its frame, which is why the explained variance belongs in the title of every PCA picture you make.
+
+Notice that the share went \emph{down}, from $99.99\%$ to $88\%$, and the picture got better. A higher number is not a better analysis; here it was the sign of a mistake. Never stare blindly at a number. The rule: standardise before PCA, unless every column is in the same unit and you want the columns that vary more to count more. Pixel intensities, all $0$ to $255$, are the usual exception.
+
+\againconcretely
+PCA turns many columns into a few new axes, each a mix of the old ones, ordered by how much of the spread they carry. It does exactly that and nothing more: it does not know about groups, labels or meaning. Two habits follow. Standardise, unless you have a reason not to, and write the reason down. And read the scree plot before the picture: two components of four columns can hold $88\%$, two components of $784$ pixels hold $17\%$, and the reader cannot guess which. If your two components hold $6\%$, PCA did its job, but it could not do it well: most of your data is not in the picture. Then consider other units, or the tool of the next question.
+
+% ─────────────────────────────────────────────
+\subsection{When is a flat picture not enough?}
+\label{sec:tsne}
+PCA is linear. Think of it as a lamp that casts a shadow of your data on a wall. For flat objects that works well: the shadow of a flat thing is recognisable. For a complicated object there may be no angle from which the shadow shows what it is. A lot of real data is like that: it does not lie close to a flat surface, but on a curved one, and no viewpoint undoes a curve.
+
+You can often not see that, but you can suspect it when the data has many interactions in itself. A linear relationship says more is more: more square metres, a higher price. A curved one says it is better in some cases and worse in others, depending on other factors. Body mass index is an example: a fine measure for most people, and a poor one for someone who trains, because muscle weighs more than fat.
+
+The bet that most real data with many columns lies on a curved surface with far fewer dimensions is called the \emph{manifold hypothesis}. The method built for that case is t-SNE. It does not look for a viewpoint; it looks for an arrangement in which each point keeps its nearest neighbours. It was developed to visualise, to solve the problems of PCA, and it pays a price for that: the distances between groups, their sizes and the gaps between them mean nothing.
+
+\subsubsection{PCA casts a shadow; t-SNE unrolls the sheet}
+The \emph{swiss roll} is the standard dataset for seeing the limit of a flat shadow: a flat sheet, rolled up in three dimensions, like the cake (figure~\ref{fig:swissroll}). Someone made it up, and it is useful precisely because you can understand it as a person. The two numbers that really describe a point are where it sits along the sheet and across it. Can we unroll the cake?
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/swissroll.png}
+\caption{1,000 points on a rolled-up sheet. The colour is the position along the sheet. Left: the data. Middle: PCA. Right: t-SNE.}
+\label{fig:swissroll}
+\end{figure}
+
+PCA keeps $71\%$ of the variance, which sounds like most of the data, and shows the roll from the side. Look at where the colours land: the two ends of the sheet, as far apart along it as two points can be, sit next to each other. The shadow is faithful to the 3D shape, and useless for the question which points are near each other on the sheet. t-SNE asks that question directly. The colour now runs from one end to the other: the sheet is more or less unrolled. The price is visible too: the sheet is torn into clumps with gaps between them, and those gaps are not in the data.
+
+\subsubsection{The manifold hypothesis: many columns, few real dimensions}
+A manifold is a space that is curved as a whole but looks flat close up, like the earth: round, but flat as seen from your street. The easiest way I picture it is a towel. A towel is two-dimensional, lying crumpled in a three-dimensional room. If you know how to spread it out, two numbers per point are enough, and you don't need the whole room.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/sevens.png}
+\caption{Handwritten sevens from MNIST.}
+\label{fig:sevens}
+\end{figure}
+
+A handwritten digit is $28 \times 28$ pixels: $784$ numbers, so one point in a space with $784$ dimensions (figure~\ref{fig:sevens}). But almost every point in that space looks like television static; the points that look like a seven are a tiny, particular region. And sevens differ in only a few ways: slant, thickness, size, a bar or none, what happens at the top. You don't need $784$ axes to describe what is different about them, because pixels are not independent: they come together in strokes and directions. So the sevens lie on a curved surface with a few dimensions, and the same goes for every digit. If the bet holds, a method that follows the surface should show ten digits as ten groups, and a flat shadow should not. It is a hypothesis: it holds for images and text, it is not a law of nature, and you check it every time.
+
+\subsubsection{On 784 pixels the shadow is a smear; t-SNE finds ten groups}
+$5{,}000$ digits from MNIST (figure~\ref{fig:mnist}). The pixels are not standardised: all $784$ columns share one unit, and a pixel that varies more between digits should count more.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/mnist.png}
+\caption{5,000 handwritten digits. Left: PCA, two components hold 17\% of the variance. Right: t-SNE.}
+\label{fig:mnist}
+\end{figure}
+
+PCA first. Two components carry $17\%$ of the variance; you need $148$ for $95\%$. The digits overlap in one smear. That is not wrong: it is an honest picture of the $17\%$ that fits on paper. Then t-SNE with its default setting: ten groups, one per digit, and the digits that touch are the ones people confuse too, $4$ and $9$ most of all. So there is more structure in this space than a flat projection can show, structure more complicated than two dimensions; the axes you would need are real. t-SNE gives you a look into a space we cannot see. The bet paid off.
+
+\subsubsection{t-SNE: the map must pick the same neighbours}
+How does t-SNE do it? You don't need to remember this, but it helps to have an idea of what happens inside. Take the data, $N$ points with $D$ numbers each, and a map, the same $N$ points with $d$ numbers each, usually two. In the data, t-SNE computes for every pair how likely point $i$ is to pick point $j$ as its neighbour, with a normal curve around $i$. In the map it asks the same question, with a curve that has heavier tails: the ``t'' in t-SNE. Then it moves the points of the map until the two sets of likelihoods match.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{lesson6/nutshell_curves.png}
+\caption{How likely a neighbour is picked, against its distance: a normal curve in the data, a heavier-tailed curve in the map.}
+\label{fig:nutshell-curves}
+\end{figure}
+
+Why the heavier tails? In a space with many dimensions there are so many ways to be neighbours that almost everything is somewhat near something. Compare the characters of everyone in class on one trait, introvert or extrovert, and the class splits in two. Compare them on $36$ traits, and any two people have something in common: you are both conscientious, or both open to new experiences. With a thousand traits, ``are these two alike in some way?'' no longer says anything. The heavier tail pushes a point that is only moderately likely to be a neighbour further away in the map, which makes it harder for everything to end up together.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/nutshell_picks.png}
+\caption{One point on the swiss roll. Left: its 30 likeliest neighbours in 3D. Right: its 30 likeliest neighbours in the finished map. 25 of the 30 are the same.}
+\label{fig:nutshell-picks}
+\end{figure}
+
+Figure~\ref{fig:nutshell-picks} shows the result for one point on the swiss roll: of its $30$ likeliest neighbours in 3D, $25$ are among its $30$ likeliest in the map. That agreement is what t-SNE optimised for, and it is \emph{all} it optimised for. Where a point far away on the sheet ended up in the map was never part of the question.
+
+\subsubsection{Which points group together survives; where the groups sit does not}
+The parameter. \emph{Perplexity} is roughly how many neighbours each point tries to stay near. The default is $30$. You can turn it to $5$ or to $100$, and you get a different picture, while nothing in the data changed. It is a choice, not a display option, so run several (figure~\ref{fig:perplexity}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/perplexity.png}
+\caption{The same 5,000 digits at four perplexities.}
+\label{fig:perplexity}
+\end{figure}
+
+Two answers, and you need both. Which points group together is stable: at every setting the digits come out as groups. To put a number on that instead of your eye, use the \emph{silhouette}: for every point, how much closer it lies to the other points of its own group than to the nearest other group, averaged over all points, between $1$ (clearly apart) and $0$ (fully overlapping). It stays between $0.20$ and $0.28$ at every perplexity. Where the groups sit is not stable: at perplexity $5$ the two digits furthest apart are $0$ and $1$, at $200$ they are $0$ and $7$. How far apart two groups sit is a fact about the setting, not about handwriting.
+
+t-SNE also contains chance: run it twice and the map differs. Fix the seed and you get the same map every time, but it remains a random process. And there is no right perplexity. If you know your data has ten groups, you can look for the setting that shows them best, but that makes it even more clearly a way of visualising, not a statistical method.
+
+\subsubsection{Preattentive processing: what do you see?}
+Look at figure~\ref{fig:noise} before you read on.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/noise.png}
+\caption{1,000 points, 50 dimensions, four perplexities.}
+\label{fig:noise}
+\end{figure}
+
+There is nothing there. Every value is an independent random draw. Still, t-SNE draws clumps at low perplexity: it was asked to keep each point near its two nearest neighbours, and in fifty dimensions of noise every point has two nearest neighbours, so it obliged. You look at it and think: I see clusters, something is happening in the data. Nothing is. Run k-means with five groups on the raw data and the silhouette is $0.016$, correctly reporting that there is nothing there. Run the same k-means on the two-dimensional picture and it is around $0.31$, which anywhere else you would read as decent structure. So never cluster a t-SNE picture, and never measure its distances. Distances in it are not the data's distances; anything measuring distance there is measuring the paper.
+
+\subsubsection{PCA or t-SNE? Two tools that answer different questions}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}l X X@{}}
+\toprule
+ & \textbf{PCA} & \textbf{t-SNE} \\
+\midrule
+keeps & the overall shape: large distances, main directions & neighbourhoods: who is close to whom \\
+loses & curves: it can only flatten & distances between groups, their sizes, the gaps \\
+use it to & see the main directions of spread, and what they are made of & see whether points group together \\
+report & the share of the variance in the picture & the perplexity, and one other you tried \\
+never & read two components as the whole data & cluster the picture, or read its distances \\
+\bottomrule
+\end{tabularx}
+\caption{PCA flattens; t-SNE unrolls.}
+\label{tab:pca-tsne}
+\end{table}
+
+The two ``never'' rows are the mistakes I see in projects every year. In practice the two are often used together: PCA first to bring hundreds of dimensions down to fifty, then t-SNE on those fifty.
+
+What can you still say with a t-SNE picture, if not where the groups sit? Return to the treehouse. You lived with a few friends in a treehouse, where you were neighbours, and now everyone has to move to the ground. The whole organisation is different: up there you lived above each other. Perplexity is roughly how surprised you would be to find you are still neighbours. If you see a group of friends that set up camp together again, that is fairly reliable information: they were probably a group in the tree too. Where their camp is, and how far it is from the next camp, says nothing about the tree. And you can check it: if you know who was a group in the tree, give them a colour and see whether the colours stay together in the map. With MNIST that is what the labels do: one route gives the colour, the other the place, and they agree.
+
+A student asked why we learn this at all; is it a preparation for machine learning? It is data analysis. If you can only analyse data in two or three dimensions, you are limited, because most data has more. This course went slowly: comparing categories was one dimension, time was two with one of them fixed, a distribution is one dimension seen through a lens, and lesson 5 was explicitly two. A lot of data has many dimensions, and then PCA and t-SNE are the tools you will meet. If you use them without knowing what they give up, you lose your way and report clusters that aren't there. In deep learning you will work almost only with vectors of many dimensions, and rarely bring them back to two, because too much is lost. Doing it once with data you know, your own chat, is good preparation.
+
+\againconcretely
+PCA flattens; t-SNE unrolls, and forgets distances. Data on a curved surface, and images and text usually are, needs a method that follows the surface, and t-SNE keeps neighbours together. You buy that with everything at a larger scale. What survives another perplexity you may report: which points group together. Everything else in the picture is decoration. Never cluster a t-SNE picture or read its distances: on pure noise it draws groups too. In a report, write down whether you scaled and why, the variance your PCA picture holds, and the perplexity and one other you tried.
+
+% ─────────────────────────────────────────────
+\subsection{How does text become a vector?}
+\label{sec:trigrams}
+Before any neural network, the cheapest way to turn text into numbers is to count. Which runs of three characters does a text contain, and how often? That gives a row of counts per text, and two rows can be compared. No GPU, no download, seconds on any laptop, and you can read back what the numbers mean. Trigrams pick up how someone writes: commas, full stops, their own spellings, the words they always use. Students before you have used this to separate in-laws from their own family in a family chat, dialects, age groups. It also has a trap, and a published claim shows it.
+
+\subsubsection{A trigram is any run of three characters}
+\texttt{CountVectorizer(analyzer="char", ngram\_range=(3, 3))} finds every trigram that occurs anywhere in the texts, makes each one a column, and counts how often each text contains it. It can also count words, or runs of two to four characters; that has other effects. Take ``yellow banana'' and ``papagena papaya banana'': together they contain $23$ distinct trigrams, and \texttt{ana} occurs twice in each. Most of a row is zero, and that stays true at scale: the posts in the next example span $27{,}179$ trigrams.
+
+To compare two rows, the \emph{Manhattan distance} adds up the absolute difference per column. On counts it reads directly: these two strings differ by $21$ trigram occurrences. It grows with length, so texts you compare must be the same length: a text twice as long has counts twice as big, and would be far from everything for its length alone.
+
+\subsubsection{``QAnon is two different people''}
+QAnon was an anonymous person, or persons, who spread conspiracy theories on online forums, claiming a high security clearance in the American government and leaving predictions and puzzles. It had real consequences: many of the people who stormed the Capitol on 6 January 2021 followed Q. In 2020 the Swiss company OrphAnalytics, which does authorship analysis for court cases, counted character trigrams in every post by Q and concluded: two authors, one on 4chan in 2017 and a second after the move to 8chan. Their software was secret, but they described the method well enough to rebuild it.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{lesson6/qanon_sites.png}
+\caption{4,966 posts in 100 chunks of equal length, trigrams counted, compared by Manhattan distance, drawn with PCA. The colour is the site, and a site is also a period.}
+\label{fig:qanon-sites}
+\end{figure}
+
+Rebuilt in a few lines: $4{,}966$ posts, cut into $100$ chunks of equal length, counted, compared, and drawn with PCA (figure~\ref{fig:qanon-sites}). The ten 4chan chunks sit apart, as in the paper. When I had rebuilt it and got the same picture, I was pleased: it works. Now lesson 5's question: what does this picture support?
+
+\subsubsection{What separates the 4chan months: questions, and links}
+The advantage of a vector you made yourself: you can read it back. Per trigram, take its share of a chunk on 4chan minus its share after the move, and list the extremes.
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\textbf{More common on 4chan} & \texttt{\textvisiblespace wh}, \texttt{?\textvisiblespace w}, \texttt{is\textvisiblespace}, \texttt{\textvisiblespace th}, \texttt{hat}, \texttt{wha}: \emph{what}, \emph{why}, \emph{is}, question marks \\
+\textbf{More common after the move} & \texttt{ttp}, \texttt{htt}, \texttt{://}, \texttt{com}, \texttt{tps}, \texttt{.co}: links, and nothing else \\
+\bottomrule
+\end{tabularx}
+\caption{The trigrams that differ most between the 4chan months and the rest. \textvisiblespace\ is a space.}
+\label{tab:qanon-trigrams}
+\end{table}
+
+The 4chan side is writing: the early posts were long strings of questions. The other side is links. A link is pasted, not typed, and its domain names the platform rather than the writer. A writer who moves to another forum and starts answering with links changes their trigram counts without changing who they are, and a counter cannot tell the two apart. So remove the links and count again: one extra step in the pipeline.
+
+\begin{center}
+\small\texttt{pipeline.add(NormaliseText, column="text", strip\_urls=True, letters\_only=True)}
+\end{center}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/qanon_twice.png}
+\caption{The same posts, counted twice: everything (left), and without links and punctuation (right).}
+\label{fig:qanon-twice}
+\end{figure}
+
+The 4chan chunks no longer sit apart (figure~\ref{fig:qanon-twice}). Some are at the edge, several among the 8chan chunks. The split in the first picture was mostly markup. I should say that I didn't find this myself: Claude did, while we were rebuilding the method. I was happy that it worked.
+
+\subsubsection{The number that did not move answered another question}
+Two pictures are hard to compare by eye, so put a number on whether the groups stand apart: the silhouette from question two. For every chunk, it compares the average distance to its own group with the average distance to the other group. Around zero means the groups do not separate.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Silhouette, 4chan vs.\ after} & \textbf{everything} & \textbf{letters only} \\
+\midrule
+mean over all 100 chunks & 0.083 & 0.087 \\
+mean over the 4chan chunks & 0.214 & 0.073 \\
+\bottomrule
+\end{tabular}
+\caption{The usual summary barely moves; the one that answers the question drops by two thirds.}
+\label{tab:qanon-silhouette}
+\end{table}
+
+The first row is the number you would usually report, and it barely moves. But $90$ of the $100$ chunks are after the move, so it mostly measures them. The question is about the 4chan chunks, and their own separation drops by two thirds. The picture was right; the mean hid it. Use the number that answers your question.
+
+\subsubsection{Every stretch of time resembles itself}
+A silhouette of $0.073$ is still above zero. Above zero compared to what? Shuffled labels are the wrong comparison here. The chunks are in time order, and text written in the same weeks shares topics, so any run of consecutive chunks resembles itself more than a random handful would. The fair comparison for the first twelve chunks is every other run of twelve consecutive chunks (figure~\ref{fig:qanon-stretches}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/qanon_stretches.png}
+\caption{Grey: the same measurement for every later run of consecutive chunks of the same length. Vermilion: the 4chan months.}
+\label{fig:qanon-stretches}
+\end{figure}
+
+With everything counted, the 4chan months stand out from every other stretch of the corpus: that is the link effect. With letters only, $25$ of the $77$ later stretches separate better. The 4chan months are an ordinary stretch of time. What is left after the markup is the drift every text corpus has: what someone writes about changes from month to month.
+
+\subsubsection{This picture is not evidence for two authors}
+Through lesson 5's grid. The model fails: without links, the 4chan months are no more distinct than other stretches of time. The mechanism has two candidates: a new author, or the same author with a new habit and drifting topics. Both predict this picture. Replication: none, one corpus with one switch. That is the cell ``plausible, unproven'', with a note on what would settle it. A better picture would not; a different question would. Not ``do the chunks differ?'' but ``whose known writing do they resemble?'' In 2022 two teams did that, comparing Q's posts with texts by candidate authors, and both pointed at the same two people. The claim may be true; this method could not show it. So I am not sure we should hire them for our court case.
+
+The general lesson is the one that makes high-dimensional work tricky. You do something complicated to your data, splitting it into $27{,}000$ trigram dimensions and projecting them, and it looks as if you have proven that there are two authors. What you have actually done is count URLs in a very complicated way. One regular expression would have shown that the later posts contain more links. With $27{,}000$ columns you cannot look at everything, so you have to read back what did the work. Your own chat has the same trap: if you exported it without media, every photo became a line saying the image was omitted, and those trigrams, or the peak they make in message length, will show up as a pattern.
+
+\againconcretely
+Counting characters is the cheapest way to make text into numbers, and its advantage is that you can always read back which counts did the work. That reading exposed the links. Two checks then took the claim apart, and both are habits for any project. A number has to answer your question: a mean over a hundred chunks did not answer a question about ten of them. And compare your finding with what a split that means nothing gives, chosen so it keeps everything but the thing you claim: here other stretches of time, not shuffled labels. Trigrams still work for authorship; just think about the links.
+
+% ─────────────────────────────────────────────
+\subsection{Why use a model somebody else trained?}
+\label{sec:pretrained}
+Trigram counts are a vector you design yourself. Most vectors you will use from now on were designed by somebody else: a large neural network, trained by a company with far more data and computers than any of us, turns a photo or a sentence into a few hundred numbers. Hugging Face hosts more than half a million such models, open, many of them put there by researchers.
+
+Those numbers are a kind of summary. Just as you can turn a taste into salty, sweet, sour and spicy, a model can turn a photo into $384$ numbers, each a direction it learned. What you do with them is up to you. To predict something from them, such as which flower is in the photo, you put a small model on top: the \emph{head}. Think of a vacuum cleaner you rent. The motor, the heavy part, was built by Meta. All you do is change the nozzle for your own job: you only want to recognise flowers, and you don't need everything the motor knows. Reusing what a model learned for a new task is \emph{transfer learning}; you keep the big model as it is, frozen, and train only the head.
+
+\subsubsection{The encoder runs once; the head trains on what it stored}
+The pipeline of notebook 06.3: the Oxford flowers dataset, $5{,}000$ photos of $102$ species. The encoder is DINOv2-small, a network of $22$ million weights that Meta trained on $142$ million photos. It has never seen these flower labels. It turns each photo into $384$ numbers.
+
+\begin{center}
+\texttt{VectorCache.from\_hub("pttrn-io/oxford-flowers-dinov2-small", split="train")}
+\end{center}
+
+Here is the point that matters for your own projects. A frozen encoder gives the same $384$ numbers for the same photo every time. So there is nothing to recompute: run it once and store the result in a \emph{cache}. I ran the $5{,}000$ photos through it once, on my laptop, and published the vectors on the Hugging Face hub; you download them in under a second, without a GPU. If you do this yourself, it is just as smart: pay for the encoder once, and do everything after that on a much lighter laptop.
+
+\subsubsection{Without a cache, the encoder does nearly all the work, every epoch}
+How much does the cache save? Count multiplications (figure~\ref{fig:cost}). One photo through the encoder: about $5.7$ billion. The head: $384 \times 102$, about $39$ thousand. The encoder costs $144{,}000$ times more.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/cost.png}
+\caption{Multiplications for 100 epochs over 4,000 training photos, with the encoder in the loop and with a cache. The axis is logarithmic.}
+\label{fig:cost}
+\end{figure}
+
+Training means showing the head the training photos many times; one pass is an epoch. With the encoder in the loop for a hundred epochs, it computes the same vectors a hundred times over. With the cache, a hundred epochs cost about as much as one pass of the encoder. Measured in the notebook: a hundred epochs in about four seconds on a laptop. That is also how the machine learning course works: models trained by others, their output computed once.
+
+\subsubsection{An organised space, before anything is trained}
+If the encoder did its job, photos of the same species should already sit near each other. Figure~\ref{fig:flowers-pca} is a PCA of the $384$ numbers for eight species, coloured by species. I did nothing: I trained nothing, learned nothing, only turned each photo into a vector. Photos of one species already sit together.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{lesson6/flowers_pca.png}
+\caption{Eight of the 102 species: PCA of the encoder's 384 numbers, coloured by species.}
+\label{fig:flowers-pca}
+\end{figure}
+
+A few species overlap in these two components; they are probably flowers that look alike, and there are $384$ dimensions, not two. Compare MNIST's raw pixels: the same two-component PCA gave a smear. The projection does not create the groups. The encoder had already organised the space: it learned patterns from $142$ million photos, colours and shapes, the way the sevens had their few ways of varying, and it recognises them in flowers it never saw. PCA only lets you see it.
+
+\subsubsection{Cosine similarity compares the direction, not the length}
+``Near'' needs a measure. Make it concrete with vectors you can read: count two words per message, \emph{install} and \emph{haha} (figure~\ref{fig:cosine}). $a = (1, 2)$; $b$ is $a$ three times over, $(3, 6)$; $c = (2, 1)$, another mix.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/cosine.png}
+\caption{Three messages as arrows. Left: Euclidean distance. Right: the angle.}
+\label{fig:cosine}
+\end{figure}
+
+By Euclidean distance, $a$ is closer to $c$ ($1.4$) than to $b$ ($4.5$): the message that says something else wins over the one that says the same thing three times, because length decides. Cosine similarity looks at the angle instead, as if you draw an arrow from zero to each point and ask how close the arrows lie. $a$ and $b$ point the same way: cosine $1$. $c$ is $37^\circ$ off: $0.80$.
+$$\cos(a, b) = \frac{a \cdot b}{\lVert a \rVert\, \lVert b \rVert}$$
+Scale both vectors to length $1$ first, and the cosine is just the dot product. Why is this better with many dimensions? Because of the problem from question two: with $384$ properties, two things are always alike on one of them by chance. The direction in a $384$-dimensional space gives a much better picture than any one axis. That is all you need to remember: many dimensions, use cosine similarity.
+
+\subsubsection{Nearest neighbour: copy the label of the most similar photo}
+Now the classifier that needs no training. Half the photos are a training set, whose labels I know; the others are a test set, whose labels are secret. To label a test photo, find the most similar training photo and copy its label. If it is closest to a daisy, it is a daisy.
+
+\begin{center}
+\texttt{(test\_unit @ train\_unit.T).argmax(dim=1)}
+\end{center}
+
+Scale every vector to length $1$, and one matrix product gives every cosine at once: a row per test photo, a column per training photo (figure~\ref{fig:nn-matrix}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/nn_matrix.png}
+\caption{A corner of the cosine table between test and training photos, sorted by species.}
+\label{fig:nn-matrix}
+\end{figure}
+
+A photo is far more similar to its own species ($0.70$ on average) than to others ($0.08$), so the most similar photo is nearly always the same species. Copying its label: $99.1\%$ correct on $102$ species, with nothing trained. That is a model almost for free. The lighter blocks off the diagonal are species that look alike, which is where the few mistakes come from. Someone asked why class $92$ goes wrong sometimes, when its numbers are always the same: the numbers are fixed, but a daisy and a marguerite both have large white petals and an orange centre, and some of those photos simply look more like another class. The trained head reaches $99.3\%$. On a space this well organised there is little left to learn, and you only know that because you computed the baseline first.
+
+This is a very different way of working from what we did until now. So far you invented your features yourself: regular expressions for URLs, emoji, punctuation. Here you turn the text or the photo into $384$ numbers and look at what happens. Sometimes, as with the flowers, you find a very good separation of what is actually in them without doing anything. It doesn't always work. A model is trained on certain data, and that matters: there are models trained on legal texts, but European or American ones? A model trained on aerial photos from China has seen other trees and other houses than one trained on American ones.
+
+\againconcretely
+The expensive part of working with a large model is running it, and its output for the same input never changes. So run it once and store the result; everything you try on top then costs almost nothing. That is transfer learning in practice. In a good vector space, near means similar. Cosine similarity is the angle between two vectors, which ignores their length; after scaling to length $1$ it is a dot product. Compute the baseline first: nearest neighbour reached $99.1\%$ without training, and the head added little. Not every laptop can run these models, which is why you can download the vectors.
+
+% ─────────────────────────────────────────────
+\subsection{What is one row, when a row is ``haha''?}
+\label{sec:one-row}
+The flowers worked because one row was one flower: a clean photo with a clean label. Chat data offers no such luck. What happens to most of you is this: you embed every message, draw the picture, colour it by author, and get a blob. Then you try to fix the picture. The better question is the one lesson 1 started with: what is one row? We follow it on the IRC channel \#ubuntu-uk, six people who wrote a lot.
+
+\subsubsection{Who wrote these?}
+Ten random messages from the six busiest people in the channel:
+
+\begin{quote}\small
+so a small alarm bell is ringing to me ! \quad\textbullet\quad not compared to other policitians ofc \quad\textbullet\quad from memory nearly 12 hours \quad\textbullet\quad because I'm a developer \quad\textbullet\quad yeah that's definitely not good \quad\textbullet\quad like it? based on what? \quad\textbullet\quad i was more expecting a sort of terminal server for CAD users :D \quad\textbullet\quad what's the M stand for?
+\end{quote}
+
+Could you tell who wrote which, if these people were in your group? For a few, perhaps; for most, no. There is nothing in these lines about their writer, and $45\%$ of all messages have five words or fewer. You can tell that they are about computers. You cannot tell who is talking.
+
+\subsubsection{One message per row: no authors in the picture}
+Now the picture most students make first. Every message goes through a small sentence encoder, \texttt{all-MiniLM-L6-v2}, which turns a sentence into $384$ numbers the way the flower encoder did for photos, so that sentences with similar meanings end up close together. Then PCA, coloured by author (figure~\ref{fig:blob}).
+
+\begin{center}
+\small\texttt{SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2").encode(messages)}
+\end{center}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{lesson6/blob.png}
+\caption{1,500 messages, embedded one at a time, PCA, coloured by author.}
+\label{fig:blob}
+\end{figure}
+
+A blob, and the silhouette by author is $0.00$ in all $384$ dimensions, so this is not the projection hiding something. That is the right answer, and nothing failed. The encoder puts similar meanings close together, and ``thanks!'' means the same thing whoever types it. If you cannot tell the authors apart by reading the messages, a model that gets nothing but those messages cannot either, however many dimensions it has. Even with an encoder, the information is just not in five words. You may conclude that the model doesn't work on your data. The better move is to change the row.
+
+\subsubsection{Three ways to merge messages into one row}
+Merge consecutive messages from the same person into a larger unit. Figure~\ref{fig:units} shows three ways on one person's day: $47$ messages, one tick per message, and a colour change where a new unit starts.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/units.png}
+\caption{One person, one day, cut three ways: per day, per fixed window of 15 messages, and per session.}
+\label{fig:units}
+\end{figure}
+
+\begin{itemize}
+\item \textbf{Day}: everything one person said on one calendar day, however many conversations that was.
+\item \textbf{Fixed window}: every $15$ messages from one person, cut wherever the fifteenth falls.
+\item \textbf{Session}: a new unit after a pause of more than $15$ minutes. That number comes from lesson 4's exponential fit to the gaps between messages, not from a guess.
+\end{itemize}
+
+\begin{center}
+\texttt{sessionize(uk, "timestamp", "author", fit\_session\_threshold(...))}
+\end{center}
+
+Three defensible answers. Which one is best is something you can test.
+
+\subsubsection{Does the second half of a unit belong with its first half?}
+There are no labels to score the units against. So think about what a good unit should be: about one thing. If someone spends ten minutes on a broken printer, the last five minutes are still about the printer, and you could match the two halves even if they were shuffled among hundreds of others. Cut every unit in half by time, embed both halves, and let each first half look for its own second half among $400$, by cosine (figure~\ref{fig:halves}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/halves.png}
+\caption{How often the first half of a unit finds its own second half among 400.}
+\label{fig:halves}
+\end{figure}
+
+Predict first: a session is one conversation, a window cuts through one, a day mixes several. Sessions win with $29\%$, then fixed windows with $19\%$ and days with $13\%$; single messages find their other half $6\%$ of the time. All are far above chance, which is one in $400$. Days hold more text and still lose: what counts is whether the text belongs together. A student in class had cut their chat into five-minute chunks and found the topics still mixed. That is the same question, and the right size depends on the people: in one chat a conversation is five minutes, in another thirty, some people reply after two hours and others after thirty seconds, some write long messages and others short lines. So test the unit on your own chat; don't copy mine.
+
+\subsubsection{Near in meaning, not in habit}
+What is a merged, embedded corpus good for? Finding what is similar: a session about running out of memory finds, as its nearest neighbour, a session about reserving memory for a GPU, written by someone else. That is retrieval by topic. But do the sessions group by author? No: the average session vectors of the six people all point in nearly the same direction, cosine $0.82$ to $0.94$ (figure~\ref{fig:centroids}). Not so strange: they are all in an Ubuntu channel, talking about Ubuntu.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{lesson6/centroids.png}
+\caption{Each author's average session vector, compared by cosine.}
+\label{fig:centroids}
+\end{figure}
+
+Lesson 5 told these same people apart cleanly with a few regexes: a smiley with a nose or without. That signal is style, and a sentence embedding is trained to ignore style: ``dont'' and ``don't'' mean the same, so they should land in the same place. A model measures what it was trained to measure.
+
+\subsubsection{A race: which vector knows who is writing?}
+Turn that impression into a number. The task: read one session and name which of the six wrote it. The classifier: logistic regression, as in lesson 5, scored on sessions it never saw. Only the vector differs (figure~\ref{fig:race}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/race.png}
+\caption{Same task, same classifier, two vectors: who wrote this session?}
+\label{fig:race}
+\end{figure}
+
+First the baseline. There are six authors; always guessing the most active one is not a model, it is smart guessing, and it is right $17\%$ of the time. Anything below that is not impressive at all. The sentence embedding reaches $54\%$, a real improvement. The trigram counts reach $79\%$. All that deep learning, beaten by counting characters. And the trigram weights are lesson 5's habits, found by the model on its own: one person's \texttt{:-p} and \texttt{lol}, another's \texttt{:d}, a third person's missing apostrophes.
+
+A student asked: one person always starts with ``hey'' and the name of their partner; should you take the names out? That is the same as the links in the QAnon posts. If someone always starts with ``hey Claudia'', that may be the best predictor of who it is, but it is not a writing style; it is one feature you could find with one regex. Ask what you are trying to find. This course is not really about WhatsApp: you already know you are talking to your father. It is about finding patterns in data, and the same thinking holds when you analyse $100{,}000$ helpdesk messages or the sensors in a machine. Where am I looking? Is there information leaking in, something like ``hey Claudia'', that makes me think I can predict something that doesn't matter?
+
+\subsubsection{Check a model on messages where you know the answer}
+One more model somebody else trained: a sentiment classifier. The tempting use is to run it over everything and report who is the most negative person in the channel. First check it on cases where you know the answer. Writers label their own mood: \texttt{:)} or \texttt{:(}. Take $600$ of each, remove the smiley, and let the model read only the words (figure~\ref{fig:sentiment}). Here one message per row is right, because a mood belongs to a message: the right unit depends on the question.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{lesson6/sentiment.png}
+\caption{The share called negative, for messages that had a frown, a smile, or no smiley.}
+\label{fig:sentiment}
+\end{figure}
+
+It calls $57\%$ of the frown messages negative, but also $44\%$ of the smile messages and $47\%$ of plain ones. It reads a little of the mood: not proof, but an indication that it measures something. Too little to compare people, because their differences would be smaller than its own confusion. Sentiment models sound attractive, and students often use them, but they are usually trained on tweets or product reviews. They work reasonably there, and much less well on chat messages.
+
+\againconcretely
+A picture shows only what the rows contain. One message is too small to carry who wrote it, and the blob was not a failure of the model but the correct answer to a badly posed question. How you chunk your data makes a large difference to the result: sometimes you find nothing, and with another unit you do. Choose the row for the question, sessions for topics and single messages for moods, and check that choice with a test whose outcome you can predict, like the two halves of a session. An embedding measures meaning; for who is writing, count characters. Always know your baseline, and check a borrowed model on cases where you know the answer.
+
+% ─────────────────────────────────────────────
+\subsection{Why did k-means find three clusters?}
+\label{sec:kmeans}
+Because you said $K = 3$. Methods that always give an answer are tricky. Sorting is the simplest one: count something and sort, and there is always something that scores highest. ``I counted something and this person scores more than that one.'' And what does that tell you? Often the honest answer is: I don't know, I was glad I had a plot. k-means is a more advanced version of the same: my data went into a space with many dimensions, the plot said nothing, so I let k-means loose on it, and now I have three colours. A result we see in projects every year: sentence vectors, a PCA picture of two components, k-means with $K = 3$, and the conclusion: three clusters. Three questions catch it.
+
+\subsubsection{k-means finds three groups in anything}
+The rescue, rebuilt on the $1{,}500$ messages from question five: the blob, cut by k-means into three tidy groups (figure~\ref{fig:kmeans}, left). Silhouette $0.48$: halfway to $1$, which in any report would read as decent cluster structure.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/kmeans.png}
+\caption{k-means with $K=3$ on the PCA picture of the 1,500 messages (left), and on the same vectors with every column shuffled (right).}
+\label{fig:kmeans}
+\end{figure}
+
+Now make data without structure from the same numbers: shuffle every column on its own, so each column keeps its values but which message a value belongs to is scrambled.
+
+\begin{center}
+\texttt{np.column\_stack([rng.permutation(column) for column in X.T])}
+\end{center}
+
+Same PCA, same k-means: three tidy groups again, silhouette $0.34$, not much lower. And k-means with $K = 3$ on all $384$ numbers of the real messages, instead of on the picture: its three groups score $0.01$. In the full data they overlap almost completely. A low silhouette does not prove there is nothing there, but the tidy groups in the picture are no evidence for anything.
+
+\subsubsection{The three groups are short, medium and long messages}
+What are the groups? Check them against something measured in another way. The cheapest measure here is the number of words.
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}l r X l@{}}
+\toprule
+\textbf{Group} & \textbf{Median words} & \textbf{Examples} & \textbf{Authors} \\
+\midrule
+short & 1 & ``!'', ``hmm'', ``nah'' & all six \\
+medium & 5 & ``like it? based on what?'' & all six \\
+long & 9 & ``i was more expecting a sort of terminal server for CAD users :D'' & all six \\
+\bottomrule
+\end{tabularx}
+\caption{What the three k-means groups contain.}
+\label{tab:kmeans-groups}
+\end{table}
+
+k-means did its job: it cut the cloud along the direction that varies most, how much there is in a message, and handed back three slices because three is what it was asked for. That is a true fact about the data, and a dull one, and it is not the three topics or three people a report would claim. In your project the check is the same: put the groups next to a regex, a word count, a label you trust, and read ten messages from each group. If the groups show up nowhere but in the picture, they belong to the picture.
+
+\subsubsection{A picture of 7\% is a shadow of 7\%}
+The first question, and the statistics of question one. Two PCA components of these sentence vectors hold $6.8\%$ of the variance (figure~\ref{fig:seven-percent}); you need $54$ components for half of it.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson6/seven_percent.png}
+\caption{The scree plot of the sentence vectors: the share of the variance per component, and cumulative.}
+\label{fig:seven-percent}
+\end{figure}
+
+A projection only shortens distances. Points far apart in the picture are far apart in the data; points close together in the picture may be far apart in the other $93\%$. So you are running k-means on a shadow of what is going on. Projecting to two dimensions destroys so much of your data that k-means on a PCA picture is almost always a bad idea. Cluster in the space with many dimensions instead, and answer this first question before you cluster anything.
+
+\subsubsection{If a tool always finds something, finding something proves nothing}
+It is the same trap three times. In lesson 5 we shuffled the labels and tested fifteen measures, and in $42\%$ of those hunts something came out significant. In this lesson, t-SNE drew clumps in pure noise, and k-means on that picture scored $0.31$ where the data scored $0.016$. And k-means found three groups in the sentence vectors, and three in the same vectors with every column shuffled. Each time, the tool produced a result because producing a result is what it does. Two questions catch all three: what would this method show me if there were nothing there? And does what I found show up in something I measured another way?
+
+\againconcretely
+k-means always returns $K$ groups, so ``$K = 3$ gives three clusters'' is a sentence about your input, not a finding. A clustering becomes a finding only after three checks: how much of the data is in the space you clustered, which for two PCA components of sentence vectors is about $7\%$; what the same steps give on data without structure, which here was three groups too; and what the groups contain, held against something measured another way, which here turned three clusters into short, medium and long messages. For this lesson I am strict on this point. Every chat you put through a model and plot with PCA gives a cloud. Always. Getting that far is the technical pipeline, and that is not worthless; but the plot says nothing yet.
+
+% ─────────────────────────────────────────────
+\subsection{Up, and back down: what to do with your plot}
+\label{sec:lesson6-routes}
+The last two slides of the lesson are what I want you to do with your plot this week.
+
+\subsubsection{Map data up to many dimensions, then back down to two to look}
+Take data that is not numbers yet, documents of any kind, and map it up into a space with many dimensions (figure~\ref{fig:whole}). That can be a model from Hugging Face, trigram counts, or done by hand: some of you wrote $25$ regular expressions, and then every message becomes a point in $25$ dimensions. That is fine too. In that space near means similar: searching, comparing and classifying happen there, as with the flowers. Then, to look at it, map it back down to two dimensions with PCA or t-SNE. Two axes always hold only part of the space, so say how much.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.3\textwidth]{lesson6/whole_docs.png}\hfill
+\includegraphics[width=0.3\textwidth]{lesson6/whole_up.png}\hfill
+\includegraphics[width=0.36\textwidth]{lesson6/whole_down.png}
+\caption{Documents, mapped up to 384 axes (four of them drawn as a hypercube), and back down to two.}
+\label{fig:whole}
+\end{figure}
+
+\subsubsection{A picture tells a story when two routes agree}
+Many projects end in a cloud of points that says nothing. A pattern that does work: take two routes from the same documents and see whether they agree (figure~\ref{fig:routes}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{lesson6/routes.png}
+\caption{3,000 sessions placed by a sentence encoder and t-SNE, coloured by a regex: does the session mention a phone?}
+\label{fig:routes}
+\end{figure}
+
+Route $f$ gives every document a label: with regexes, by hand, or by asking a language model. Route $g$ gives every document a place: a sentence encoder with $384$ numbers, or your own $25$ regex features, projected down. The two routes do not know about each other. The picture is where they meet: position from $g$, colour from $f$. Here the label is ``mentions a phone'', and those sessions gather in one region: $52\%$ of them have another phone session as their nearest neighbour, against $11.5\%$ by chance. Two independent routes point at the same group, and that is a finding you can defend: the encoder never saw the regex, and the regex never saw the encoder. A scattered colour means $f$ sees something $g$ does not.
+
+Why is that useful? Because one route is often expensive and the other cheap. A former student did this in a master's thesis on fraud. The usual way is to search a dataset with search terms and read the suspicious documents. The student labelled $9{,}000$ e-mails by hand as suspicious or not, and put the same e-mails through an embedding model. The fraudulent e-mails lay close together in the cloud: not all of them, but far more often than chance. Starting from one suspicious e-mail and reading its neighbours, you had to read $30$ e-mails instead of $200$, a speed-up of about eight times; at $175$ euros an hour, that is a very interesting speed-up. The thesis showed that the structure of the embedded documents carries information about fraud, which is exactly what the flowers showed for species. Showing it with labels you already have makes it plausible that the cheap route finds the same thing when you don't have them.
+
+The same thinking carries over to predictive maintenance. A factory where every machine has $50$ sensors sends you a point in $50$ dimensions every $100$ milliseconds. How do you find, in that space, whether a machine needs repair? Can you simplify it, find the patterns, and label the past by when machines broke down? Then see whether the two routes agree. If you can take your data up into a space with many dimensions and back, and you have a story about what it shows, you have practised enough for that.
+
+% ─────────────────────────────────────────────
+\subsection{The six questions, answered}
+\label{sec:lesson6-summary}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\textbf{Question} & \textbf{Answer} \\
+\midrule
+What does PCA show you? & The directions of most spread, in your units. Standardise, and read the scree plot. \\
+When is a flat picture not enough? & When data lies on a curve. t-SNE keeps neighbours, not distances. \\
+How does text become a vector? & By counting. Then read back what did the work: in the Q posts, links. \\
+Why use a model somebody else trained? & Pay for it once, store its vectors, train your part on a laptop. \\
+What is one row, when a row is ``haha''? & The unit your question needs. Check it with a test you can predict. \\
+Why did k-means find three clusters? & Because you asked. Ask what the same steps find in nothing. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Notebooks 06.1 to 06.4 work through the questions: 06.1 PCA, the penguins, the swiss roll, MNIST, perplexity and t-SNE on noise; 06.2 trigram counts and the QAnon claim checked twice; 06.3 the flower cache, cosine similarity, nearest neighbour and a head trained on the cache; 06.4 your own vectors, from the blob through sessions, the race and the sentiment check, ending in five cells on your own chat. For your project: every picture of many dimensions gets the share of the data it holds in its title, and every group you report gets the two questions: what would the method show if there were nothing there, and does it show up in something you measured another way.
+
+\subsection{Feedback on your high-dimensional plots}
+\label{sec:lesson6-feedback}
+In class we discussed several of your plots. The same points came back, so I collect them here.
+
+\textbf{Do a few dimensions do all the work?} One plot counted trigrams in a long chat, $5{,}680$ dimensions, and found one PCA axis holding $45\%$ of the variance. A creative touch: that axis drawn as a time series instead of a cloud. But the axis is very likely English against Dutch: the person switched language after two months in the Netherlands. Then $30$ or $40$ trigrams such as \emph{the}, \emph{you} and \emph{it} do the work, and the $5{,}000$-dimensional space is mostly a handful of hidden regular expressions, just as the QAnon picture turned out to be one regex for URLs. That does not make it a bad plot; it is a critical question worth asking of your own.
+
+\textbf{Don't throw dimensions away before you start.} Another plot grouped $80$ regexes into four themes and ran PCA on the four. The result showed stripes. Stripes in a PCA are suspicious: there is so much structure that PCA flattens everything along the axes, which means the data was not high-dimensional enough. Use every regex as a column, $0$ or $1$ or a count, and you have an $80$-dimensional space for PCA or t-SNE. Then think about the colour: your name and your partner's, the topic, or the four themes as route $f$ against a Hugging Face model as route $g$.
+
+\textbf{A null result needs tension.} One plot coloured trigram chunks by whether the team captain wrote them, and found nothing. Not finding a pattern can be interesting, but only when everybody was convinced there would be one: ``for ten years we all thought this, and it isn't so''. Nobody expected the team captain to stand out in a $3{,}000$-dimensional space. A single PCA component near $90\%$ in that plot was suspicious too: something, probably a unit, dominated. In a second version the student did see something: the captain writes more formally, in announcements. That is finding something, however modest, and it is very different from finding nothing.
+
+\textbf{Fewer, better dimensions.} One student went from $10{,}000$ trigrams to the $25$ that best separate their own writing from their partner's, mapped those $25$ down to two, and the two of them came apart. That is a convincing example of two routes: one gives the label, who wrote it, and the other the place, $25$ trigrams that identify them. With more than two people it gets harder, but for this assignment this is exactly the exercise.
+
+\textbf{Never k-means on t-SNE.} One plot embedded five-minute chunks with BGE-M3 ($1{,}024$ dimensions), projected them with t-SNE, and coloured them by a topic label from a language model: football, over the years. Without k-means that is a good plot. The moment you mention k-means on a t-SNE picture, it is wrong: t-SNE distances mean nothing. And for football, a few regular expressions (club names, \emph{keeper}, \emph{competition}) are good enough as a label, even if they don't catch everything.
+\newpage
+
 \section{Reading code with atlas}
 \label{sec:atlas}
 This course asks two things of your code. It has to make the plots in your report, and you have to be able to explain how it does that: in the final assignment you show me a picture of your code and walk me through it. This section explains why I ask for a picture and not for the code itself, and what atlas, the tool that draws the picture, shows you. The argument is the same one this course makes about data: a good visualisation lets you see in a second what a table of numbers hides, and code is no different.
@@ -1362,7 +1971,7 @@ The sloppy script (figure~\ref{fig:atlas-sloppy}) falls apart into fragments, an
 The typed program (figure~\ref{fig:atlas-clean}) is one process with a head and a tail, and you can read its story off the picture. The command starts it. \texttt{download} fetches the data into \texttt{raw.csv}, \texttt{load} turns that into a DataFrame, \texttt{smooth} turns that into a smoothed one, using the number of months from the settings. In parallel, the settings make a \texttt{Trend}, the object that knows how to draw. The two lanes join at \texttt{save}, which draws the smoothed frame into \texttt{sunspots.png}. Every question the first picture left open is answered by an arrow: what the CSV is for, which frame is plotted, in what order things happen. Same output, same libraries. The difference is entirely in the connections, and the picture shows it in a second.
 
 \subsubsection{A red dot is a question}
-Some boxes carry a red dot. A dot is a question atlas asks the author: something in the code does not follow one of the eleven design principles atlas checks (table~\ref{tab:atlas-principles}). A step reads and changes a global; a function reads a file whose path it chose itself, so nobody calling it can tell where its data comes from; a function's signature doesn't say what it gives. \texttt{atlas check} lists the same questions as text, each with the principle, the place in the code, what atlas saw, and a question for you.
+Some boxes carry a red dot. A dot is a question atlas asks the author: something in the code does not follow one of the eleven design principles atlas checks (table~\ref{tab:atlas-principles}). A step reads and changes a global; a function reads a file whose path it chose itself, so nobody calling it can tell where its data comes from; a function's signature doesn't say what it gives. \texttt{atlas-code check} lists the same questions as text, each with the principle, the place in the code, what atlas saw, and a question for you.
 
 A red dot is not a verdict. Atlas coaches; it doesn't fix. Sometimes the answer is to change the code, and the dot disappears. Sometimes the code is right as it is, and then you write that decision down beside the code, with your reason. What I am interested in is that you know which it is, and why. That is the same thing I ask of every number in your report.
 
@@ -1432,8 +2041,8 @@ This is the house of cards and the spaghetti of figure~\ref{fig:atlas-shapes} ag
 \paragraph{Four more in the tour.}
 A \emph{pushout}: the same meaning gives the same picture, so an option the caller can change is one box whether Python, Rust or TypeScript spells it. \emph{Yoneda}: a thing is what it connects to, not what it is called, so a function you only renamed shows as unchanged when you compare two commits. A \emph{partial map}: a design that is not built yet is part of the picture, drawn dotted. And \emph{Liskov substitution}: a subclass keeps its base's promise, so it fits wherever the base is expected.
 
-\subsubsection{Eleven questions atlas check asks}
-On top of this mathematics, \texttt{atlas check} asks eleven questions of your code, one per design principle (table~\ref{tab:atlas-principles}). Each is stated once, on the graph, for every language; a language decides how much of it can be traced. Rust's compiler already forbids some of the careless forms, so there atlas has less to ask than in Python. Each principle has its own section in \texttt{docs/reference/principles.md}, with what it means in Python, Rust and TypeScript, and your agent can fetch that section for you through atlas's MCP tool \texttt{explain}.
+\subsubsection{Eleven questions atlas asks}
+On top of this mathematics, \texttt{atlas-code check} asks eleven questions of your code, one per design principle (table~\ref{tab:atlas-principles}). Each is stated once, on the graph, for every language; a language decides how much of it can be traced. Rust's compiler already forbids some of the careless forms, so there atlas has less to ask than in Python. Each principle has its own section in \texttt{docs/reference/principles.md}, with what it means in Python, Rust and TypeScript, and your agent can fetch that section for you through atlas's MCP tool \texttt{explain}.
 
 \begin{table}[H]
 \centering
@@ -1463,7 +2072,7 @@ Three of them you will meet most in your own project. \texttt{places}: where dat
 
 \subsection{Working with your agent on the same picture}
 \label{sec:atlas-agent}
-Your coding agent lives in text, and you are much faster with images. Atlas gives the two of you the same picture. Register it once with your agent (\texttt{claude mcp add -{}-scope user atlas -{}- atlas mcp} for Claude Code), run \texttt{atlas serve} in your repository and open the page it prints. Then you can ask ``where does the smoothing happen?'' and the agent points at the box on your page, instead of describing it. You can write a note on a box (``what happens if the data on the web changes?''), and the agent reads it and answers on the box. And when you ask for a change, the agent can draw it first, beside the code as it is, so you see what it would add before a single file changes. You say yes to a picture, not to a paragraph of text.
+Your coding agent lives in text, and you are much faster with images. Atlas gives the two of you the same picture. Register it once with your agent (\texttt{claude mcp add -{}-scope user atlas -{}- atlas-code mcp} for Claude Code), run \texttt{atlas-code serve} in your repository and open the page it prints. Then you can ask ``where does the smoothing happen?'' and the agent points at the box on your page, instead of describing it. You can write a note on a box (``what happens if the data on the web changes?''), and the agent reads it and answers on the box. And when you ask for a change, the agent can draw it first, beside the code as it is, so you see what it would add before a single file changes. You say yes to a picture, not to a paragraph of text.
 
 This matters for the same reason as everything above. You will write much of your code with an agent, and the danger of that is a fine outside and a mess inside: the plots come out, and nobody, you included, knows how. Looking at the picture together is a way to keep the inside something you understand.
 
@@ -1473,10 +2082,62 @@ Programming has moved up a level before. In Fortran, in the 1960s, you allocated
 
 Does that mean you no longer need to learn to program? No. Think of the step from a slide rule to a calculator. A calculator lets you do things that were impossible before, and still, for the first years of primary school, children don't get one: they first learn what multiplying is. An LLM is a new calculator, a fuzzy one. What you still need to learn is the way of thinking behind code: how to cut a problem into smaller problems, how a process runs step by step, what an if-else decides. That is why in class I sometimes ask you to close your laptop and work a problem out with pen and paper first. You learn to think with your hands, and only then open the laptop. The picture of your code is where that thinking shows: if you can explain it, I know you understand what you built.
 
+\subsection{What the picture of your project should look like}
+\label{sec:atlas-project}
+Conceptually, what does the code for your plots do? When we drew it on the board in lesson 6, it came out much the same for almost everyone (figure~\ref{fig:atlas-project}).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[every node/.style={font=\small},
+  place/.style={draw=blue!50!black, thick, rounded corners=2pt, minimum height=0.6cm, inner sep=4pt},
+  fn/.style={draw, minimum height=0.6cm, inner sep=4pt}]
+  \node[place] (csv) at (0,1.2) {data (CSV)};
+  \node[place] (cfg) at (0,-0.9) {config};
+  \node[fn] (clean) at (2.5,1.2) {clean, process};
+  \node[place] (regex) at (4.8,0.0) {list of regexes};
+  \node[fn] (feat) at (4.8,1.2) {features};
+  \node[place] (df) at (7.2,1.2) {one DataFrame};
+  \node[fn] (p1) at (9.7,2.1) {plot};
+  \node[fn] (fit) at (9.7,0.3) {fit};
+  \node[fn] (p2) at (11.2,0.3) {plot};
+  \node[place] (f1) at (12.8,2.1) {figure 1};
+  \node[place] (f2) at (12.8,0.3) {figure 2};
+  \draw[-{Stealth}] (csv) -- (clean);
+  \draw[-{Stealth}] (clean) -- (feat);
+  \draw[-{Stealth}] (regex) -- (feat);
+  \draw[-{Stealth}] (feat) -- (df);
+  \draw[-{Stealth}] (df.east) -- (p1);
+  \draw[-{Stealth}] (df.east) -- (fit);
+  \draw[-{Stealth}] (fit) -- (p2);
+  \draw[-{Stealth}] (p1) -- (f1);
+  \draw[-{Stealth}] (p2) -- (f2);
+  \draw[-{Stealth}] (cfg) -| (clean);
+  \draw[-{Stealth}] (cfg) -| (fit);
+\end{tikzpicture}
+\caption{The flow most of your projects share: data and settings in, one table of features, a route per plot.}
+\label{fig:atlas-project}
+\end{figure}
+
+You start with data, a CSV, and settings. A first step cleans and processes the data: timestamps, perhaps anonymising. Then you make features: time features, and above all regular expressions. Those regexes live apart, as a list of thirty or eighty, and one function applies them all. The result is one DataFrame with all your features, which every plot uses. Some plots come straight from that DataFrame; others first go through a step such as a distribution fit, or set two things against each other. Every route ends in a figure.
+
+Why doesn't atlas draw your code like that? Because you have fifty notebooks, mine and your own, each with six experiments mixed together, and the flow is spread over the whole repository. What I would do is start a new, clean project and move the pieces into it:
+
+\begin{itemize}
+\item a folder with its own \texttt{pyproject.toml} and its own \texttt{.venv}, with the dependencies you need (goad for the pipelines and plots, and for instance \texttt{sentence-transformers} for a model from Hugging Face);
+\item \texttt{data/raw} and \texttt{data/processed};
+\item a package under \texttt{src/} with a real name, and a \texttt{main.py} that runs the flow above in broad strokes: process, add the regex features, make the plots;
+\item perhaps \texttt{scripts/} and \texttt{tests/} for pytest;
+\item lefthook, which you installed in lesson 1, so that every commit runs \texttt{ruff format} (tidy lines), \texttt{ruff check} (inconsistencies and sloppiness) and \texttt{ty} (types: if one function says it gives a DataFrame, the next must take one).
+\end{itemize}
+
+Use type hints and classes. Point atlas at that project, and the picture should show one flow from start to end, like the typed sunspot program of figure~\ref{fig:atlas-clean}, instead of loose fragments.
+
 \subsection{Atlas in your final assignment}
 \label{sec:atlas-assignment}
-Install atlas from \url{https://github.com/raoulg/atlas}; there is an install script for macOS and Linux and one for Windows. In your repository run \texttt{atlas view}, pick the entry point that makes your plots in the dropdown, and open the steps you want to show. Atlas writes one HTML file and keeps your code on your own machine.
+The command is \texttt{atlas-code}, because other tools install an \texttt{atlas} too; add \texttt{alias atlas=atlas-code} to your shell if you want the short name. Install it from \url{https://github.com/raoulg/atlas}: there is an install script for macOS and Linux, one for Windows, and a Homebrew formula. In your repository run \texttt{atlas-code view}, pick the entry point that makes your plots in the dropdown, and open the steps you want to show. Atlas writes one HTML file and keeps your code on your own machine.
 
-In the assessment I will sit next to you and ask you to explain that picture: where your data comes from, which steps it goes through, where each plot is made, and what the red dots ask. You may make your own diagram as well; I will still put atlas next to it, because atlas draws the code you actually wrote, and a diagram can be beautiful and have nothing to do with the code. A tidy picture is easy to explain. If yours looks messy, that is not a failure; it is the question to work on: what would you change in your code so that the picture tells the story you meant? Just as with a model of your data, the aim is not a perfect picture. It is a picture you can explain.
+There are two other ways in. \emph{Atlas Studio} is a desktop app for macOS and Windows: the picture, your git history, a preview for Markdown, HTML and PDF, and a terminal in one window, with its own \texttt{atlas-code} inside, so you need nothing else installed. Reading a repository the first time takes a while; after that it opens in a moment. Studio is not signed with a paid identity, so the first time macOS asks you to allow it under \emph{Privacy \& Security}, and a laptop managed by your employer may not let you install it at all. For that case there is a GitHub workflow that runs atlas on GitHub's machines on every push and keeps the picture in your README current; it needs nothing on your laptop\footnote{\texttt{docs/reference/ci.md} in the atlas repository; your agent can set it up from those instructions.}.
+
+The atlas picture of your code is required, and it is the baseline: it is what I look at when I assess your code. In the assessment I will sit next to you and ask you to explain that picture: where your data comes from, which steps it goes through, where each plot is made, and what the red dots ask. If you get atlas to draw a picture as calm as the typed sunspot program, you have enough grip on your code, and then you may also describe the picture in your report, or in an appendix beside it. A diagram of your own comes after atlas, never instead of it: atlas draws the code you actually wrote, and a diagram can be beautiful and have nothing to do with the code. Your own diagram is a nice-to-have, to present the atlas picture more clearly or to highlight what matters in it; it does not replace it. If your own picture and atlas's disagree, I would like to see why; there may well be a mistake in atlas, and I would only be glad to find it. A tidy picture is easy to explain. If yours looks messy, that is not a failure; it is the question to work on: what would you change in your code so that the picture tells the story you meant? Just as with a model of your data, the aim is not a perfect picture. It is a picture you can explain.
 
 \end{document}
