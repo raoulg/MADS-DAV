@@ -783,38 +783,122 @@ ax.set_xlabel("messages sent in 2015")
 ax.set_ylabel("weighted degree, nearby rule")
 save(fig, "wdegree")
 
+log_w = pearsonr(np.log(scores.weighted_degree), np.log(scores.messages)).statistic
+print(f"weighted degree vs messages: pearson on logs {log_w:.2f}")
+for k in (2, 10):
+    rest = scores.drop(scores.nlargest(k, "messages").index)
+    print(
+        f"  without the {k} loudest: pearson {pearsonr(rest.weighted_degree, rest.messages).statistic:.2f}, "
+        f"spearman {spearmanr(rest.weighted_degree, rest.messages).statistic:.2f}"
+    )
+rho_d = spearmanr(scores.degree, scores.messages).statistic
+r_d = pearsonr(scores.degree, scores.messages).statistic
+print(f"degree vs messages: spearman {rho_d:.2f}, pearson {r_d:.2f}")
+
+# Three outcomes of the same check, in rank space, where spearman lives: what the chat gave,
+# a made-up crowd whose few loud accounts carry Pearson alone, and plain degree, where people
+# leave the diagonal. Rank 1 is the fewest, so "more" is up and to the right.
+crowd = np.random.default_rng(7)
+fake = pd.DataFrame(
+    {
+        "x": np.exp(crowd.normal(1, 1, 400)),
+        "y": np.exp(crowd.normal(1, 1, 400)),
+    }
+)
+loud_x = np.array([9000, 6000, 4000, 2500, 1600, 1000])
+fake.loc[:5, "x"] = loud_x
+fake.loc[:5, "y"] = loud_x * np.exp(crowd.normal(0, 0.3, 6))
+r_fake = pearsonr(fake.x, fake.y).statistic
+rho_fake = spearmanr(fake.x, fake.y).statistic
+print(f"synthetic crowd: pearson {r_fake:.2f}, spearman {rho_fake:.2f}")
+
 ranks = scores.rank()
-fig, axes = plt.subplots(1, 2, figsize=(13, 5.6))
-axes[0].scatter(
-    scores.messages,
-    scores.weighted_degree,
-    s=26,
-    color=ACCENT_LIGHT,
-    alpha=0.7,
-    linewidths=0,
+visitors = scores[(scores.messages <= 3) & (scores.degree >= 5)].index
+print(f"{len(visitors)} accounts with at most 3 messages and at least 5 neighbours")
+print(
+    f"lubotu3`: rank {scores.degree.rank(ascending=False, method='min')['lubotu3`']:.0f} by degree, "
+    f"{scores.messages.rank(ascending=False, method='min')['lubotu3`']:.0f} by messages, "
+    f"{scores.weighted_degree.rank(ascending=False, method='min')['lubotu3`']:.0f} by weighted degree"
 )
-axes[0].scatter(loud.messages, loud.weighted_degree, s=70, color=SECOND, zorder=3)
-axes[0].set_title(f"the values: Pearson r = {r_w:.2f}")
-axes[0].set_xlabel("messages sent")
-axes[0].set_ylabel("weighted degree")
-axes[1].scatter(
-    ranks.messages,
-    ranks.weighted_degree,
-    s=26,
-    color=ACCENT_LIGHT,
-    alpha=0.7,
-    linewidths=0,
-)
-axes[1].scatter(
-    ranks.loc[loud.index].messages,
-    ranks.loc[loud.index].weighted_degree,
-    s=70,
+fig, axes = plt.subplots(1, 3, figsize=(17, 5.9))
+panels = [
+    (
+        ranks.messages,
+        ranks.weighted_degree,
+        "weighted degree",
+        "what we got",
+        r_w,
+        rho_w,
+    ),
+    (
+        fake.x.rank(),
+        fake.y.rank(),
+        "",
+        "synthetic: Pearson high, ρ low",
+        r_fake,
+        rho_fake,
+    ),
+    (
+        ranks.messages,
+        ranks.degree,
+        "degree",
+        "plain degree: people leave the line",
+        r_d,
+        rho_d,
+    ),
+]
+for ax, (x, y, ylabel, title, r, rho) in zip(axes, panels):
+    ax.plot([0, len(x)], [0, len(x)], "--", color=GREY_FAINT, lw=1.2, zorder=0)
+    ax.scatter(x, y, s=20, color=ACCENT_LIGHT, alpha=0.7, linewidths=0)
+    ax.set_title(f"{title}\nPearson r = {r:.2f}, spearman ρ = {rho:.2f}", fontsize=15)
+    ax.set_xticks([])
+    ax.set_yticks([])
+axes[0].set_xlabel("rank by messages sent  →")
+axes[0].set_ylabel("rank by weighted degree  →")
+axes[1].scatter(fake.x.rank()[:6], fake.y.rank()[:6], s=70, color=SECOND, zorder=3)
+axes[1].annotate(
+    "six loud accounts\nnear one line",
+    (fake.x.rank()[:6].min(), 395),
+    xytext=(-14, -18),
+    textcoords="offset points",
+    ha="right",
+    va="top",
     color=SECOND,
+    fontsize=13,
+)
+axes[1].set_xlabel("rank by x  →")
+axes[1].set_ylabel("rank by y  →")
+axes[2].scatter(
+    ranks.messages[visitors],
+    ranks.degree[visitors],
+    s=26,
+    color=SECOND,
+    alpha=0.8,
     zorder=3,
 )
-axes[1].set_title(f"their ranks: spearman ρ = {rho_w:.2f}")
-axes[1].set_xlabel("rank by messages sent")
-axes[1].set_ylabel("rank by weighted degree")
+axes[2].scatter(
+    ranks.messages["lubotu3`"], ranks.degree["lubotu3`"], s=110, color=SECOND, zorder=4
+)
+axes[2].annotate(
+    "lubotu3` (a bot)",
+    (ranks.messages["lubotu3`"], ranks.degree["lubotu3`"]),
+    xytext=(0, 14),
+    textcoords="offset points",
+    ha="center",
+    color=SECOND,
+    fontsize=13,
+)
+axes[2].annotate(
+    f"{len(visitors)} visitors: 1–3 messages,\n5 or more neighbours",
+    (0.02, 0.98),
+    xycoords="axes fraction",
+    ha="left",
+    va="top",
+    color=SECOND,
+    fontsize=13,
+)
+axes[2].set_xlabel("rank by messages sent  →")
+axes[2].set_ylabel("rank by degree  →")
 save(fig, "spearman")
 
 shared = sorted(set(core) & set(core_named))
@@ -835,6 +919,11 @@ for ax, rule, title in zip(axes, ["nearby", "named"], ["nearby rule", "mention r
     print(
         f"{rule}: {alone.sum()} with one neighbour, spearman {rho_all:+.2f} with them, {rho_rest:+.2f} without"
     )
+    for label, x in [("pearson", degree), ("pearson on log degree", np.log(degree))]:
+        print(
+            f"  {label}: {pearsonr(x, clustering).statistic:+.2f} with them, "
+            f"{pearsonr(x[~alone], clustering[~alone]).statistic:+.2f} without"
+        )
     ax.scatter(
         degree[~alone],
         clustering[~alone],
@@ -857,6 +946,84 @@ for ax, rule, title in zip(axes, ["nearby", "named"], ["nearby rule", "mention r
 axes[0].set_ylabel("clustering coefficient")
 axes[0].set_ylim(-0.08, 1.05)
 save(fig, "signflip")
+
+# The same three measures under every window, each ranked against its own ten-minute ranking
+# on the people both giant components contain.
+windows = {}
+for seconds in (60, 300, 600, 1800):
+    giant = giant_component(builder.build(chat, edge_seconds=seconds))
+    windows[seconds] = pd.DataFrame(
+        {
+            "degree": dict(giant.degree()),
+            "betweenness": nx.betweenness_centrality(giant),
+            "clustering": nx.clustering(giant),
+        }
+    )
+reference = windows[600]
+rows = []
+for seconds, measures in windows.items():
+    common = measures.index.intersection(reference.index)
+    a, b = measures.loc[common], reference.loc[common]
+    two = (a.degree >= 2) & (b.degree >= 2)
+    rows.append(
+        {
+            "minutes": seconds / 60,
+            "people": len(common),
+            "two_or_more": int(two.sum()),
+            **{
+                column: spearmanr(a[column], b[column]).statistic
+                for column in ["degree", "betweenness", "clustering"]
+            },
+            "clustering_two": spearmanr(a.clustering[two], b.clustering[two]).statistic,
+        }
+    )
+sweep = pd.DataFrame(rows)
+print(sweep.round(2).to_string(index=False))
+ends = windows[60].index.intersection(windows[1800].index)
+print(
+    "1 min against 30 min: "
+    + ", ".join(
+        f"{column} {spearmanr(windows[60].loc[ends, column], windows[1800].loc[ends, column]).statistic:.2f}"
+        for column in ["degree", "betweenness", "clustering"]
+    )
+)
+
+fig, ax = plt.subplots(figsize=(8.5, 5.6))
+for column, colour, style, label in [
+    ("degree", ACCENT, "-", "degree"),
+    ("betweenness", THIRD, "-", "betweenness"),
+    ("clustering", SECOND, "-", "clustering"),
+    ("clustering_two", SECOND, ":", "clustering, 2+ neighbours"),
+]:
+    ax.plot(
+        sweep.minutes,
+        sweep[column],
+        style,
+        color=colour,
+        lw=1.6,
+        marker="o",
+        markersize=8,
+        label=label,
+    )
+for m, v in zip(sweep.minutes, sweep.clustering):
+    if m != 10:
+        ax.annotate(
+            f"{v:.2f}",
+            (m, v),
+            xytext=(0, -20),
+            textcoords="offset points",
+            ha="center",
+            color=SECOND,
+            fontsize=13,
+        )
+ax.set_xscale("log")
+ax.set_xticks(sweep.minutes, ["1 min", "5 min", "10 min", "30 min"])
+ax.minorticks_off()
+ax.set_ylim(0, 1.05)
+ax.set_ylabel("spearman ρ with the 10-minute ranking")
+ax.set_xlabel("window (10 min is the reference, so 1 by construction)")
+ax.legend(loc="lower right")
+save(fig, "window_sweep")
 
 # ---------- 04: one graph, two layouts, and its matrix ----------
 hubs = giant_component(to_graph(MentionEdges()(chat)))
