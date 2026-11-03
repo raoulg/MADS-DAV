@@ -1842,6 +1842,571 @@ In class we discussed several of your plots. The same points came back, so I col
 \textbf{Never k-means on t-SNE.} One plot embedded five-minute chunks with BGE-M3 ($1{,}024$ dimensions), projected them with t-SNE, and coloured them by a topic label from a language model: football, over the years. Without k-means that is a good plot. The moment you mention k-means on a t-SNE picture, it is wrong: t-SNE distances mean nothing. And for football, a few regular expressions (club names, \emph{keeper}, \emph{competition}) are good enough as a label, even if they don't catch everything.
 \newpage
 
+\section{Lesson 7: Networks}
+\label{sec:lesson7}
+Until now a row was a thing: a message, a person, a penguin. This lesson's data is about how things are connected: who talks to whom, which topics come up together, which stations share a line. That kind of data has its own structure, the graph, and its own pitfalls. A graph sounds very basic, things and relations, but you can do a lot with it, and nearly every step on the way is a choice you have to be able to defend.
+
+The lesson is organised around six questions:
+
+\begin{enumerate}
+\item \textbf{What} is a graph? A set of things and the relations between them. You choose both.
+\item What are the \textbf{nodes and edges} in your chat? People, but also places, hobbies and objects. Every edge is a rule.
+\item What does a graph \textbf{measure} add? Sometimes something deeper. Sometimes a column you already had.
+\item \textbf{Graph or heatmap}? Both, side by side. Sometimes one is much better.
+\item Can an algorithm \textbf{find the groups}? Yes. But sometimes it finds groups that aren't there.
+\item Are the groups \textbf{real}? Ask what the method finds in a network without any.
+\end{enumerate}
+
+The first two are about what a network is and what it can be made of, in the world and in your own chat, where people are only the most obvious nodes. The third is about the numbers you can compute on a network, and the one question to ask of each: what does it tell me that I did not have already? The fourth is about looking. The last two are about groups: an algorithm finds them, and then you check whether they are there. That last question is the same one as k-means in lesson 6, and the same one that has come back in every lesson: a method that always gives an answer is no evidence on its own.
+
+% ─────────────────────────────────────────────
+\subsection{What is a graph?}
+\label{sec:what-is-a-graph}
+A graph, or network, is the simplest structure for data about relations: a set of things, the \emph{nodes}, and a set of pairs of things that are related, the \emph{edges}. The nodes are whatever your question is about: people, train stations, topics, bank accounts, posts. The edges are pairs that are related: replied to, connected by a train, mentioned together, paid.
+
+There is a third ingredient, and it is the one to remember. A chat log does not contain a network; it contains messages. To get a network you need a rule that turns messages into edges, and that rule nearly always has parameters you can turn: how close in time, how often, with or without a direction. Different parameters on the same data give a different network. Nodes, edges and the parameters of the rule together make your picture.
+
+\subsubsection{A graph is two sets: nodes and edges}
+The whole definition fits on one line (figure~\ref{fig:gve}):
+\[
+G = (V, E), \qquad V = \{A, B, C, D, E\}, \qquad E = \{AB,\ AC,\ BC,\ CD,\ DE\}.
+\]
+$V$ is the set of nodes (the letter comes from \emph{vertices}), $E$ the set of edges, each edge a pair of nodes. That is the entire mathematical object; everything else is a way of showing it, or a number computed from it.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{lesson7/gve.png}
+\caption{Five nodes and five edges, as a drawing and as a matrix.}
+\label{fig:gve}
+\end{figure}
+
+The two ways of showing it come back all lesson. The drawing has a dot per node and a line per edge, and it is good at paths: you see at once that to get from $A$ to $E$ you go through $C$ and $D$. But where the dots go does not follow from the data. That $A$, $B$ and $C$ sit together in a triangle at the left is simply where the drawing program felt like putting them. The matrix has a row and a column per node and a dark cell where two are connected: the same information, and no layout.
+
+What do you notice about the matrix? It is mirrored in the diagonal. That tells you what extra information a matrix can hold: a relation from $A$ to $B$ and one from $B$ to $A$ are two different cells, and they need not be equal. Very often they are, but not always. On some social networks you follow an account and it does not have to follow you back; in a chat, me addressing you is not the same as you addressing me. Then the edges have a \emph{direction}, the matrix is no longer symmetric, and in the drawing an edge becomes an arrow. Whether your network has a direction is something to think about.
+
+The first number you can compute on a graph is the \emph{degree}: how many edges a node has. $C$ has three, $E$ has one. Question three is about numbers like that, and what they add.
+
+Much data is a graph in disguise. A photo is a set of pixels, and the edges say which pixel lies next to which: a graph, but a very rigid one, a perfect grid. A time series is a graph too, a one-dimensional one: time step 1, then time step 2, and so on. We force a lot of data into a neat line or a neat square, and then forget that it is a graph. Most data is not that tidy, and a graph lets you work with data that does not fit in a spreadsheet.
+
+\subsubsection{Nodes and edges can be anything}
+Two networks that have nothing to do with people talking (figure~\ref{fig:ex-policy-trains}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.52\textwidth]{lesson7/ex_policy.png}\hfill
+\includegraphics[width=0.38\textwidth]{lesson7/ex_trains.png}
+\caption{Left: Dutch nitrogen policy, topics as nodes and ``affects'' as a directed edge. Right: intercity stations as nodes, a direct train as the edge, drawn on the map.}
+\label{fig:ex-policy-trains}
+\end{figure}
+
+On the left, a knowledge graph of the kind a policy analyst draws: topics as nodes and ``affects'' as the edge, so the edges have a direction. It is the nitrogen problem in a few boxes: emissions from livestock and traffic reach nature reserves, a court ruling in 2019 stopped the permits that had allowed them, and without permits construction stopped, of houses and of roads, which in turn produce nitrogen. The value of drawing it is the loop: a policy that is a network has consequences that come back.
+
+On the right, the intercity network, drawn on real coordinates. Here the layout is not made up: position is geography. That is rare, and question four comes back to it. Utrecht has the most direct connections, which anyone who travels by train in the Netherlands knows already.
+
+\subsubsection{Edges can have a weight, and nodes a kind}
+Two more, each adding something to the definition (figure~\ref{fig:ex-money-likes}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{lesson7/ex_money.png}\hfill
+\includegraphics[width=0.37\textwidth]{lesson7/ex_likes.png}
+\caption{Left: accounts as nodes and payments as directed edges, the amount as the weight. Right: two kinds of node, people and posts, with a line for every like.}
+\label{fig:ex-money-likes}
+\end{figure}
+
+Money: bank accounts as nodes and payments as edges, with a direction, who paid whom, and a \emph{weight}, how much. Not every edge is just an edge: more money goes through one than through another. The matrix of this graph is not symmetric, because if you give me money, I do not necessarily give you money. A weight immediately gives you a knob to turn: show only payments above some amount, or only pairs between whom money went at least three times. Banks and tax authorities analyse exactly this graph; money laundering shows up as money that travels in a loop and comes back to where it started, which no single row in a table of transactions shows you.
+
+Likes add a second idea: nodes of two kinds in the same graph. People like posts; people never connect to people directly. From that graph you can make another one: connect two people if they liked the same post. That is the sense in which a network is a decision. The same likes give a people-to-posts graph, a people-to-people graph and a posts-to-posts graph, each with its own centre, and which one you need depends on the question.
+
+\againconcretely
+A graph is a set of things and a set of relations between pairs of them, drawn as dots and lines or written as a matrix. The things can be anything, and so can the relations, which may have a direction and a weight. The point to carry into the rest of the lesson: a network is never just in the data. You apply a rule, the rule has parameters, and different parameters give a different network. The rule is part of what you report.
+
+% ─────────────────────────────────────────────
+\subsection{What are the nodes and edges in your chat?}
+\label{sec:nodes-edges-chat}
+People are the obvious nodes, and there are already several networks of people in one chat: who answered whom, who was writing at the same time, who mentioned whom by name. But nodes need not be people. Many of you have already made good graphs of topics or places: the places you talk about, the hobbies, the games, the food, the objects. Whatever a word list or a regex finds can be a node, and two of them are connected when they come up together, in the same message, the same ten minutes, the same day.
+
+Every edge is a measurement, so it needs a metric you could hand to someone else. ``Mentioned within ten minutes of each other, at least three times'' is an example of how you could define that there is a relation. It is a choice you make.
+
+The data for this question is an IRC channel, \#ubuntu-uk in 2015, $95{,}518$ messages. It has a convention your WhatsApp chat lacks: people type the name of whoever they are answering. That lets us compare a rule you can use on your own chat with one you mostly cannot.
+
+\subsubsection{Two metrics to define a relationship}
+Two rules on the same messages (figure~\ref{fig:rules}). The \emph{nearby} rule connects two people when they wrote within ten minutes of each other: $3{,}265$ edges between $443$ people. It is the rule you can always use, because it needs nothing but timestamps. The \emph{named} rule connects two people when one typed the other's name: $1{,}146$ edges. That has to be lower: you cannot name someone more often than you send a message, because naming someone is a message.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{lesson7/rules.png}
+\caption{Each dot a person. Across: how many people the nearby rule connects them to. Up: how many the named rule does.}
+\label{fig:rules}
+\end{figure}
+
+The dashed line is where the two rules would agree, and every dot sits well below it. The people who wrote within ten minutes of each other were often not talking to each other at all; they were simply in the channel at the same time, in different conversations. The extreme case is the bot, lubotu3, which posts automatic messages: it was near $42$ people, and exactly one ever addressed it. zmoylan-pi, one of the busiest people in the channel, was near $206$ people and talked by name with $51$. So the nearby rule is mostly a measure of being online at the same time. That is not wrong; it is a different relation, and it needs to be called what it is. Whichever rule you choose, you always lose something.
+
+\subsubsection{The window is a metric too}
+The nearby rule has a number in it, the window, and the number changes the network (figure~\ref{fig:window}). A longer window finds more pairs: $2{,}308$ edges at one minute, $4{,}104$ at thirty. The question is who they are.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.62\textwidth]{lesson7/window.png}
+\caption{Against the window length. Petrol: the share of named pairs the window also connects. Vermilion: the share of window edges with no name typed.}
+\label{fig:window}
+\end{figure}
+
+Here we use the named rule as a check, because in this channel we can. The petrol line asks: of the pairs who addressed each other by name, how many does the window also connect? Almost all of them, $93\%$, already at one minute: people who talk to each other write close together, so a short window already has the real conversations. Then whatever a longer window adds must be something else, and the vermilion line says what: the share of edges with no name behind them climbs from $54\%$ at one minute to $66\%$ at ten and $72\%$ at thirty. Make the window big enough and you vacuum up everyone who was online at the same time. A longer window does not find more conversation; it finds more bystanders.
+
+When you read a chat yourself, you know whether someone is still answering in one conversation or has started another. From a timestamp alone that is very hard to tell. In your WhatsApp chat you cannot draw the vermilion line either, because there are no names to check against. That is exactly why the window goes in the caption: it is the decision that made your network, and the reader needs it to judge what an edge means.
+
+\subsubsection{Topics: what is mentioned together}
+The same channel with things as nodes instead of people (figure~\ref{fig:things}). The nodes are $23$ words from a word list, and two of them are connected when both were mentioned in the same ten minutes at least eight times.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\textwidth]{lesson7/things.png}\hfill
+\includegraphics[width=0.44\textwidth]{lesson7/things_matrix.png}
+\caption{23 things mentioned in \#ubuntu-uk, 59 edges, as a drawing and as a matrix sorted by group.}
+\label{fig:things}
+\end{figure}
+
+A network appears. Some edges look random: it is not obvious why wifi and coffee would belong together, and that may well be chance. Others make sense at once: internet and browser, Chrome and Firefox, a tangled knot of hardware words. And then, as a kind of outlier, London, train and beer, and a pair of their own, rain and weather: the off-topic life of an Ubuntu help channel. The clusters you see in the drawing come back in the matrix as blocks. The colours in both are groups found by an algorithm, louvain; question five explains how.
+
+This is the kind of network you can build from your own chat: places you mention together, hobbies, the things that come up on the same evening.
+
+\subsubsection{Different lenses on the same dataset}
+One dataset, many networks. Before anyone writes code, list several:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule
+\textbf{Nodes} & \textbf{An edge when} & \textbf{Measured as} \\
+\midrule
+people & they wrote within ten minutes of each other & times, at least three \\
+people & one @-mentions the other (groups only) & mentions, with a direction \\
+places & both mentioned in the same message & messages \\
+hobbies, games, food & both mentioned on the same day & days \\
+people and places & a person mentions a place & mentions; two kinds of node \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The table is a start for a WhatsApp chat, not a list to copy. For people, the nearby rule is what you have; @-mentions exist only in group chats, and they have a direction. For things, every row is a word list plus a window. The last row has two kinds of node, like the likes example. The point of listing several before choosing is that the choice becomes something you can defend: you can say why this network answers your question and the others do not.
+
+\againconcretely
+Your chat contains many networks, of people and of things, and every one of them is a set of knobs: what a node is, when two are related, how often, with or without a direction. It is not always obvious which setting is a good one, so you are allowed to search. Two things to search for. First, holes: if everything is connected with everything, there is no story. Networks become interesting through their gaps, where clusters form and some groups are connected and others are not. Second, honesty about the rule: the rule you will use most for people, being active within a window of each other, mostly measures being online together, so name it for what it is, and put the window and the threshold in the caption. They made the network.
+
+% ─────────────────────────────────────────────
+\subsection{What does a graph measure add?}
+\label{sec:graph-measures}
+Once you have a network, there is a whole toolbox of numbers to compute on it, and networkx gives you each in one line. Three things those numbers can reveal:
+
+\begin{itemize}
+\item \textbf{Hubs.} \emph{Betweenness} shows who or what is an intermediary in the network, a switching point that can often control a lot.
+\item \textbf{Triangles.} The \emph{clustering coefficient} says something about how tightly knit the network is, and can reveal social dynamics.
+\item \textbf{Outliers.} Sort nodes by a measure, and see who stands out: especially a node that is high on one measure and low on another.
+\end{itemize}
+
+The question to ask of each is what it adds to the picture you already had. Some measures add something real; some add nothing, and the second half of this question is about recognising which.
+
+\subsubsection{The Medici were the broker}
+Padgett and Ansell (1993) collected the marriages between the elite families of fifteenth-century Florence. Marrying off sons and daughters was politics, and there was a fierce struggle for power between the families, some of whom were bankers with a lot of money at stake. The question was how the Medici, who were not the richest or the oldest family, came to rule the city (figures~\ref{fig:florence} and~\ref{fig:florence-bars}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{lesson7/florence.png}
+\caption{The marriage network of 15 Florentine families, the Medici in vermilion.}
+\label{fig:florence}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson7/florence_bars.png}
+\caption{All fifteen families, sorted by degree, betweenness and clustering coefficient.}
+\label{fig:florence-bars}
+\end{figure}
+
+\emph{Degree} is simply how many lines you have, and that alone is an interesting measure. The Medici are at the top with six marriages; Guadagni and Strozzi have four. More, but not a different kind of family.
+
+The spider in the web is measured better by \emph{betweenness}. Take two nodes, find the shortest path between them, and ask whether that path has to go through a particular node. Do that for every pair, and a node's betweenness is the share of shortest paths that run through it, a number between $0$ and $1$. The Medici score $0.52$, twice the next family: about half of the shortest routes between other families run through them. If you are with the Pazzi and want to reach the Lamberteschi, you go through the Medici. Families with low betweenness are ones you rarely need: from the Castellani you can reach most families just as quickly without them. Some families score exactly zero, because no route ever needs them. A hub position is a strong one: a middleman who can control what passes, and so has power. That is the outlier, and it is an outlier in a column that only exists in the network.
+
+The third measure is about triangles: are your friends friends with each other? The Peruzzi are connected to the Castellani, the Strozzi and the Bischeri, and those families mostly married each other too: two thirds of the pairs among the Peruzzi's in-laws are connected, so their \emph{clustering coefficient} is $0.67$. That embeds them strongly in a closed bloc of old families. The Medici score $0.07$: the families they married hardly married each other. So the Medici were the middleman, but not embedded in a tight network. Every alliance went through them, and their partners could not coordinate without them.
+
+In class someone asked whether betweenness belongs with the hubs or with the outliers. With the hubs: betweenness is the measure that tells you what the hubs are, and the clustering coefficient measures the triangles. The outliers come from putting measures side by side: the Medici are an outlier on betweenness and not at all on clustering, and that contrast is the finding. A broker has high betweenness and low clustering.
+
+One caution about the data. The marriages are not all the ties there were: the families also formed business alliances, and those are missing from this graph. To really explain what happened in Florence you would need them too. A network can only show the relations you put in it.
+
+\subsubsection{Are your friends friends with each other?}
+The clustering coefficient of a person counts the pairs among their friends who know each other, and divides by the number of pairs there could be (figure~\ref{fig:triads}):
+\[
+C_i = \frac{\text{pairs of friends of } i \text{ who know each other}}{\text{all pairs of friends of } i}.
+\]
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{lesson7/triads.png}
+\caption{One person, five friends. Closed: 7 of the 10 pairs know each other, $C = 0.7$. Open: 1 of 10, $C = 0.1$.}
+\label{fig:triads}
+\end{figure}
+
+Among five friends there are ten possible pairs. On the left seven of them know each other: a closed circle. On the right one does: an open circle, held together only by the person in the middle.
+
+The reason this matters is \emph{triadic closure}, one of the oldest observations in sociology: two people with a friend in common tend to become friends. They meet at that friend's birthday, they hear about each other. So real social networks have far more triangles than random ones. And a closed circle has its advantages: your birthday party is not a room of strangers who start arguing, and you can easily arrange to meet the whole group.
+
+Sociology reads the difference between closed and open in two ways. James Coleman (1988) saw closure as social capital: when your friends know each other, they share norms, trust each other and notice when something is wrong. Closed gives support and trust. Ronald Burt (1992) found social capital in the open circle instead: whoever sits between people who do not know each other hears more, and decides what passes between them. Open gives control. The Medici are Burt's case. The same coefficient can mean opposite things, so a network measure says nothing without knowing what its ties carry.
+
+\subsubsection{A small world: closed circles, and a few shortcuts}
+Hubs and triangles together give one of the best-known results in network science (figure~\ref{fig:small-world}). Start from a world of closed circles: a thousand people on a ring, each with ten friends, their nearest neighbours, who also know each other. Clustering is high, but a message from one side of the ring to the other has to walk all the way round. Now rewire a small share of the edges to random strangers.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson7/small_world.png}
+\caption{Left: a ring with three shortcuts. Right: for 1,000 people with 10 friends each, clustering and mean distance against the share of edges rewired, relative to the ring without shortcuts.}
+\label{fig:small-world}
+\end{figure}
+
+At one percent rewired, the mean distance between two people has dropped to a fifth, while clustering is still at $98\%$ of what it was. A few shortcuts are enough to make the whole world close, without opening anyone's circle (Watts and Strogatz, 1998). That combination, high clustering and short paths, is called a \emph{small world}, and real social networks are small worlds. It is where ``six degrees of separation'' comes from: everyone has shaken hands with hundreds of people, so a chain of about six handshakes reaches nearly anyone in the world. Or the Wikipedia game: someone names a random page, the aurochs, and another, the port of Rotterdam, and whoever finds a route of links from one to the other fastest wins. There is always a route within five or six clicks. Facebook measured its own network in 2011: $721$ million people, and on average $4.74$ steps between two of them. You would not expect it to be that low.
+
+What follows from it: anything that spreads person to person, news, a rumour, a virus, crosses even a huge network in a few steps, through its hubs and brokers. That is also why hubs and brokers have so much control over the flow of information: the network leans on those few to keep its distances short. And a caution for your own analysis: a short average distance in your chat is not a finding; every social network has one.
+
+\subsubsection{An open friendship circle, and thoughts of suicide}
+How far a network measure can reach. Bearman and Moody (2004) used a large American survey in which $13{,}465$ students in grades 7 to 12 named their friends, so the researchers could build the friendship network of each school. For every student they counted the friends of their friends, and asked which share of those are not the student's own friends: the triangles around you that did not close. The paper calls it \emph{intransitivity} (figure~\ref{fig:open-circle}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{lesson7/open_circle.png}
+\caption{Two made-up friendship circles. Closed: intransitivity 0.08. Open: 0.80.}
+\label{fig:open-circle}
+\end{figure}
+
+The outcome was a survey question: in the past twelve months, did you ever seriously think about suicide? For girls, a fully open circle against a fully closed one meant $2.2$ times the odds, where $1$ means no difference, with isolation, depression and self-esteem held equal. Isolation, the risk you would expect, counts too: $2.0$. But the striking part is that the open circle is at least as strong, and it is about girls who \emph{do} have friends.
+
+In class someone asked whether that means you don't really belong to the group. Not quite: you are in a group, but the group is not tight. Take two girls who both know ten people. One knows ten people who do not know each other; the other knows ten people who all know each other. Having friends does not protect you if they do not know each other. For boys neither effect was found, and the authors hardly explain why. For boys as for girls, what did count was a friend's suicide attempt: $2.7$ times the odds.
+
+Two cautions. It is a survey at one moment, so it shows an association, not which came first. And the point for us is the method: a number that only exists in the network said something that the individual columns, including a depression score, did not.
+
+\paragraph{You are who you know.} This is also why social networks are so pleased with metadata. Suppose I want to know your political preference, and you have decided never to share it on Facebook because it is private. I can still guess it quite well by looking at your social surroundings and what they share. The same goes for much of what we consider private: you do not have to leak anything yourself to be targeted. Another example: the motion sensor of your phone alone, the way you move, turns out to predict depression. If that can be read from movement alone, imagine what can be read from when you are online and whom you talk to: exactly the metadata a chat app has. That is part of why such an app can be free.
+
+\subsubsection{How you construct an edge has impact downstream}
+Now the other side: a measure that adds nothing (figure~\ref{fig:wdegree}). Under the nearby rule, the \emph{weighted degree} of a person counts how many times someone else wrote within ten minutes of them.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{lesson7/wdegree.png}
+\caption{Each dot a person in \#ubuntu-uk, on log axes. Across: messages sent in 2015. Up: weighted degree under the nearby rule.}
+\label{fig:wdegree}
+\end{figure}
+
+The cloud is a straight band across four orders of magnitude. Of course it is: someone who posts a lot always posts close to other people, whether or not they interact with anyone. The more you write, the more often someone happens to write near you. So ``this person is the most central in the channel'' says the same as ``this person wrote the most messages'', which you knew from a \texttt{value\_counts} in lesson one. You can compute a centrality on such a graph, but then ask what you are measuring. The choice of your network has all kinds of downstream effects on the statistics you compute from it.
+
+That is the test for every network measure you report: put it next to a column you already had, here the message count, and draw the scatter. If it is a line, say so and drop the measure. If people break away from the line, those are the interesting ones.
+
+\subsubsection{Is the line carried by the loudest few?}
+One fair doubt about that scatter: a handful of accounts sent thousands of messages, and an ordinary (Pearson) correlation weighs every point by how far it lies from the mean. So a straight line could be carried by those few, with the crowd doing something else. That is what ranks are for (figure~\ref{fig:spearman}). Give the busiest person rank 1, the next rank 2, on both columns, and correlate the ranks:
+\[
+\rho = \operatorname{corr}\bigl(\operatorname{rank}(x),\ \operatorname{rank}(y)\bigr).
+\]
+That is Spearman's $\rho$. Eleven thousand messages buy the top rank and nothing more, so every person has one vote, and $\rho$ asks whether the order holds for the whole crowd.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson7/spearman.png}
+\caption{Rank against rank. Left, what we got: weighted degree against messages. Right, synthetic: a random crowd with six loud accounts.}
+\label{fig:spearman}
+\end{figure}
+
+On the left, what we got: Pearson $0.99$, Spearman $0.92$. The order holds all the way down, so it is not just a few outliers that make the relation. On the right, what the other answer would have looked like, made up and labelled as such: a random crowd and six loud accounts on one line. Pearson says $0.99$, because that small group of very active accounts pushes it up; Spearman says $0.01$. Then ``central means busy'' holds for the top six and for nobody else. When you want to express that difference, you need Spearman.
+
+\subsubsection{Which degree adds something?}
+So weighted degree is a message counter. Is there a degree that is not? Plain \emph{degree} counts something else: how many different people you were near, however often (figure~\ref{fig:degrees}). The two sound almost the same. One counts every message, the other only people.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson7/degrees.png}
+\caption{People ranked by messages across. Left: weighted degree up. Right: plain degree up. Marked: the bot and 24 visitors with one to three messages.}
+\label{fig:degrees}
+\end{figure}
+
+Mark the same people in both panels: the bot, and $24$ visitors who wrote one to three messages. Under weighted degree they stay in the band; the bot sits right on the diagonal. Under plain degree they leave it: the bot climbs seventy places, and the visitors a median of $148$, because their few messages landed in a busy ten minutes and every person writing then became a neighbour. A visitor with one to three messages is hard to find in the left panel, and with a slightly different measure they suddenly lie far off the diagonal.
+
+So plain degree, at $\rho = 0.76$, does add something to the message count, and what it adds is presence: being there when others are talking, not talking with them. A list of people who are everywhere and say little is worth looking at, and the bot is the first name on it. It is a very small tweak in how you measure, and it suddenly shows something the other measure hides. The order of work: put the measure next to a column you already had, and when people leave the line, look at who they are before you give the measure a name.
+
+\subsubsection{Does the window decide who is central?}
+A second use of Spearman, and a different question. Not whether a measure adds something, but whether a result survives a choice you made (figure~\ref{fig:window-ranks}). A longer window adds edges, mostly bystanders. If it also reshuffles who has the most, ``most central'' is a fact about the window. So rebuild the graph at one, five, ten and thirty minutes, rank everyone by degree each time, and follow the people at the top.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{lesson7/window_ranks.png}
+\caption{Rank by degree at windows of 1, 5, 10 and 30 minutes, for everyone who reaches the top ten at any window.}
+\label{fig:window-ranks}
+\end{figure}
+
+The same five people are the top five at every window. They swap places among themselves, between one and five minutes and again later, but the structure stays intact. Spearman against the ten-minute ranking: $0.92$ at one minute, $0.98$ at five, $0.95$ at thirty. For the top five it hardly matters which window you take; you can play with the window freely. Lower down people do move: one climbs from 14th at one minute to 7th at ten. A claim about who moves from place 15 to place 10 needs much more thought: what noise are you pulling in by turning the window up?
+
+Why this matters. With a network you have a lot of knobs: the window, messages or names, counting every message or not, weighted or not. Before you know it you are turning all of them, you see something, and you say: there, I found something, now stop, don't touch it. For a course assignment that may get you a nice plot. But in your work, when you investigate something complex and doubt it yourself (I think I found a network effect, but how solid is it?), people will rightly say: ``but you chose a window of ten minutes''. If you have done this check, you can answer: I looked at that, and for the top five it does not matter. That is a much more solid way to say something. Had the lines crossed wildly, the analysis would not be wrong: a short window misses conversations, a long one adds bystanders, and neither is the true network. It would mean the ranking belongs to the window, so you report it with its window and show who moves.
+
+\againconcretely
+Hubs: some nodes hold a network together. Betweenness found the Medici, who were not the biggest family but the one every route ran through; and a few such shortcuts are why even a huge network is only a few steps across. Connectedness: whether the people around a node know each other, counted in triangles, which can tell you a lot about how close a group is. Outliers: many measures in a chat say nothing new, because activity drives everything. So put each measure next to a column you already had and draw the scatter. The line repeats the column; the people off the line are the finding, if the ranking survives your window.
+
+% ─────────────────────────────────────────────
+\subsection{Graph or heatmap?}
+\label{sec:graph-or-heatmap}
+There are two ways to look at a network, and they complement each other. The drawing, dots and lines, is what everyone expects, and it is good at paths, hubs and bridges. But a drawing has a \emph{layout}, and the layout is an algorithm in itself, usually with a random seed in it: position in the picture is not data. The matrix is a heatmap: one row and one column per node and a coloured cell for every edge. It needs no layout, and nothing gets tangled up in it. What it hides is paths, and the order of its rows is a choice too, one we will play with. In the end the question is what story you want to tell, and one is simply better suited than the other.
+
+\subsubsection{One graph, two layouts, identical degrees}
+One network, the mention graph of the people with at least six conversation partners, drawn twice (figure~\ref{fig:layouts}). Colour and size are degree, the same in both panels; only the positions differ. In networkx this is choosing \texttt{spring\_layout} or \texttt{circular\_layout}. Exactly the same data; nothing in the data changed.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson7/layouts.png}
+\caption{The same network in a spring layout (left) and a circular layout (right).}
+\label{fig:layouts}
+\end{figure}
+
+The spring layout treats every edge as a spring and every node as a charge that pushes the others away, and lets the system settle: the hubs, which have many springs, are pulled into the middle. The circular layout puts all nodes on a circle in the order they come, so the hubs sit on the rim with everyone else. The layout algorithm has parameters of its own as well, which make the picture looser or tighter.
+
+In class someone remarked that the spring layout gives a better feeling of what belongs together. I am not saying one is good and the other bad. The point is that a layout is just some algorithm, and it says less about the data than it seems to. Each time you draw it, it looks different. A sentence like ``she is on the edge of the network'' is true in one panel and false in the other, so it is a sentence about the layout, sometimes no more than a quirk of the algorithm you chose. Say what the data says: the node's degree, or how many steps it is from the busiest person.
+
+\subsubsection{The same network as a matrix}
+The same people, the same edges, as an adjacency matrix with the most connected people first (figure~\ref{fig:hubmatrix}). A cell is coloured when the two mentioned each other, and darker the more often.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\textwidth]{lesson7/hubmatrix.png}
+\caption{The mention graph as a matrix, people sorted by degree. The vermilion lines mark off the core.}
+\label{fig:hubmatrix}
+\end{figure}
+
+Sorting the rows gives a pattern that is much harder to see in the drawing. The top-left corner is dark: the busiest people all talk to each other. The top rows and the left columns are long bands: the busiest people also talk to almost everyone else. And the bottom-right, the conversations among the less busy people, is nearly empty. You see which groups talk a lot to each other and which hardly at all.
+
+The vermilion lines mark off the \emph{core}, and where to draw them is not a matter of taste. The $k$-core of a network is the largest group in which everyone is tied to at least $k$ others of that group. You find it by peeling: remove everyone with fewer than $k$ ties, which lowers the count of their neighbours, remove whoever drops below $k$ next, and repeat until nobody drops out (the notebook has a cell that does it). The highest $k$ that leaves anyone here is $19$: $25$ people, each tied to at least $19$ of the others, one big cluster. Inside the lines $91\%$ of the pairs talk; their rows run on to $35\%$ of everyone else; among the rest only $5\%$ of pairs talk. That is the shape of a hub network, a channel where questions go to a few regulars. The spring layout let you guess it with its star; the matrix lets you read it off. All of that pattern comes from nothing more than sorting the columns.
+
+\subsubsection{Sometimes the drawing wins}
+The intercity network is sparse, each station has two or three direct connections, and it has a layout that is not made up (figure~\ref{fig:trains-matrix}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.36\textwidth]{lesson7/ex_trains.png}\hfill
+\includegraphics[width=0.45\textwidth]{lesson7/trains_matrix.png}
+\caption{The intercity network on the map, and as a matrix with the stations ordered north to south.}
+\label{fig:trains-matrix}
+\end{figure}
+
+I think most people prefer the map when they want to take the train. Technically the railways could print matrices like this one, but I doubt many travellers would be happy with it. Try it anyway: navigate the matrix from Zwolle to Eindhoven. From Zwolle you can go to Groningen and to Amersfoort; from Amersfoort to Amsterdam and Utrecht; but how do you get to Eindhoven? You would have to work backwards from Eindhoven's row. It is a real puzzle. On the map it takes a glance: Zwolle, Amersfoort, Utrecht, Den Bosch, Eindhoven. The matrix does show some interesting little clusters, but here the drawing shows them better too. For a small, sparse network with real geography, draw it.
+
+\subsubsection{Sometimes the matrix wins}
+The opposite case: the eight busiest people in the channel, and who names whom, with the direction kept (figure~\ref{fig:dense}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson7/dense.png}
+\caption{The eight busiest people: a ring of arrows, and a matrix with the person who typed the name as the row and the person named as the column.}
+\label{fig:dense}
+\end{figure}
+
+As a drawing it is fifty arrows on top of each other, and pre-attentive processing quickly concludes: everyone talks to everyone, and two of them talk a lot. That is about where it stops. In the matrix, things stand out that you would not otherwise notice. One column is full and its row is almost empty: zmoylan-pi is named $332$ times by the other seven and names them $4$ times. A person people talk to, who answers without typing names. In the drawing you would have to see that in the direction of the arrows, and it does not stand out at all. You also see who names others fanatically, and which pairs talk to each other most, with a small asymmetry between them. A dense, weighted, directed network is a table of numbers, and a table of numbers is what a heatmap is for. Your WhatsApp group of six or eight friends is very likely this case.
+
+\subsubsection{A dashboard: ask your agent for one}
+The rule, the window, the threshold: every decision in this question is a number you would like to drag and watch the network answer (figure~\ref{fig:dashboard}). In earlier years this lesson taught Streamlit, a Python package for building dashboards. While preparing the lesson it struck me that it is now much easier to ask an agent to build one, so I gave a subagent the prompt from the slide and looked at what came back. It is in the repository as \texttt{dashboards/lesson7-dashboard.html}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{lesson7/dashboard.png}
+\caption{A dashboard built by an agent: a switch for the rule, sliders for the window and the minimum weight, the graph and the matrix side by side.}
+\label{fig:dashboard}
+\end{figure}
+
+The prompt asked for a force-directed graph on the left and the adjacency matrix on the right, always the same edges; a switch for the rule, a slider for the window and one for the minimum weight; hovering a person highlights them in both views; and a caption with the rule, the window, the threshold and the number of edges left. Notice that it asks for both views side by side, which is this whole question. The division of labour matters: the network is computed in the notebook, where you can check it, and the page only draws the numbers. And check what comes back, because the agent will not: move the window slider and see whether the edge count changes, and make sure the decisions are in the caption, because a screenshot of a dashboard travels without its sliders.
+
+If you are asking yourself what a good window is, this is how I would find out: interactively, turning the knobs and seeing what happens. It is a good way to explore the structure of your own data, of different topics too.
+
+\againconcretely
+Draw every network twice, as dots and lines and as a matrix. They both tell a story, and neither is good or bad in general. The drawing is best at paths and hubs, but its positions are invented by a layout, so never describe a node by where it sits. The matrix has no layout, never tangles and shows weights and direction, and once you sort its rows by degree or by group its shape becomes readable. A sparse network with real geography wants the drawing; a dense, weighted one wants the matrix. It is up to you to pick the one that tells your story best.
+
+% ─────────────────────────────────────────────
+\subsection{Can an algorithm find the groups?}
+\label{sec:finding-groups}
+Networks often fall apart into groups: friend circles, departments, factions. You can see that by eye, in a drawing as clumps with few lines between them, or in a matrix sorted the right way as blocks along the diagonal. With graphs the size of yours that still works: the small graphs of a chat you can simply look at, and say ``there is a cluster''. But graphs can be very large.
+
+An example from my own work. An international company had factories all over Europe, and machines in those factories that must not stand still: a machine that stops costs something like $200{,}000$ euros of turnover a day. So every factory kept spare parts in stock. But a part's name and number came from the local supplier. The factory in France had its rings and springs from a French supplier, with a French description and a French article number; the factory in Greece had a Greek supplier who had simply started numbering at 1. Does the company buy the same parts all over Europe? Probably, but nobody had any idea. So the question was whether we could match parts that are the same, which gave a graph of some $80$ million edges, full of clusters. Many clusters were neat. Some held $15{,}000$ parts, and we knew those were wrong, because they contained both batteries and coffee mugs. Somewhere an error in the matching connected things that did not belong together. To find it, we computed betweenness: like the Medici, the parts in the middle of such a cluster are the ones that make it so large, and finding them showed which part tied the batteries to the coffee mugs. At that size you cannot look; $80$ million nodes on a screen is a screen full of black dots. That is where algorithms come in.
+
+An algorithm that finds groups you could already see is not redundant either: it is a confirmation, it makes the boundary precise, and it tells you who sits on it. The strongest case is when the groups also match something measured separately from the network.
+
+\subsubsection{A karate club that split in two}
+The most famous small network in the field (figure~\ref{fig:karate}). In the early 1970s the anthropologist Wayne Zachary studied a university karate club for two years, and recorded which of its $34$ members met each other outside the lessons: who trained with whom, who had lunch with whom. During that time a conflict grew between the instructor and the club's president, and the club split in two: the instructor started a new club, and every member chose a side. So this network comes with an answer that was not part of it.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson7/karate.png}
+\caption{Zachary's karate club, 34 members and 78 friendships. Left: coloured by the club each member joined. Right: coloured by an algorithm that was given only the lines. Member 8 is ringed.}
+\label{fig:karate}
+\end{figure}
+
+You can already see in the drawing where the dividing line will run. On the left, the data: the club each member actually joined. On the right, a cut through the same lines, nothing else. They differ in one member: the algorithm puts member 8 on the president's side, and in reality member 8 stayed with the instructor. But member 8 also sits literally in between the two groups; I can vividly imagine the sleepless nights over which club to join. A student pointed out that there is an explanation outside the network, and Zachary's account gives it: member 8 was only weeks away from a black belt under the instructor. No algorithm on these lines could have found that.
+
+\subsubsection{One eigenvector predicts the split}
+How the cut is made (figure~\ref{fig:karate-matrix}). You do not have to remember this; what matters is the idea. Write the club as a matrix. Besides the adjacency matrix $A$, which has a cell for every link, make the degree matrix $D$, which only has numbers on its diagonal: how many links each member has. Subtract one from the other:
+\[
+L = D - A.
+\]
+Why that works is too long a story for this course, but $L$, the \emph{Laplacian} of the graph, has eigenvectors that describe the graph's shape, and computing them is a relatively simple piece of linear algebra. The first one tells you nothing for a network that hangs together as one piece, as this club does before the split. The second one, the \emph{Fiedler vector}, gives every member a number such that members connected to each other get similar numbers. Split the members by the sign of that number and you cut the graph in two with few edges between the halves.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson7/karate_matrix.png}
+\caption{The karate club as a matrix. Left: members in random order. Right: sorted by the Fiedler vector.}
+\label{fig:karate-matrix}
+\end{figure}
+
+On the left, member 1, member 2, member 3, in a random order: no structure. On the right, the same matrix sorted by the Fiedler vector: the matrix orders itself into two dense blocks on the diagonal, with few cells between them. That is what a group looks like in a matrix, the same two clumps the drawing showed. And the cut agrees with history: $33$ of $34$ members land on the side they actually joined.
+
+What I find interesting about it: there is no machine learning in it. Nothing to train, nothing to learn, no random process. You need the matrix, you compute its statistics, and they tell you how to order it, and then you have your groups. That makes it very cheap. The one drawback is that you need the whole matrix at once. If you are Facebook, with $700$ million people, the matrix is far too big, and every time someone joins you have to start again. But for small, manageable graphs it is a very elegant method.
+
+\subsubsection{Louvain maximises modularity}
+The Fiedler vector cuts in two. For more groups the standard tool is \emph{louvain}, named after the Belgian university where it was developed, and it optimises a score you should be able to read: \emph{modularity}, $Q$:
+\[
+Q = \frac{1}{2m} \sum_{ij} \left( A_{ij} - \frac{k_i\, k_j}{2m} \right) [\,c_i = c_j\,].
+\]
+In plain words: the edges inside your groups, minus the edges you would expect there if the same nodes, with the same degrees, were wired at random. $A_{ij}$ is the edge that is there, $k_i k_j / 2m$ the edge you would expect from the degrees alone, and the bracket only counts pairs in the same group. So $Q = 0$ means no more inside the groups than chance. The karate club divided into the two clubs it actually split into scores $Q = 0.36$.
+
+Louvain searches for the division with the highest $Q$. It tries assigning members to groups: what if you are in group A and you in group B, and what if you move to B? Each node in turn joins the neighbouring group that raises $Q$ most, until no single move raises it; then every group becomes one node, and it does the same again. It is a greedy search: it finds a high $Q$, not guaranteed the highest, and it decides the number of groups itself.
+
+\subsubsection{Louvain on the words: five topics}
+Back to the words of the chat from question two (figure~\ref{fig:words-louvain}). I gave louvain the network of $23$ words and asked it to look for clusters.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{lesson7/words_louvain.png}
+\caption{The 23 words as a matrix, sorted by louvain's five groups, each named beside it.}
+\label{fig:words-louvain}
+\end{figure}
+
+It finds five, with $Q = 0.20$, and the check is to read them: hardware, phones and browsers, drivers and games, going out, the weather. It is not perfect. Coffee and car sit with the phones and browsers, which looks wrong; BBC sits with the hardware. In class someone suggested that this may not be wrong at all: the edges are about what people talk about in the same conversation, and for this group of people it may well make sense. It might. The point is that you get a sensible division for free, one you would otherwise have to dig out yourself, and that you still read it before you believe it.
+
+\againconcretely
+Can an algorithm find groups? Yes. Look first: clumps in the drawing, blocks in a matrix sorted by the groups. The Fiedler vector cuts a graph in two, cheaply and without any training, as long as the whole matrix fits; louvain finds as many groups as raise modularity. The karate club is the good case: the picture, the algorithm and the split that actually happened all agree, and they were obtained separately. Most networks do not come with that third thing, and then you need the checks of the next question.
+
+% ─────────────────────────────────────────────
+\subsection{Are the groups real?}
+\label{sec:groups-real}
+This is something we have seen again and again, in all seven lessons: a method that always finds groups. Last lesson you could let k-means loose on a cloud and ask for three, and you got three groups. Louvain always finds clusters too: every network has a division with an optimal $Q$, and louvain searches until it has it. So a method that always finds groups is no evidence that there are any. Three checks:
+
+\begin{itemize}
+\item \textbf{Nothing.} Run the same method on the network rewired at random, every degree kept. That is the null model.
+\item \textbf{Triangles.} Friends of friends make clumps that beat that null without any groups behind them.
+\item \textbf{Another period.} Real groups come back when the same rule runs on another part of the data.
+\end{itemize}
+
+\subsubsection{Louvain colours every network into tidy clumps}
+An experiment where we know the answer, because we built the network (figure~\ref{fig:introductions}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson7/introductions.png}
+\caption{Louvain's communities in two networks without groups. Left: random friendships, 102 edges. Right: the same people after friends introduced their friends, 261 edges.}
+\label{fig:introductions}
+\end{figure}
+
+On the left, a hundred strangers with random friendships: no groups, by construction. Louvain colours it into communities anyway, and some of them, like the clump at the top right, look like a group to us as well. I had a discussion about this with Claude while making the figure: even though the network is random, I still find some of those clumps quite defensible as a group. You can argue about whether one clump is really a different group from the next. But that is the point: louvain and our eye are fooled by the same thing, edges that happen to fall close together. You cannot trust it blindly.
+
+On the right, the same people after one round of introductions: everyone introduces pairs of their friends to each other. That is triadic closure, done on purpose. There are still no groups; nobody chose a side. But louvain's clumps look tighter and more convincing than before.
+
+\subsubsection{Is Q more than chance? Rewire and compare}
+Louvain gives a $Q$ for every network, random ones too, so a $Q$ on its own says nothing. You need to know what $Q$ the same network would get if it had no groups. The test: rewire the network at random, in a way that keeps one thing fixed: everyone keeps their number of links. If you talk to five people in the network, you still talk to five people in the copy, only five different ones; the lines are moved at random. Do that twenty times, run louvain on each copy too, and see where the real network lies (figure~\ref{fig:nullmodel}):
+\[
+z = \frac{Q - \operatorname{mean}(Q_{\text{rewired}})}{\operatorname{sd}(Q_{\text{rewired}})}.
+\]
+Real groups should beat their copies by many standard deviations.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{lesson7/nullmodel.png}
+\caption{Modularity of five networks (vermilion) against twenty rewired copies of each (grey).}
+\label{fig:nullmodel}
+\end{figure}
+
+The karate club: $z = 11$, far above its copies, which makes it very unlikely that its groups are a pattern found by chance. The Florentine families: $z = 0.6$, hardly different from their copies, so I would distrust the groups louvain finds there much more than those of the karate club; the Medici network was a broker network, not a set of factions. The random graph: its $Q$ of $0.70$ is the highest on the plot, and the test rightly says it is nothing, $z = 1$. So far the test works.
+
+The catch is the fourth row. The same random graph after introductions scores $z = 25.6$, more than twice the karate club, and we know it has no groups. The reason is what the shuffle destroys. It keeps everyone's number of friends, but not the triangles, and triadic closure is a natural process that made a lot of them. Randomising breaks that structure, so the real network stands far above its copies. Any network with many triangles passes this test, and social networks always have many triangles.
+
+\subsubsection{Finding hubs typically needs support from additional data}
+The matrix as a check on communities (figure~\ref{fig:squares}). Sort it by louvain's communities, the most connected person first within each, and draw the borders between communities.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{lesson7/squares.png}
+\caption{Matrices sorted by louvain's communities. Left: the karate club. Right: the IRC mention graph, 256 people.}
+\label{fig:squares}
+\end{figure}
+
+In the karate club, two squares that are filled: the hubs' rows stop at the border, and inside a block the other members know each other too. That is what a group is: people who know each other, more than they know the rest. The chat looks different. Each community is a corner with one dark row along its top and one dark column down its left, and very little inside: a hub and the people who address the hub, who do not talk to each other. Louvain has to cut a network of people who all talk to the same few regulars somewhere, and it cuts where the hubs' circles overlap least. Whether such a block is a group needs support from something other than the cut itself.
+
+\subsubsection{Do the groups come back?}
+The oldest check in science: does it come back? Find the communities in the chat for January to June, find them again for July to December, and compare who ends up together (figure~\ref{fig:chat-halves}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{lesson7/halves.png}
+\caption{The 80 people active in both halves of 2015: their community in January to June against their community in July to December.}
+\label{fig:chat-halves}
+\end{figure}
+
+If the groups were stable, each row would have one dark cell. Only the first has anything like it; the other groups spread over the second half of the year, and a large part of the clusters disappears. The adjusted Rand index, a score that is $1$ for the same division and $0$ for chance, is $0.08$. That is an indication that these clusters are not stable.
+
+In class someone made a good point: friend groups change over time too, and that does not mean they were never a group. Exactly. It could be chance that the groups changed, or the groups may simply have changed. This is the situation with all the statistics we do in this course. You see patterns, and you keep asking whether this is chance or not. You can make it more plausible that something is not chance, but you can never exclude it entirely; there is never one hundred percent certainty.
+
+\againconcretely
+A coloured drawing and a high $Q$ prove very little: give louvain a random graph and it still finds colours and groups. That it finds something is guaranteed. What you can do is apply tricks, shuffling and comparing, to make it plausible that the structure you found is not random. Compare with a rewired null, and remember that it does not control for triangles, which social networks are full of. Look at the matrix sorted by the communities: a real group is a filled square, not a hub with its audience. And see whether the communities come back in another period or with another rule. The karate club passed all three. The chat passed none convincingly, and saying so is a valid result.
+
+% ─────────────────────────────────────────────
+\subsection{A network analysis in four steps}
+\label{sec:lesson7-steps}
+The plan for your plot this week, which is also what the goad coach walks you through when your question is about connections:
+
+\begin{enumerate}
+\item \textbf{Brainstorm.} Try several kinds of node and relation, not only people: topics, places, anything. Each is a rule with a window and a threshold; pick the one your question needs.
+\item \textbf{Draw both.} Put the drawing and the matrix side by side, and let the clearer one carry the point. If you have a drawing and think ``it's interesting, but what story is in it?'', see whether the matrix adds something.
+\item \textbf{Measure what it adds.} Who or which topic has the highest betweenness? Where is closure high? Put each measure next to the column you had, as a scatter, not one number.
+\item \textbf{Test against nothing.} If you find groups, set them against what you would expect if it were random: a null baseline, so you know you are not hunting ghosts. If the structure disappears when you shuffle, it was real. And see whether it comes back in another period.
+\end{enumerate}
+
+% ─────────────────────────────────────────────
+\subsection{The six questions, answered}
+\label{sec:lesson7-summary}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\textbf{Question} & \textbf{Answer} \\
+\midrule
+What is a graph? & Things and their relations, $G = (V, E)$. You choose both. \\
+What are the nodes and edges in your chat? & People, places, things; every edge a rule with a window. \\
+What does a graph measure add? & Brokers and open circles, or a column you had. Draw the scatter. \\
+Graph or heatmap? & Both, side by side. Sparse wants the drawing, dense the matrix. \\
+Can an algorithm find the groups? & Yes, best as confirmation of what you saw. \\
+Are the groups real? & If they beat a null, are not just triangles, and come back. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Notebooks 07.1 to 07.3 work through the questions: 07.1 the IRC channel, the two rules, the window, a dashboard from your agent, and your own nodes and edges; 07.2 degree, betweenness, the clustering coefficient and triadic closure, a small world, Spearman against a column and across windows, layouts and the matrix; 07.3 the karate club, the Fiedler vector, louvain and modularity, the null model, the introductions experiment and the chat's communities across two halves of the year. For your project: write down at least two networks your chat contains before you build one, draw every network as a drawing and as a matrix, report a measure only with what it adds over a column you had, and run the checks before you call anything a group.
+
+What to hand in for the process step: not your whole project. Your visualisations with a piece of text around them, a short introduction and conclusion, and a link to your GitHub repository are enough. For the description of your code, the atlas picture will do, and it may take two or three pages as an appendix to your report. You can also let a GitHub workflow run atlas on every commit and publish the picture in your README or as a GitHub Pages site; then put a clear link to that walkthrough of your code in your report (section~\ref{sec:atlas-assignment}).
+
+\subsection{Feedback on your network plots}
+\label{sec:lesson7-feedback}
+In class we discussed several of your plots. The same points came back, so I collect them here.
+
+\textbf{Let the clusters come from the graph.} One plot made a topic map of a household chat: word groups per theme, in which home, food and cooking and the dogs connect everything, and also have the highest betweenness. A nice map of what the conversations are about, and of what relates to what. Pre-attentively it is somewhat messy, though. The word groups were made by hand before the graph was built, while that clustering could also come out of the graph itself. Consider showing the raw data, the original words as nodes, and pointing out the clusters with colour, found by louvain. Or colour the few nodes with the highest betweenness, and show that they all sit in the category home. And ask what the size of the dots and the thickness of the lines add: if the story is that home is the central theme, extra colours and decorations may distract from it.
+
+\textbf{When the graph is clearer, use it.} Another student drew the same network twice: people mentioned in the chat, connected when both were mentioned within thirty minutes, as a graph and as a heatmap. In the graph the two friend circles fall apart naturally into left and right, and the one line between the two mothers survives when you move the threshold slider of the dashboard: a small, clear story. A few people, like one friend mentioned with everyone, overlap both sides. Here both the class and I found the graph the stronger of the two. The heatmap in grey tones makes it hard to see anything; with another colour scale, the contrast between the many names that are rarely mentioned and the few outliers would come out.
+
+\textbf{Asymmetry belongs in a matrix, and turn the window.} One plot of a family group showed three people in the middle. Two of them have the same influence in different ways: one is a connector who often names others, the other sends many more messages for the same connections. That asymmetry does not show in a graph; a matrix would show it. The difference between the two also maps onto the difference between weighted degree, which counts messages, and plain degree, which counts people. The student chose not to look at windows, because the story was about who sits at the top of the family, not how fast people respond. A window may be chosen to fit the question, but then ask what happens to your story when you turn it. Here the story is about betweenness, so rank people by betweenness and turn the window: does the top three stay? According to the student, completely different people come up. That is exactly the interesting question to investigate.
+
+\textbf{Without a mechanism, ``more often than chance'' adds little.} One plot of a sports team connected two members when one replied within sixty minutes, counting consecutive messages from the same sender as one. The result is an almost perfect star with the team captain in the middle, with surprisingly few other lines. Two orange lines were marked as more frequent than chance. But things sometimes happen more often than chance; if you cannot name a mechanism for why these two members would interact, the orange lines tell you little. The story here is that you can see the team captain in the structure of the graph. Focus on that.
+
+\textbf{Check what a long window does to your measure.} One student asked a lovely question: who introduces a new word in the chat, and who takes it over? Who leads and who follows? The window chosen was a week, and that raises the window question again. Suppose I introduce a word in week one and you take it over; in week two you are the first to use it on Monday. By this measure you have now introduced it, and I am following you. One way out is to look over the whole period: take the $400$ or $1{,}000$ unique words, and for each, who used it first and who used it after. Then you can count, and also see something else that is interesting: if I start a new word five times and you never take it over. Another student pointed out the other side: you cannot make the window too large either, because a word that comes back three months later has hardly been ``taken over''; there has to be some closeness in time. That is exactly the knob this lesson is about. Turn it and see what happens; if it has no impact, you are free to choose. Either way, say in words why you chose it (``after three months I no longer call it taking over''). A window that adds noise is not necessarily wrong: you may say that you know it adds noise and find that acceptable.
+\newpage
+
 \section{Reading code with atlas}
 \label{sec:atlas}
 This course asks two things of your code. It has to make the plots in your report, and you have to be able to explain how it does that: in the final assignment you show me a picture of your code and walk me through it. This section explains why I ask for a picture and not for the code itself, and what atlas, the tool that draws the picture, shows you. The argument is the same one this course makes about data: a good visualisation lets you see in a second what a table of numbers hides, and code is no different.
