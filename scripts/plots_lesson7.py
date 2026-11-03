@@ -1320,19 +1320,41 @@ print(
     f"karate: Fiedler agrees with the record for {max((side == truth).mean(), 1 - (side == truth).mean()):.1%}"
 )
 kpos = nx.spring_layout(karate, seed=46)
+flipped = 1 - side if (side == truth).mean() < 0.5 else side
 fig, axes = plt.subplots(1, 2, figsize=(14, 6.2))
-draw(axes[0], karate, kpos, color=GREY_DIM, size=260, edge_color=GREY_FAINT, width=1.2)
-axes[0].set_title("who spent time with whom")
-draw(
-    axes[1],
-    karate,
-    kpos,
-    color=[ACCENT if t == 0 else SECOND for t in truth],
-    size=260,
-    edge_color=GREY_FAINT,
-    width=1.2,
+for ax, groups, title in [
+    (axes[0], truth, "the data: which club they joined"),
+    (axes[1], flipped, "the algorithm: the second eigenvector"),
+]:
+    draw(
+        ax,
+        karate,
+        kpos,
+        color=[ACCENT if g == 0 else SECOND for g in groups],
+        size=260,
+        edge_color=GREY_FAINT,
+        width=1.2,
+    )
+    ax.set_title(title)
+    # member 8, the one the cut misses: a ring around it, its name beside it
+    ax.scatter(
+        *kpos[8], s=900, facecolors="none", edgecolors=THIRD, linewidths=2.5, zorder=3
+    )
+    ax.annotate(
+        "member 8",
+        kpos[8],
+        xytext=(-34, 30),
+        textcoords="offset points",
+        ha="right",
+        va="center",
+        color=THIRD,
+        fontsize=15,
+        arrowprops={"arrowstyle": "-", "color": THIRD, "lw": 1, "shrinkB": 16},
+    )
+print(
+    f"member 8: {sum(flipped[m] == flipped[8] for m in karate.neighbors(8))} ties on its own side, "
+    f"{sum(flipped[m] != flipped[8] for m in karate.neighbors(8))} on the other"
 )
-axes[1].set_title("which club they joined after the split")
 save(fig, "karate")
 
 fig, ax = plt.subplots(figsize=(6.4, 6.4), facecolor=INK_BG)
@@ -1349,7 +1371,6 @@ nx.draw_networkx_nodes(
 ax.set_axis_off()
 save(fig, "cover", facecolor=INK_BG)
 
-flipped = 1 - side if (side == truth).mean() < 0.5 else side
 wrong = [n for n in karate if flipped[n] != truth[n]]
 shuffled = list(np.random.default_rng(0).permutation(list(karate)))
 sides = sorted(karate, key=lambda n: (side[n], -karate.degree(n)))
@@ -1362,67 +1383,53 @@ cut = int((side == side[sides[0]]).sum()) - 0.5
 for ax in [axes[1]]:
     ax.axhline(cut, color=SECOND, lw=1.5)
     ax.axvline(cut, color=SECOND, lw=1.5)
-# member 8, the one the cut misses: its row and column outlined, with its name beside the row
-row8 = sides.index(8)
-for xy, width, height in [((-0.5, row8 - 0.5), 34, 1), ((row8 - 0.5, -0.5), 1, 34)]:
-    axes[1].add_patch(
-        plt.Rectangle(xy, width, height, fill=False, edgecolor=THIRD, lw=2, zorder=3)
-    )
-axes[1].annotate(
-    "member 8",
-    (-0.5, row8),
-    xytext=(-14, 0),
-    textcoords="offset points",
-    ha="right",
-    va="center",
-    color=THIRD,
-    fontsize=15,
-    annotation_clip=False,
-)
-print(
-    f"member 8: {sum(side[m] == side[8] for m in karate.neighbors(8))} ties on its own side, "
-    f"{sum(side[m] != side[8] for m in karate.neighbors(8))} on the other"
-)
 save(fig, "karate_matrix")
 
-# louvain on the same club, in the same layout: colour is louvain's group, shape the club joined
-louvain_groups = best_partition(karate, seeds=3)
-louvain_of = labels(karate, louvain_groups)
+# louvain on the words of question two: the matrix sorted by its groups, each group named
+TOPICS = {
+    "windows": "hardware",
+    "phone": "phones and browsers",
+    "kernel": "drivers and games",
+    "beer": "going out",
+    "rain": "the weather",
+}
+topics = best_partition(together, weight="weight")
+topic_of = labels(together, topics)
+if sorted(topic_of[w] for w in TOPICS) != list(range(len(topics))):
+    raise ValueError(f"each topic name needs its own louvain group: {topics}")
 print(
-    f"karate louvain: {len(louvain_groups)} groups, Q = {modularity(karate, louvain_groups, weight=None):.2f}; "
-    f"the two clubs Q = {modularity(karate, [set(np.flatnonzero(truth == k)) for k in (0, 1)], weight=None):.2f}, "
-    f"the Fiedler cut Q = {modularity(karate, [set(np.flatnonzero(side == k)) for k in (0, 1)], weight=None):.2f}"
+    f"words louvain: {len(topics)} groups, Q = {modularity(together, topics, weight='weight'):.2f}; "
+    f"{[sorted(c) for c in sorted(topics, key=len, reverse=True)]}"
 )
-for group in louvain_groups:
-    print("  ", sorted(group), "clubs", sorted({int(truth[n]) for n in group}))
-fig, ax = plt.subplots(figsize=(7, 6.2))
-nx.draw_networkx_edges(karate, kpos, ax=ax, edge_color=GREY_FAINT, width=1.2)
-for club, shape in [(0, "o"), (1, "s")]:
-    members = [n for n in karate if truth[n] == club]
-    nx.draw_networkx_nodes(
-        karate,
-        kpos,
-        nodelist=members,
-        node_shape=shape,
-        ax=ax,
-        node_size=300,
-        linewidths=0,
-        node_color=[CATEGORIES[louvain_of[n]] for n in members],
+word_order = sorted(
+    together, key=lambda n: (topic_of[n], -together.degree(n, weight="weight"))
+)
+fig, ax = plt.subplots(figsize=(10.5, 7.6))
+matrix(ax, together, word_order, weight="weight", log=True)
+ax.set_xticks(range(len(word_order)), word_order, rotation=90, fontsize=13)
+ax.set_yticks(range(len(word_order)), word_order, fontsize=13)
+ax.tick_params(length=0)
+for tick, n in zip(
+    list(ax.get_yticklabels()) + list(ax.get_xticklabels()), word_order + word_order
+):
+    tick.set_color(CATEGORIES[topic_of[n]])
+sizes = topic_of.value_counts().sort_index()
+for e in np.cumsum(sizes.to_numpy())[:-1] - 0.5:
+    ax.axhline(e, color=SECOND, lw=1.2)
+    ax.axvline(e, color=SECOND, lw=1.2)
+for word, topic in TOPICS.items():
+    start = sizes.iloc[: topic_of[word]].sum()
+    ax.annotate(
+        topic,
+        (len(word_order) - 0.5, start + (sizes.iloc[topic_of[word]] - 1) / 2),
+        xytext=(14, 0),
+        textcoords="offset points",
+        va="center",
+        fontsize=16,
+        color=CATEGORIES[topic_of[word]],
+        annotation_clip=False,
     )
-ax.annotate(
-    "member 8",
-    kpos[8],
-    xytext=(20, 4),
-    va="bottom",
-    textcoords="offset points",
-    color=THIRD,
-    fontsize=15,
-)
-ax.scatter([], [], marker="o", color=GREY_DIM, label="joined Mr. Hi")
-ax.scatter([], [], marker="s", color=GREY_DIM, label="joined the officer")
-ax.legend(loc="lower left")
-ax.set_axis_off()
-save(fig, "karate_louvain")
+save(fig, "words_louvain")
 print(f"karate: the member on the wrong side is {wrong}")
 
 
