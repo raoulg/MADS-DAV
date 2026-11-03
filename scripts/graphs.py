@@ -102,6 +102,31 @@ def giant_component(graph: nx.Graph) -> nx.Graph:
     return induced(graph, max(nx.connected_components(graph), key=len))
 
 
+def intransitivity(graph: nx.Graph) -> pd.Series:
+    """Bearman and Moody's intransitivity index, one value per node.
+
+    Of all two-step relations from a node (a neighbour's neighbour, other than the node
+    itself), the share that are not also direct relations: the triangles around the node
+    that did not close. A friend's friend reached through two friends counts twice, as
+    in the paper (American Journal of Public Health 94(1), 2004).
+
+    A node whose neighbours have no other neighbours has no two-step relations, so the
+    share is undefined there, and it is NaN rather than a zero that looks like a
+    measurement.
+    """
+    values = {}
+    for ego in graph.nodes():
+        steps = [
+            far
+            for near in graph.neighbors(ego)
+            for far in graph.neighbors(near)
+            if far != ego
+        ]
+        open_steps = sum(not graph.has_edge(ego, far) for far in steps)
+        values[ego] = open_steps / len(steps) if steps else np.nan
+    return pd.Series(values, name="intransitivity")
+
+
 def rewired(graph: nx.Graph, seed: int = 0) -> nx.Graph:
     """A graph with the same degree sequence and nothing else of the original in it.
 

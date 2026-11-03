@@ -24,6 +24,7 @@ from scripts.graphs import (
     best_partition,
     giant_component,
     induced,
+    intransitivity,
     labels,
     rewired,
     to_graph,
@@ -784,11 +785,6 @@ save(fig, "small_world")
 
 # Bearman and Moody's intransitivity, drawn: of all two-step relations from a student (a friend's
 # friend), the share that are not also the student's own friends. Two made-up circles.
-def intransitivity(graph, ego):
-    steps = [k for j in graph.neighbors(ego) for k in graph.neighbors(j) if k != ego]
-    return sum(not graph.has_edge(ego, k) for k in steps) / len(steps)
-
-
 friends4 = ["A", "B", "C", "D"]
 closed_circle = nx.Graph(
     [("you", f) for f in friends4]
@@ -855,7 +851,7 @@ for ax, graph, title in [
         graph, pos, nodelist=outsiders, ax=ax, node_color=GREY_FAINT, node_size=380
     )
     ax.text(0, 0, "you", ha="center", va="center", color=BG, fontsize=14)
-    value = intransitivity(graph, "you")
+    value = intransitivity(graph)["you"]
     print(f"{title}: intransitivity {value:.2f}")
     ax.set_title(f"{title}: intransitivity {value:.2f}", fontsize=18)
     ax.set_axis_off()
@@ -918,9 +914,9 @@ rho_d = spearmanr(scores.degree, scores.messages).statistic
 r_d = pearsonr(scores.degree, scores.messages).statistic
 print(f"degree vs messages: spearman {rho_d:.2f}, pearson {r_d:.2f}")
 
-# Three outcomes of the same check, in rank space, where spearman lives: what the chat gave,
-# a made-up crowd whose few loud accounts carry Pearson alone, and plain degree, where people
-# leave the diagonal. Rank 1 is the fewest, so "more" is up and to the right.
+# Two outcomes of the same check, in rank space, where spearman lives: what the chat gave, and
+# a made-up crowd whose few loud accounts carry Pearson alone. Rank 1 is the fewest, so "more"
+# is up and to the right.
 crowd = np.random.default_rng(7)
 fake = pd.DataFrame(
     {
@@ -935,49 +931,28 @@ r_fake = pearsonr(fake.x, fake.y).statistic
 rho_fake = spearmanr(fake.x, fake.y).statistic
 print(f"synthetic crowd: pearson {r_fake:.2f}, spearman {rho_fake:.2f}")
 
-ranks = scores.rank()
-visitors = scores[(scores.messages <= 3) & (scores.degree >= 5)].index
-print(f"{len(visitors)} accounts with at most 3 messages and at least 5 neighbours")
-print(
-    f"lubotu3`: rank {scores.degree.rank(ascending=False, method='min')['lubotu3`']:.0f} by degree, "
-    f"{scores.messages.rank(ascending=False, method='min')['lubotu3`']:.0f} by messages, "
-    f"{scores.weighted_degree.rank(ascending=False, method='min')['lubotu3`']:.0f} by weighted degree"
-)
-fig, axes = plt.subplots(1, 3, figsize=(17, 5.9))
-panels = [
-    (
-        ranks.messages,
-        ranks.weighted_degree,
-        "weighted degree",
-        "what we got",
-        r_w,
-        rho_w,
-    ),
-    (
-        fake.x.rank(),
-        fake.y.rank(),
-        "",
-        "synthetic: Pearson high, ρ low",
-        r_fake,
-        rho_fake,
-    ),
-    (
-        ranks.messages,
-        ranks.degree,
-        "degree",
-        "plain degree: people leave the line",
-        r_d,
-        rho_d,
-    ),
-]
-for ax, (x, y, ylabel, title, r, rho) in zip(axes, panels):
+
+def rank_panel(ax, x, y, title, r, rho):
     ax.plot([0, len(x)], [0, len(x)], "--", color=GREY_FAINT, lw=1.2, zorder=0)
     ax.scatter(x, y, s=20, color=ACCENT_LIGHT, alpha=0.7, linewidths=0)
     ax.set_title(f"{title}\nPearson r = {r:.2f}, spearman ρ = {rho:.2f}", fontsize=15)
     ax.set_xticks([])
     ax.set_yticks([])
+
+
+ranks = scores.rank()
+fig, axes = plt.subplots(1, 2, figsize=(12, 5.9))
+rank_panel(axes[0], ranks.messages, ranks.weighted_degree, "what we got", r_w, rho_w)
 axes[0].set_xlabel("rank by messages sent  →")
 axes[0].set_ylabel("rank by weighted degree  →")
+rank_panel(
+    axes[1],
+    fake.x.rank(),
+    fake.y.rank(),
+    "synthetic: Pearson high, ρ low",
+    r_fake,
+    rho_fake,
+)
 axes[1].scatter(fake.x.rank()[:6], fake.y.rank()[:6], s=70, color=SECOND, zorder=3)
 axes[1].annotate(
     "six loud accounts\nnear one line",
@@ -991,38 +966,76 @@ axes[1].annotate(
 )
 axes[1].set_xlabel("rank by x  →")
 axes[1].set_ylabel("rank by y  →")
-axes[2].scatter(
-    ranks.messages[visitors],
-    ranks.degree[visitors],
-    s=26,
-    color=SECOND,
-    alpha=0.8,
-    zorder=3,
-)
-axes[2].scatter(
-    ranks.messages["lubotu3`"], ranks.degree["lubotu3`"], s=110, color=SECOND, zorder=4
-)
-axes[2].annotate(
-    "lubotu3` (a bot)",
-    (ranks.messages["lubotu3`"], ranks.degree["lubotu3`"]),
-    xytext=(0, 14),
-    textcoords="offset points",
-    ha="center",
-    color=SECOND,
-    fontsize=13,
-)
-axes[2].annotate(
-    f"{len(visitors)} visitors: 1–3 messages,\n5 or more neighbours",
-    (0.02, 0.98),
-    xycoords="axes fraction",
-    ha="left",
-    va="top",
-    color=SECOND,
-    fontsize=13,
-)
-axes[2].set_xlabel("rank by messages sent  →")
-axes[2].set_ylabel("rank by degree  →")
 save(fig, "spearman")
+
+# The same check on two degrees: weighted degree grows with every message sent, plain degree
+# counts distinct people. The bot and the visitors are marked in both panels, so the reader can
+# see that they stay on the line in one and leave it in the other.
+visitors = scores[(scores.messages <= 3) & (scores.degree >= 5)].index
+by_rank = scores.rank(ascending=False, method="min")
+climb_w = by_rank.messages - by_rank.weighted_degree
+climb_d = by_rank.messages - by_rank.degree
+print(f"{len(visitors)} accounts with at most 3 messages and at least 5 neighbours")
+print(
+    f"lubotu3`: rank {by_rank.messages['lubotu3`']:.0f} by messages, "
+    f"{by_rank.weighted_degree['lubotu3`']:.0f} by weighted degree, {by_rank.degree['lubotu3`']:.0f} by degree"
+)
+print(
+    f"visitors climb, median: {climb_w[visitors].median():.0f} places by weighted degree, "
+    f"{climb_d[visitors].median():.0f} by degree"
+)
+fig, axes = plt.subplots(1, 2, figsize=(12, 5.9))
+for ax, column, label, title, r, rho in [
+    (
+        axes[0],
+        "weighted_degree",
+        "weighted degree",
+        "weighted degree: they stay near the line",
+        r_w,
+        rho_w,
+    ),
+    (axes[1], "degree", "degree", "plain degree: they leave it", r_d, rho_d),
+]:
+    rank_panel(ax, ranks.messages, ranks[column], title, r, rho)
+    ax.scatter(
+        ranks.messages[visitors],
+        ranks[column][visitors],
+        s=26,
+        color=SECOND,
+        alpha=0.8,
+        zorder=3,
+    )
+    ax.scatter(
+        ranks.messages["lubotu3`"],
+        ranks[column]["lubotu3`"],
+        s=110,
+        color=SECOND,
+        zorder=4,
+    )
+    ax.annotate(
+        "lubotu3` (a bot)",
+        (ranks.messages["lubotu3`"], ranks[column]["lubotu3`"]),
+        xytext=(-60, 50) if column == "weighted_degree" else (0, 14),
+        textcoords="offset points",
+        ha="right" if column == "weighted_degree" else "center",
+        color=SECOND,
+        fontsize=13,
+        arrowprops={"arrowstyle": "-", "color": SECOND, "lw": 1}
+        if column == "weighted_degree"
+        else None,
+    )
+    ax.set_xlabel("rank by messages sent  →")
+    ax.set_ylabel(f"rank by {label}  →")
+axes[0].annotate(
+    f"{len(visitors)} visitors: 1–3 messages,\n5 or more neighbours",
+    (0.98, 0.04),
+    xycoords="axes fraction",
+    ha="right",
+    va="bottom",
+    color=SECOND,
+    fontsize=13,
+)
+save(fig, "degrees")
 
 shared = sorted(set(core) & set(core_named))
 both = pd.DataFrame(
@@ -1191,15 +1204,36 @@ fig, ax = plt.subplots(figsize=(7, 7))
 matrix(ax, hubs, by_degree, weight="weight", log=True)
 ax.set_xlabel("people, most connected first →")
 ax.set_ylabel("← people, most connected first")
-# a vermilion line is a boundary drawn on the matrix: here the ten most connected people
-ax.axhline(9.5, color=SECOND, lw=1.5)
-ax.axvline(9.5, color=SECOND, lw=1.5)
-ax.text(4.5, -1.2, "top 10", ha="center", va="bottom", color=SECOND, fontsize=15)
-top10 = nx.to_numpy_array(hubs, nodelist=by_degree, weight=None)
+# a vermilion line is a boundary drawn on the matrix: here the main k-core, the largest group in
+# which everyone is tied to at least k others of the group. It is the top of the degree order.
+core = nx.k_core(hubs)
+k_core = min(d for _, d in core.degree())
+size = core.number_of_nodes()
+if set(by_degree[:size]) != set(core):
+    raise ValueError(
+        "the core is not the top of the degree order, so no single line marks it"
+    )
+ax.axhline(size - 0.5, color=SECOND, lw=1.5)
+ax.axvline(size - 0.5, color=SECOND, lw=1.5)
+ax.text(
+    (size - 1) / 2,
+    -1.2,
+    f"core: {size} people",
+    ha="center",
+    va="bottom",
+    color=SECOND,
+    fontsize=15,
+)
+ties = nx.to_numpy_array(hubs, nodelist=by_degree, weight=None)
+weights = nx.to_numpy_array(hubs, nodelist=by_degree, weight="weight")
+rest = len(by_degree) - size
 print(
-    f"hub matrix: {len(by_degree)} people; top 10 among themselves {top10[:10, :10].sum() / 90:.0%} "
-    f"of pairs, top 10 with the rest {top10[:10, 10:].mean():.0%}, rest among themselves "
-    f"{top10[10:, 10:].sum() / (len(by_degree) - 10) / (len(by_degree) - 11):.0%}"
+    f"hub matrix: {len(by_degree)} people; core k={k_core}, {size} people, "
+    f"among themselves {ties[:size, :size].sum() / (size * (size - 1)):.0%} of pairs, "
+    f"with the rest {ties[:size, size:].mean():.0%}, rest among themselves "
+    f"{ties[size:, size:].sum() / (rest * (rest - 1)):.0%}; "
+    f"{weights[:size, :size].sum() / weights.sum():.0%} of the mentions inside the core; "
+    f"the first {next(k for k in range(2, size) if ties[:k, :k].sum() < k * (k - 1)) - 1} all tied to each other"
 )
 save(fig, "hubmatrix")
 
