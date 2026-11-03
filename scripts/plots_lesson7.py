@@ -4,8 +4,8 @@ Run from the repo root:  uv run python scripts/plots_lesson7.py
 Writes PNGs to presentations/img/lesson7/ and prints the numbers the slides quote.
 Data: the ubuntu_irc showcase (#ubuntu-uk, 2015) and the karate club and Florentine families
 graphs that ship with networkx. Each computation repeats the code and seeds of its notebook,
-so the numbers match 07.1–07.3. The Bearman and Moody odds ratios are copied from their
-Table 2 (American Journal of Public Health 94(1), 2004).
+so the numbers match 07.1–07.3. The open and closed circles that illustrate Bearman and
+Moody's intransitivity index (American Journal of Public Health 94(1), 2004) are made up.
 """
 
 import itertools
@@ -129,7 +129,7 @@ def draw(
         edge_color=edge_color,
         width=edge_width or width,
         arrows=arrows,
-        arrowsize=16,
+        **({"arrowsize": 16} if arrows else {}),
         node_size=size if np.isscalar(size) else 300,
     )
     nx.draw_networkx_nodes(
@@ -285,7 +285,7 @@ pos = {
     "roads": (2.6, -1.7),
 }
 fig, ax = plt.subplots(figsize=(8, 5.4))
-boxed(ax, policy, pos)
+boxed(ax, policy, pos, fill={"nitrogen": (SECOND, BG)})
 save(fig, "ex_policy")
 
 # trains: intercity stops, placed at their real coordinates
@@ -382,16 +382,25 @@ boxed(
     rad=0.12,
     width={(u, v): 1 + money[u][v]["weight"] / 400 for u, v in money.edges()},
 )
-nx.draw_networkx_edge_labels(
-    money,
-    pos,
-    ax=ax,
-    font_size=13,
-    font_color=SECOND,
-    edge_labels={(u, v): f"€{d['weight']}" for u, v, d in money.edges(data=True)},
-    bbox={"facecolor": BG, "edgecolor": "none", "pad": 1},
-    connectionstyle="arc3,rad=0.12",
-)
+# each amount sits beside the middle of its arc, upright and above every line: arc3 bends the
+# line by rad times its length in display space, so the label goes a little further out
+to_screen, to_data = ax.transData.transform, ax.transData.inverted().transform
+for u, v, d in money.edges(data=True):
+    (x1, y1), (x2, y2) = to_screen(pos[u]), to_screen(pos[v])
+    dx, dy = x2 - x1, y2 - y1
+    bend = 0.12 / 2 + 22 / np.hypot(dx, dy)
+    x, y = to_data(((x1 + x2) / 2 + bend * dy, (y1 + y2) / 2 - bend * dx))
+    ax.text(
+        x,
+        y,
+        f"€{d['weight']}",
+        ha="center",
+        va="center",
+        fontsize=15,
+        color=SECOND,
+        zorder=4,
+        bbox={"facecolor": BG, "edgecolor": "none", "pad": 1.5},
+    )
 save(fig, "ex_money")
 
 # likes: two kinds of node, people and posts
@@ -658,21 +667,26 @@ for f, (x, y) in pos.items():
     )
 save(fig, "florence")
 
-top = families.sort_values("betweenness", ascending=False).head(6)
-fig, axes = plt.subplots(1, 3, figsize=(13, 4.4), sharey=False)
+# every family in every panel, each panel sorted by its own measure, so the top of each is visible
+fig, axes = plt.subplots(1, 3, figsize=(13, 6.2), sharey=False)
 for ax, column, title in zip(
     axes,
     ["degree", "betweenness", "clustering"],
     ["degree", "betweenness", "clustering coefficient"],
 ):
-    ordered = top.sort_values(column)
+    ordered = families.sort_values(column, kind="stable")
     ax.barh(
         ordered.index,
         ordered[column],
-        color=[SECOND if f == "Medici" else GREY_FAINT for f in ordered.index],
+        color=[
+            SECOND if f == "Medici" else ACCENT if f == "Peruzzi" else GREY_FAINT
+            for f in ordered.index
+        ],
     )
     ax.set_title(title)
-    ax.tick_params(axis="y", length=0)
+    ax.tick_params(axis="y", length=0, labelsize=12)
+    for tick in ax.get_yticklabels():
+        tick.set_color({"Medici": SECOND, "Peruzzi": ACCENT}.get(tick.get_text(), GREY))
 save(fig, "florence_bars")
 
 # ---------- 03: triangles, closed and open ----------
@@ -706,39 +720,148 @@ for ax, friends_know, title in [
     ax.margins(0.1)
 save(fig, "triads")
 
-# Bearman and Moody (2004), Table 2: odds ratios for suicidal thoughts, with 95% intervals
-bearman = [
-    ("open friendship circle", "girls", 2.198, 1.221, 3.956),
-    ("open friendship circle", "boys", 0.747, 0.358, 1.558),
-    ("isolated", "girls", 2.010, 1.073, 3.765),
-    ("isolated", "boys", 0.665, 0.307, 1.445),
-]
-fig, ax = plt.subplots(figsize=(10, 4.4))
-for i, (_, group, odds, low, high) in enumerate(bearman):
-    colour = SECOND if group == "girls" else ACCENT
-    y = len(bearman) - 1 - i
-    ax.plot([low, high], [y, y], color=colour, lw=3)
-    ax.scatter(odds, y, color=colour, s=140, zorder=3)
-    ax.annotate(
-        f"{odds:.1f}",
-        (odds, y),
-        xytext=(0, 12),
-        textcoords="offset points",
-        ha="center",
-        color=colour,
-        fontsize=14,
-    )
-ax.axvline(1, color=GREY_DIM, lw=1.2, ls="--")
-ax.set_xscale("log")
-ax.set_xticks([0.25, 0.5, 1, 2, 4], ["¼", "½", "1", "2", "4"])
-ax.minorticks_off()
-ax.set_yticks(
-    range(len(bearman)),
-    [f"{measure}, {group}" for measure, group, *_ in reversed(bearman)],
+# ---------- 03: a small world: closed circles plus a few shortcuts ----------
+without_medici = giant_component(florence.subgraph(set(florence) - {"Medici"}))
+print(
+    f"florence: mean distance {nx.average_shortest_path_length(florence):.2f}; without the Medici "
+    f"{without_medici.number_of_nodes()} of {florence.number_of_nodes() - 1} families still "
+    f"connected, mean distance {nx.average_shortest_path_length(without_medici):.2f}"
 )
-ax.tick_params(axis="y", length=0)
-ax.set_xlabel("odds of having seriously thought about suicide, × (1 = no effect)")
-save(fig, "bearman")
+lattice = nx.watts_strogatz_graph(1000, 10, 0, seed=1)
+base_l = nx.average_shortest_path_length(lattice)
+base_c = nx.average_clustering(lattice)
+rows = []
+for p in [0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0]:
+    g = nx.connected_watts_strogatz_graph(1000, 10, p, seed=1)
+    rows.append(
+        (
+            p,
+            nx.average_shortest_path_length(g) / base_l,
+            nx.average_clustering(g) / base_c,
+        )
+    )
+small_world = pd.DataFrame(rows, columns=["p", "distance", "clustering"])
+print(f"lattice: distance {base_l:.1f}, clustering {base_c:.2f}")
+print(small_world.round(2).to_string(index=False))
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 6), gridspec_kw={"width_ratios": [1, 1.25]})
+ring_graph = nx.watts_strogatz_graph(30, 4, 0, seed=0)
+shortcuts = [(0, 15), (5, 22), (9, 26)]
+ring_graph.remove_edges_from([(0, 1), (5, 6), (9, 10)])
+ring_graph.add_edges_from(shortcuts)
+ring_pos = nx.circular_layout(ring_graph)
+nx.draw_networkx_edges(
+    ring_graph,
+    ring_pos,
+    edgelist=[e for e in ring_graph.edges() if e not in shortcuts],
+    ax=axes[0],
+    edge_color=GREY_DIM,
+    width=1.4,
+)
+nx.draw_networkx_edges(
+    ring_graph, ring_pos, edgelist=shortcuts, ax=axes[0], edge_color=SECOND, width=2.6
+)
+nx.draw_networkx_nodes(
+    ring_graph, ring_pos, ax=axes[0], node_color=ACCENT, node_size=140, linewidths=0
+)
+axes[0].set_title("neighbours, plus 3 shortcuts")
+axes[0].set_axis_off()
+axes[0].set_aspect("equal")
+ax = axes[1]
+for column, colour, label in [
+    ("clustering", ACCENT, "clustering: do your friends know each other?"),
+    ("distance", SECOND, "distance: steps between two random people"),
+]:
+    ax.plot(small_world.p, small_world[column], color=colour, marker="o", label=label)
+ax.set_xscale("log")
+ax.set_ylim(0, 1.08)
+ax.set_xlabel("share of edges rewired to a random stranger")
+ax.set_ylabel("relative to no shortcuts")
+ax.set_title("1,000 people, 10 friends each")
+ax.legend(loc="lower left")
+save(fig, "small_world")
+
+
+# Bearman and Moody's intransitivity, drawn: of all two-step relations from a student (a friend's
+# friend), the share that are not also the student's own friends. Two made-up circles.
+def intransitivity(graph, ego):
+    steps = [k for j in graph.neighbors(ego) for k in graph.neighbors(j) if k != ego]
+    return sum(not graph.has_edge(ego, k) for k in steps) / len(steps)
+
+
+friends4 = ["A", "B", "C", "D"]
+closed_circle = nx.Graph(
+    [("you", f) for f in friends4]
+    + list(itertools.combinations(friends4, 2))
+    + [("A", "a1")]
+)
+open_circle = nx.Graph(
+    [("you", f) for f in friends4]
+    + [("A", "B")]
+    + [(f, f"{f.lower()}{i}") for f in friends4 for i in (1, 2)]
+)
+fig, axes = plt.subplots(1, 2, figsize=(13, 6))
+angles = dict(zip(friends4, np.deg2rad([45, 135, 225, 315])))
+for ax, graph, title in [
+    (axes[0], closed_circle, "closed circle"),
+    (axes[1], open_circle, "open circle"),
+]:
+    pos = {"you": (0, 0)} | {f: (np.cos(a), np.sin(a)) for f, a in angles.items()}
+    for f in friends4:
+        outside = [n for n in graph.neighbors(f) if n not in pos]
+        for i, n in enumerate(outside):
+            spread = (i - (len(outside) - 1) / 2) * 0.45
+            pos[n] = (2 * np.cos(angles[f] + spread), 2 * np.sin(angles[f] + spread))
+    outsiders = [n for n in graph if n not in friends4 and n != "you"]
+    nx.draw_networkx_edges(
+        graph,
+        pos,
+        edgelist=[("you", f) for f in friends4],
+        ax=ax,
+        edge_color=GREY_DIM,
+        width=2.4,
+    )
+    # friends who know each other, bent so the diagonals do not run over the lines to "you"
+    nx.draw_networkx_edges(
+        graph,
+        pos,
+        ax=ax,
+        edge_color=SECOND,
+        width=3,
+        arrows=True,
+        arrowstyle="-",
+        connectionstyle="arc3,rad=0.25",
+        node_size=600,
+        edgelist=[(u, v) for u, v in graph.edges() if u in friends4 and v in friends4],
+    )
+    nx.draw_networkx_edges(
+        graph,
+        pos,
+        ax=ax,
+        edge_color=GREY_FAINT,
+        width=2,
+        style="--",
+        edgelist=[
+            (u, v) for u, v in graph.edges() if (u in outsiders) != (v in outsiders)
+        ],
+    )
+    nx.draw_networkx_nodes(
+        graph, pos, nodelist=["you"], ax=ax, node_color=ACCENT, node_size=1100
+    )
+    nx.draw_networkx_nodes(
+        graph, pos, nodelist=friends4, ax=ax, node_color=ACCENT_LIGHT, node_size=600
+    )
+    nx.draw_networkx_nodes(
+        graph, pos, nodelist=outsiders, ax=ax, node_color=GREY_FAINT, node_size=380
+    )
+    ax.text(0, 0, "you", ha="center", va="center", color=BG, fontsize=14)
+    value = intransitivity(graph, "you")
+    print(f"{title}: intransitivity {value:.2f}")
+    ax.set_title(f"{title}: intransitivity {value:.2f}", fontsize=18)
+    ax.set_axis_off()
+    ax.set_aspect("equal")
+    ax.margins(0.12)
+save(fig, "open_circle")
 
 # ---------- 03: what a centrality adds ----------
 core = giant_component(nearby)
@@ -988,42 +1111,52 @@ print(
     )
 )
 
-fig, ax = plt.subplots(figsize=(8.5, 5.6))
-for column, colour, style, label in [
-    ("degree", ACCENT, "-", "degree"),
-    ("betweenness", THIRD, "-", "betweenness"),
-    ("clustering", SECOND, "-", "clustering"),
-    ("clustering_two", SECOND, ":", "clustering, 2+ neighbours"),
-]:
+# who is on top at each window: the ten highest degrees at any window, ranked among everyone
+ranks = pd.DataFrame(
+    {s: m.degree.rank(ascending=False, method="first") for s, m in windows.items()}
+)
+shown = sorted(
+    set().union(*(ranks.index[ranks[s] <= 10] for s in ranks)),
+    key=lambda n: ranks.loc[n, 600],
+)
+print(ranks.loc[shown].astype(int).to_string())
+fig, ax = plt.subplots(figsize=(9.5, 6.4))
+xs = range(len(windows))
+for nick in shown:
+    row = ranks.loc[nick].to_numpy()
+    stays = bool((row <= 5).all())
+    colour = ACCENT if stays else GREY_DIM
     ax.plot(
-        sweep.minutes,
-        sweep[column],
-        style,
+        xs,
+        row,
         color=colour,
-        lw=1.6,
+        lw=2.6 if stays else 1.4,
         marker="o",
-        markersize=8,
-        label=label,
+        markersize=9 if stays else 6,
+        alpha=1 if stays else 0.7,
     )
-for m, v in zip(sweep.minutes, sweep.clustering):
-    if m != 10:
-        ax.annotate(
-            f"{v:.2f}",
-            (m, v),
-            xytext=(0, -20),
-            textcoords="offset points",
-            ha="center",
-            color=SECOND,
-            fontsize=13,
+    for x, nudge, align in [(0, -0.12, "right"), (len(windows) - 1, 0.12, "left")]:
+        ax.text(
+            x + nudge,
+            row[x],
+            f"{nick} ({row[x]:.0f})" if row[x] > 10 else nick,
+            ha=align,
+            va="center",
+            fontsize=12.5,
+            color=colour,
         )
-ax.set_xscale("log")
-ax.set_xticks(sweep.minutes, ["1 min", "5 min", "10 min", "30 min"])
-ax.minorticks_off()
-ax.set_ylim(0, 1.05)
-ax.set_ylabel("spearman ρ with the 10-minute ranking")
-ax.set_xlabel("window (10 min is the reference, so 1 by construction)")
-ax.legend(loc="lower right")
-save(fig, "window_sweep")
+ax.axhspan(
+    10.5, ranks.loc[shown].to_numpy().max() + 0.6, color=GREY_FAINT, alpha=0.25, lw=0
+)
+ax.set_ylim(ranks.loc[shown].to_numpy().max() + 0.6, 0.4)
+ax.set_yticks([1, 5, 10], ["1", "5", "10"])
+ax.set_xticks(xs, ["1 min", "5 min", "10 min", "30 min"])
+ax.set_xlim(-1.1, len(windows) - 1 + 1.1)
+ax.set_ylabel("rank by degree")
+ax.set_xlabel("window")
+ax.spines["left"].set_visible(False)
+ax.tick_params(axis="y", length=0)
+save(fig, "window_ranks")
 
 # ---------- 04: one graph, two layouts, and its matrix ----------
 hubs = giant_component(to_graph(MentionEdges()(chat)))
@@ -1058,6 +1191,16 @@ fig, ax = plt.subplots(figsize=(7, 7))
 matrix(ax, hubs, by_degree, weight="weight", log=True)
 ax.set_xlabel("people, most connected first →")
 ax.set_ylabel("← people, most connected first")
+# a vermilion line is a boundary drawn on the matrix: here the ten most connected people
+ax.axhline(9.5, color=SECOND, lw=1.5)
+ax.axvline(9.5, color=SECOND, lw=1.5)
+ax.text(4.5, -1.2, "top 10", ha="center", va="bottom", color=SECOND, fontsize=15)
+top10 = nx.to_numpy_array(hubs, nodelist=by_degree, weight=None)
+print(
+    f"hub matrix: {len(by_degree)} people; top 10 among themselves {top10[:10, :10].sum() / 90:.0%} "
+    f"of pairs, top 10 with the rest {top10[:10, 10:].mean():.0%}, rest among themselves "
+    f"{top10[10:, 10:].sum() / (len(by_degree) - 10) / (len(by_degree) - 11):.0%}"
+)
 save(fig, "hubmatrix")
 
 # ---------- 04: which view, sparse and dense ----------
@@ -1069,44 +1212,65 @@ ax.set_yticks(range(len(west_to_east)), west_to_east, fontsize=12)
 ax.tick_params(length=0)
 save(fig, "trains_matrix")
 
-eight = chat.author.value_counts().head(8).index
-dense = induced(nearby, eight)
-print(
-    f"eight busiest: {dense.number_of_edges()} of 28 pairs connected; weights "
-    f"{min(d['weight'] for *_, d in dense.edges(data=True))}..{max(d['weight'] for *_, d in dense.edges(data=True))}"
+# the eight busiest people under the named rule, keeping the direction: who typed whose name
+eight = list(chat.author.value_counts().head(8).index)
+said = MentionEdges()(chat)
+said = said[said.source.isin(eight) & said.target.isin(eight)]
+addressed = (
+    said.pivot_table(index="source", columns="target", values="weight", fill_value=0)
+    .reindex(index=eight, columns=eight, fill_value=0)
+    .astype(int)
 )
+directed = nx.DiGraph()
+directed.add_weighted_edges_from(
+    said[["source", "target", "weight"]].itertuples(index=False)
+)
+print(
+    f"eight busiest, named: {directed.number_of_edges()} of 56 directed pairs, "
+    f"weights {said.weight.min()}..{said.weight.max()}"
+)
+print(pd.DataFrame({"typed": addressed.sum(axis=1), "received": addressed.sum(axis=0)}))
 fig, axes = plt.subplots(1, 2, figsize=(14, 6.2))
-pos = nx.circular_layout(dense)
-draw(
-    axes[0],
-    dense,
+pos = nx.circular_layout(eight)
+nx.draw_networkx_edges(
+    directed,
     pos,
-    color=ACCENT,
-    size=700,
+    ax=axes[0],
     edge_color=GREY_DIM,
-    edge_width=[d["weight"] / 1500 for *_, d in dense.edges(data=True)],
+    width=[0.3 + d["weight"] / 40 for *_, d in directed.edges(data=True)],
+    arrows=True,
+    arrowsize=12,
+    node_size=700,
+    connectionstyle="arc3,rad=0.12",
+)
+nx.draw_networkx_nodes(
+    directed, pos, ax=axes[0], node_color=ACCENT, node_size=700, linewidths=0
 )
 for n, (x, y) in pos.items():
     axes[0].text(
         1.28 * x, 1.2 * y, n, ha="center", va="center", fontsize=13, color=GREY
     )
+axes[0].set_axis_off()
 axes[0].set_xlim(-1.6, 1.6)
 axes[0].set_ylim(-1.45, 1.45)
-weights = nx.to_numpy_array(dense, nodelist=list(eight), weight="weight")
-axes[1].imshow(weights, cmap=CELLS, interpolation="nearest")
+values = addressed.to_numpy()
+axes[1].imshow(np.log1p(values), cmap=CELLS, interpolation="nearest")
 for i, j in itertools.product(range(8), range(8)):
     if i != j:
         axes[1].text(
             j,
             i,
-            f"{weights[i, j] / 1000:.1f}k",
+            str(values[i, j]),
             ha="center",
             va="center",
-            fontsize=11,
-            color=BG if weights[i, j] > weights.max() / 2 else TEXT,
+            fontsize=12,
+            color=BG if np.log1p(values[i, j]) > np.log1p(values.max()) / 2 else TEXT,
         )
 axes[1].set_xticks(range(8), eight, rotation=90, fontsize=12)
 axes[1].set_yticks(range(8), eight, fontsize=12)
+axes[1].set_xlabel("whose name was typed")
+axes[1].set_ylabel("who typed it")
+axes[1].xaxis.set_label_position("top")
 axes[1].tick_params(length=0)
 save(fig, "dense")
 
@@ -1164,7 +1328,67 @@ cut = int((side == side[sides[0]]).sum()) - 0.5
 for ax in [axes[1]]:
     ax.axhline(cut, color=SECOND, lw=1.5)
     ax.axvline(cut, color=SECOND, lw=1.5)
+# member 8, the one the cut misses: its row and column outlined, with its name beside the row
+row8 = sides.index(8)
+for xy, width, height in [((-0.5, row8 - 0.5), 34, 1), ((row8 - 0.5, -0.5), 1, 34)]:
+    axes[1].add_patch(
+        plt.Rectangle(xy, width, height, fill=False, edgecolor=THIRD, lw=2, zorder=3)
+    )
+axes[1].annotate(
+    "member 8",
+    (-0.5, row8),
+    xytext=(-14, 0),
+    textcoords="offset points",
+    ha="right",
+    va="center",
+    color=THIRD,
+    fontsize=15,
+    annotation_clip=False,
+)
+print(
+    f"member 8: {sum(side[m] == side[8] for m in karate.neighbors(8))} ties on its own side, "
+    f"{sum(side[m] != side[8] for m in karate.neighbors(8))} on the other"
+)
 save(fig, "karate_matrix")
+
+# louvain on the same club, in the same layout: colour is louvain's group, shape the club joined
+louvain_groups = best_partition(karate, seeds=3)
+louvain_of = labels(karate, louvain_groups)
+print(
+    f"karate louvain: {len(louvain_groups)} groups, Q = {modularity(karate, louvain_groups, weight=None):.2f}; "
+    f"the two clubs Q = {modularity(karate, [set(np.flatnonzero(truth == k)) for k in (0, 1)], weight=None):.2f}, "
+    f"the Fiedler cut Q = {modularity(karate, [set(np.flatnonzero(side == k)) for k in (0, 1)], weight=None):.2f}"
+)
+for group in louvain_groups:
+    print("  ", sorted(group), "clubs", sorted({int(truth[n]) for n in group}))
+fig, ax = plt.subplots(figsize=(7, 6.2))
+nx.draw_networkx_edges(karate, kpos, ax=ax, edge_color=GREY_FAINT, width=1.2)
+for club, shape in [(0, "o"), (1, "s")]:
+    members = [n for n in karate if truth[n] == club]
+    nx.draw_networkx_nodes(
+        karate,
+        kpos,
+        nodelist=members,
+        node_shape=shape,
+        ax=ax,
+        node_size=300,
+        linewidths=0,
+        node_color=[CATEGORIES[louvain_of[n]] for n in members],
+    )
+ax.annotate(
+    "member 8",
+    kpos[8],
+    xytext=(20, 4),
+    va="bottom",
+    textcoords="offset points",
+    color=THIRD,
+    fontsize=15,
+)
+ax.scatter([], [], marker="o", color=GREY_DIM, label="joined Mr. Hi")
+ax.scatter([], [], marker="s", color=GREY_DIM, label="joined the officer")
+ax.legend(loc="lower left")
+ax.set_axis_off()
+save(fig, "karate_louvain")
 print(f"karate: the member on the wrong side is {wrong}")
 
 
